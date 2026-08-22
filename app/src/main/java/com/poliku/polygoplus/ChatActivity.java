@@ -15,10 +15,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ChatMessageAdapter;
+import com.poliku.polygoplus.network.NetworkApi;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ChatActivity extends AppCompatActivity {
     public static final String EXTRA_THREAD_ID = "thread_id";
-    private String threadId;
+    public static final String EXTRA_LISTING_ID = "listing_id";
+    public static final String EXTRA_SELLER_ID = "seller_id";
+    public static final String EXTRA_OTHER_NAME = "other_name";
+
+    private String threadId, listingId, sellerId, otherName;
     private RecyclerView messageList;
     private ChatMessageAdapter adapter;
     private EditText input;
@@ -27,7 +35,19 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         threadId = getIntent().getStringExtra(EXTRA_THREAD_ID);
-        if (threadId == null || threadId.trim().isEmpty()) { finish(); return; }
+        listingId = getIntent().getStringExtra(EXTRA_LISTING_ID);
+        sellerId = getIntent().getStringExtra(EXTRA_SELLER_ID);
+        otherName = getIntent().getStringExtra(EXTRA_OTHER_NAME);
+
+        if ((threadId == null || threadId.trim().isEmpty()) && (listingId == null || sellerId == null)) {
+            finish();
+            return;
+        }
+
+        if (otherName != null) {
+            ((TextView) findViewById(R.id.chatTitle)).setText(otherName);
+        }
+
         messageList = findViewById(R.id.chatMessages);
         messageList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ChatMessageAdapter(AppDataStore.userName(this));
@@ -46,32 +66,71 @@ public class ChatActivity extends AppCompatActivity {
             if (actionId == EditorInfo.IME_ACTION_SEND) { sendMessage(); return true; }
             return false;
         });
-        AppDataStore.markThreadRead(this, threadId);
-        render();
+        
+        loadMessages();
     }
 
     @Override protected void onResume() {
         super.onResume();
-        if (adapter != null) { AppDataStore.markThreadRead(this, threadId); render(); }
+        loadMessages();
+    }
+
+    private void loadMessages() {
+        if (threadId == null || threadId.isEmpty()) return;
+        
+        String userId = AppDataStore.userId(this);
+        NetworkApi.getMessages(userId, threadId, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                JSONArray msgs = response.optJSONArray("messages");
+                if (msgs != null) {
+                    adapter.submit(msgs);
+                    if (adapter.getItemCount() > 0) messageList.scrollToPosition(adapter.getItemCount() - 1);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                // Fallback to local
+                AppDataStore.ThreadRecord thread = AppDataStore.getThread(ChatActivity.this, threadId);
+                if (thread != null) {
+                    adapter.submit(thread.messages);
+                    if (adapter.getItemCount() > 0) messageList.scrollToPosition(adapter.getItemCount() - 1);
+                }
+            }
+        });
     }
 
     private void sendMessage() {
         String text = input.getText().toString().trim();
         if (text.isEmpty()) { input.setError("Write a message"); return; }
-        AppDataStore.sendMessage(this, threadId, text);
-        input.setText("");
-        render();
+        
+        String userId = AppDataStore.userId(this);
+        NetworkApi.sendMessage(userId, threadId, listingId, sellerId, text, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                input.setText("");
+                if (threadId == null || threadId.isEmpty()) {
+                    threadId = response.optString("thread_id");
+                }
+                loadMessages();
+            }
+
+            @Override
+            public void onError(String message) {
+                // Local fallback
+                if (threadId != null) {
+                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
+                    input.setText("");
+                    loadMessages();
+                } else {
+                    Toast.makeText(ChatActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void render() {
-        AppDataStore.ThreadRecord thread = AppDataStore.getThread(this, threadId);
-        if (thread == null) {
-            Toast.makeText(this, "Conversation not found", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-        ((TextView) findViewById(R.id.chatTitle)).setText(thread.name);
-        adapter.submit(thread.messages);
-        if (adapter.getItemCount() > 0) messageList.scrollToPosition(adapter.getItemCount() - 1);
+        // This is no longer used but I'll keep it as a stub if needed
     }
 }

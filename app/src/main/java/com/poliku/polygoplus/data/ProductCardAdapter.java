@@ -24,6 +24,12 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
         this.listener = listener;
     }
 
+    public void updateData(List<AppDataStore.ProductRecord> newData) {
+        products.clear();
+        if (newData != null) products.addAll(newData);
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

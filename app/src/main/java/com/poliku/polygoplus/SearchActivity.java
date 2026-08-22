@@ -18,6 +18,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
+import com.poliku.polygoplus.network.NetworkApi;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +68,13 @@ public class SearchActivity extends AppCompatActivity {
         }
         RecyclerView rv = findViewById(R.id.rvSearchResults);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
+        adapter = new ProductCardAdapter(new ArrayList<>(), (a, p) -> {
+            android.content.Intent i = new android.content.Intent(this, ProductDetailActivity.class);
+            i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
+            startActivity(i);
+        });
+        rv.setAdapter(adapter);
+
         search.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int st, int c, int a) {
             }
@@ -92,9 +103,35 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void reloadListings() {
-        all.clear();
-        all.addAll(AppDataStore.getListings(this));
-        filter();
+        String currentUserId = AppDataStore.userId(this);
+        NetworkApi.getListings(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                all.clear();
+                JSONArray list = response.optJSONArray("listings");
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) {
+                            AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
+                            if (p != null) {
+                                boolean isOwner = p.ownerId.equals(currentUserId);
+                                all.add(isOwner ? p.withOwnerStatus(true) : p);
+                            }
+                        }
+                    }
+                }
+                filter();
+            }
+
+            @Override
+            public void onError(String message) {
+                // Fallback to local if server fails or handle error
+                all.clear();
+                all.addAll(AppDataStore.getListings(SearchActivity.this));
+                filter();
+            }
+        });
     }
 
     private void filter() {
@@ -108,13 +145,9 @@ public class SearchActivity extends AppCompatActivity {
             boolean categoryMatch = categoryMatches(p.category, cat);
             if (text && categoryMatch) filtered.add(p);
         }
-        adapter = new ProductCardAdapter(filtered, (a, p) -> {
-            android.content.Intent i = new android.content.Intent(this, ProductDetailActivity.class);
-            i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
-            startActivity(i);
-        });
-        RecyclerView rv = findViewById(R.id.rvSearchResults);
-        if (rv != null) rv.setAdapter(adapter);
+        if (adapter != null) {
+            adapter.updateData(filtered);
+        }
         if (count != null) count.setText(filtered.size() + " listings");
         if (empty != null) empty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
     }

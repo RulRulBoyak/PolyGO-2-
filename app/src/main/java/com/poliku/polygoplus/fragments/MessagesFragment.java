@@ -21,6 +21,13 @@ import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.SearchActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ConversationAdapter;
+import com.poliku.polygoplus.network.NetworkApi;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessagesFragment extends androidx.fragment.app.Fragment {
     private ConversationAdapter adapter;
@@ -66,8 +73,32 @@ public class MessagesFragment extends androidx.fragment.app.Fragment {
     }
 
     private void loadThreads() {
-        adapter.submit(AppDataStore.getThreads(requireContext()));
-        updateEmpty();
+        String userId = AppDataStore.userId(requireContext());
+        NetworkApi.getThreads(userId, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                List<AppDataStore.ThreadRecord> result = new ArrayList<>();
+                JSONArray list = response.optJSONArray("threads");
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) result.add(AppDataStore.ThreadRecord.fromJson(o));
+                    }
+                }
+                if (adapter != null) {
+                    adapter.submit(result);
+                    updateEmpty();
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                if (adapter != null) {
+                    adapter.submit(AppDataStore.getThreads(requireContext()));
+                    updateEmpty();
+                }
+            }
+        });
     }
 
     private void updateEmpty() {

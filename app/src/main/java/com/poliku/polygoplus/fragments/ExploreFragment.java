@@ -16,11 +16,19 @@ import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
+import com.poliku.polygoplus.network.NetworkApi;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ExploreFragment extends Fragment {
+    private ProductCardAdapter adapter;
 
     @Nullable
     @Override
@@ -36,11 +44,38 @@ public class ExploreFragment extends Fragment {
         });
 
         list.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-        list.setAdapter(new ProductCardAdapter(AppDataStore.getListings(requireContext()), (adapter, product) -> {
+        adapter = new ProductCardAdapter(new ArrayList<>(), (a, product) -> {
             android.content.Intent intent = new android.content.Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
             startActivity(intent);
-        }));
+        });
+        list.setAdapter(adapter);
+        reloadListings();
         return view;
+    }
+
+    private void reloadListings() {
+        NetworkApi.getListings(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                List<AppDataStore.ProductRecord> products = new ArrayList<>();
+                JSONArray list = response.optJSONArray("listings");
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) {
+                            AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
+                            if (p != null) products.add(p);
+                        }
+                    }
+                }
+                if (adapter != null) adapter.updateData(products);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (adapter != null) adapter.updateData(AppDataStore.getListings(requireContext()));
+            }
+        });
     }
 }

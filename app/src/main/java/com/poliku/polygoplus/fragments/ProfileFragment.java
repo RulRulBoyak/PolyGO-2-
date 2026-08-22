@@ -69,6 +69,7 @@ public class ProfileFragment extends Fragment {
         view.findViewById(R.id.menuVerification).setOnClickListener(v -> startActivity(new Intent(requireContext(), VerificationActivity.class)));
 
         view.findViewById(R.id.ivLogout).setOnClickListener(v -> {
+            AppDataStore.logout(requireContext());
             Intent intent = new Intent(requireContext(), MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);

@@ -5,6 +5,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 import android.content.Intent;
+import android.view.View;
 import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -12,11 +13,16 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.network.NetworkApi;
+
+import org.json.JSONObject;
 
 public class EditProductActivity extends AppCompatActivity {
 
-    private TextInputEditText etPrice;
+    private TextInputEditText etPrice, etCustomCategory;
+    private TextInputLayout tilCustomCategory;
     private double currentPrice = 0.0;
     private String selectedImageUri = "";
 
@@ -74,17 +80,61 @@ public class EditProductActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categories);
         AutoCompleteTextView autoComplete = findViewById(R.id.autoCompleteCategory);
         autoComplete.setAdapter(adapter);
+
+        tilCustomCategory = findViewById(R.id.tilCustomCategory);
+        etCustomCategory = findViewById(R.id.etCustomCategory);
+
+        autoComplete.setOnItemClickListener((parent, view, position, id) -> {
+            String selected = categories[position];
+            if ("Others".equalsIgnoreCase(selected)) {
+                tilCustomCategory.setVisibility(View.VISIBLE);
+            } else {
+                tilCustomCategory.setVisibility(View.GONE);
+                etCustomCategory.setText("");
+            }
+        });
     }
 
     private void setupPublishAction() {
         findViewById(R.id.btnSaveProduct).setOnClickListener(v -> {
-            String title = value(R.id.etProductName); String category = ((AutoCompleteTextView)findViewById(R.id.autoCompleteCategory)).getText().toString().trim(); String price = value(R.id.etPrice); String description = value(R.id.etDescription);
+            String title = value(R.id.etProductName);
+            String category = ((AutoCompleteTextView)findViewById(R.id.autoCompleteCategory)).getText().toString().trim();
+            if ("Others".equalsIgnoreCase(category)) {
+                category = etCustomCategory.getText() == null ? "" : etCustomCategory.getText().toString().trim();
+            }
+            String price = value(R.id.etPrice);
+            String description = value(R.id.etDescription);
+
             if (selectedImageUri.isEmpty()) { Toast.makeText(this, "Add at least one photo", Toast.LENGTH_SHORT).show(); return; }
-            if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) { Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show(); return; }
+            if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
+                Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show();
+                if (category.isEmpty() && tilCustomCategory.getVisibility() == View.VISIBLE) {
+                    etCustomCategory.setError("Enter a category name");
+                }
+                return;
+            }
             try { if (Double.parseDouble(price) <= 0) { Toast.makeText(this, "Price must be greater than zero", Toast.LENGTH_SHORT).show(); return; } } catch (NumberFormatException e) { Toast.makeText(this, "Enter a valid price", Toast.LENGTH_SHORT).show(); return; }
-            AppDataStore.addUserListing(this, title, category, price, description, selectedImageUri);
-            Toast.makeText(this, "Listing published", Toast.LENGTH_LONG).show();
-            finish();
+            
+            String userId = AppDataStore.userId(this);
+            if ("0".equals(userId)) {
+                Toast.makeText(this, "Please log in again to publish", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            v.setEnabled(false);
+            NetworkApi.addListing(userId, title, category, price, description, selectedImageUri, new NetworkApi.Callback() {
+                @Override
+                public void onSuccess(JSONObject response) {
+                    Toast.makeText(EditProductActivity.this, "Listing published", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+
+                @Override
+                public void onError(String message) {
+                    v.setEnabled(true);
+                    Toast.makeText(EditProductActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 

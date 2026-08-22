@@ -45,6 +45,7 @@ public final class AppDataStore {
         if (!p.contains(KEY_USER)) {
             try {
                 JSONObject user = new JSONObject();
+                user.put("id", 1); // Mock ID for default user
                 user.put("name", "Amirul");
                 user.put("studentId", "05DIT24F1029");
                 user.put("email", "amirul@pks.edu.my");
@@ -52,6 +53,15 @@ public final class AppDataStore {
                 p.edit().putString(KEY_USER, user.toString()).apply();
             } catch (JSONException ignored) {
             }
+        } else {
+            // Migration: Ensure existing local user has an ID
+            try {
+                JSONObject user = new JSONObject(p.getString(KEY_USER, "{}"));
+                if (!user.has("id")) {
+                    user.put("id", 1);
+                    p.edit().putString(KEY_USER, user.toString()).apply();
+                }
+            } catch (JSONException ignored) {}
         }
 
         if (p.getBoolean(KEY_SEEDED, false)) {
@@ -130,6 +140,14 @@ public final class AppDataStore {
                 .apply();
     }
 
+    public static String userId(Context context) {
+        try {
+            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("id", "0");
+        } catch (JSONException e) {
+            return "0";
+        }
+    }
+
     public static boolean register(Context context, String name, String studentId, String email, String password) {
         if (hasAccount(context)) return false;
         try {
@@ -138,7 +156,7 @@ public final class AppDataStore {
             user.put("studentId", studentId);
             user.put("email", email);
             user.put("password", password);
-            prefs(context).edit().putString(KEY_USER, user.toString()).putBoolean("loggedIn", true).apply();
+            prefs(context).edit().putString(KEY_USER, user.toString()).apply();
             return true;
         } catch (JSONException e) {
             return false;
@@ -148,9 +166,7 @@ public final class AppDataStore {
     public static boolean login(Context context, String studentId, String password) {
         try {
             JSONObject user = new JSONObject(prefs(context).getString(KEY_USER, "{}"));
-            boolean valid = studentId.equalsIgnoreCase(user.optString("studentId")) && password.equals(user.optString("password"));
-            if (valid) prefs(context).edit().putBoolean("loggedIn", true).apply();
-            return valid;
+            return studentId.equalsIgnoreCase(user.optString("studentId")) && password.equals(user.optString("password"));
         } catch (JSONException e) {
             return false;
         }
@@ -235,7 +251,7 @@ public final class AppDataStore {
 
     public static ProductRecord addUserListing(Context context, String title, String category, String price, String description, String imageUri) {
         JSONArray list = array(context, KEY_LISTINGS);
-        ProductRecord product = new ProductRecord(UUID.randomUUID().toString(), title, userName(context), price, "New", "Near campus", imageForCategory(category), imageUri, category, description, true, true);
+        ProductRecord product = new ProductRecord(UUID.randomUUID().toString(), title, userName(context), price, "New", "Near campus", imageForCategory(category), imageUri, category, description, true, true, userId(context));
         try {
             list.put(product.toJson());
             saveArray(context, KEY_LISTINGS, list);
@@ -497,15 +513,15 @@ public final class AppDataStore {
     }
 
     public static final class ProductRecord {
-        public final String id, title, seller, price, rating, distance, imageUri, category, description;
+        public final String id, title, seller, price, rating, distance, imageUri, category, description, ownerId;
         public final int imageRes;
         public final boolean owner, available;
 
         public ProductRecord(String id, String title, String seller, String price, String rating, String distance, int imageRes, String category, String description, boolean owner, boolean available) {
-            this(id, title, seller, price, rating, distance, imageRes, "", category, description, owner, available);
+            this(id, title, seller, price, rating, distance, imageRes, "", category, description, owner, available, "0");
         }
 
-        public ProductRecord(String id, String title, String seller, String price, String rating, String distance, int imageRes, String imageUri, String category, String description, boolean owner, boolean available) {
+        public ProductRecord(String id, String title, String seller, String price, String rating, String distance, int imageRes, String imageUri, String category, String description, boolean owner, boolean available, String ownerId) {
             this.id = id;
             this.title = title;
             this.seller = seller;
@@ -518,10 +534,34 @@ public final class AppDataStore {
             this.description = description;
             this.owner = owner;
             this.available = available;
+            this.ownerId = ownerId;
         }
 
-        static ProductRecord fromJson(JSONObject o) {
-            return new ProductRecord(o.optString("id"), o.optString("title"), o.optString("seller"), o.optString("price"), o.optString("rating"), o.optString("distance"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri"), o.optString("category"), o.optString("description"), o.optBoolean("owner"), o.optBoolean("available", true));
+        public ProductRecord withOwnerStatus(boolean isOwner) {
+            return new ProductRecord(id, title, seller, price, rating, distance, imageRes, imageUri, category, description, isOwner, available, ownerId);
+        }
+
+        public static ProductRecord fromJson(JSONObject o) {
+            if (o == null) return null;
+            try {
+                return new ProductRecord(
+                        o.optString("id", o.optString("listing_id", "0")),
+                        o.optString("title", "Untitled"),
+                        o.optString("seller", o.optString("owner_name", "Unknown Seller")),
+                        o.optString("price", "0"),
+                        o.optString("rating", "4.5"),
+                        o.optString("distance", "Near campus"),
+                        o.optInt("imageRes", R.drawable.bg_product_home),
+                        o.optString("image_url", o.optString("imageUri", "")),
+                        o.optString("category", "General"),
+                        o.optString("description", ""),
+                        o.optBoolean("owner", false),
+                        o.optBoolean("is_available", o.optBoolean("available", true)),
+                        o.optString("owner_id", "0")
+                );
+            } catch (Exception e) {
+                return null;
+            }
         }
 
         JSONObject toJson() throws JSONException {
@@ -538,6 +578,7 @@ public final class AppDataStore {
             o.put("description", description);
             o.put("owner", owner);
             o.put("available", available);
+            o.put("owner_id", ownerId);
             return o;
         }
     }
@@ -548,7 +589,7 @@ public final class AppDataStore {
         public final boolean unread;
         public final long lastMessageTime;
 
-        ThreadRecord(String id, String listingId, String name, String preview, JSONArray messages, boolean unread, long lastMessageTime) {
+        public ThreadRecord(String id, String listingId, String name, String preview, JSONArray messages, boolean unread, long lastMessageTime) {
             this.id = id;
             this.listingId = listingId;
             this.name = name;
@@ -558,19 +599,27 @@ public final class AppDataStore {
             this.lastMessageTime = lastMessageTime;
         }
 
-        static ThreadRecord fromJson(JSONObject o) {
+        public static ThreadRecord fromJson(JSONObject o) {
             JSONArray m = o.optJSONArray("messages");
             if (m == null) m = new JSONArray();
-            String p = "";
+            String p = o.optString("last_message", "");
             long time = o.optLong("lastMessageTime", 0);
-            if (m.length() > 0) {
+            if (m.length() > 0 && p.isEmpty()) {
                 JSONObject last = m.optJSONObject(m.length() - 1);
                 if (last != null) {
                     p = last.optString("text", "");
                     if (time == 0) time = last.optLong("time", 0);
                 }
             }
-            return new ThreadRecord(o.optString("id"), o.optString("listingId"), o.optString("name"), p, m, o.optBoolean("unread", false), time);
+            return new ThreadRecord(
+                    o.optString("id"),
+                    o.optString("listingId", o.optString("listing_id")),
+                    o.optString("name", o.optString("other_name", "User")),
+                    p,
+                    m,
+                    o.optBoolean("unread", false),
+                    time
+            );
         }
     }
 
@@ -587,8 +636,14 @@ public final class AppDataStore {
             this.read = read;
         }
 
-        static NotificationRecord fromJson(JSONObject o) {
-            return new NotificationRecord(o.optString("id"), o.optString("title"), o.optString("body"), o.optLong("time", 0), o.optBoolean("read", false));
+        public static NotificationRecord fromJson(JSONObject o) {
+            return new NotificationRecord(
+                    o.optString("id"),
+                    o.optString("title"),
+                    o.optString("body"),
+                    o.optLong("time", o.optLong("created_at", 0)),
+                    o.optBoolean("read", o.optBoolean("is_read", false))
+            );
         }
     }
 }

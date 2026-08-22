@@ -22,12 +22,18 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.databinding.FragmentHomeBinding;
 import com.poliku.polygoplus.databinding.ItemCategoryBinding;
+import com.poliku.polygoplus.network.NetworkApi;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
+    private ProductCardAdapter productAdapter;
 
     @Nullable
     @Override
@@ -45,6 +51,7 @@ public class HomeFragment extends Fragment {
         setupCategories();
         setupProducts();
         setupSearchActions();
+        reloadProducts();
 
         ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.home_top), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -81,12 +88,38 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupProducts() {
-        binding.recyclerViewProducts.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        binding.recyclerViewProducts.setAdapter(new ProductCardAdapter(AppDataStore.getListings(requireContext()), (adapter, product) -> {
+        productAdapter = new ProductCardAdapter(new ArrayList<>(), (adapter, product) -> {
             Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
             startActivity(intent);
-        }));
+        });
+        binding.recyclerViewProducts.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        binding.recyclerViewProducts.setAdapter(productAdapter);
+    }
+
+    private void reloadProducts() {
+        NetworkApi.getListings(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                List<AppDataStore.ProductRecord> list = new ArrayList<>();
+                JSONArray arr = response.optJSONArray("listings");
+                if (arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject o = arr.optJSONObject(i);
+                        if (o != null) {
+                            AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
+                            if (p != null) list.add(p);
+                        }
+                    }
+                }
+                if (productAdapter != null) productAdapter.updateData(list);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (productAdapter != null) productAdapter.updateData(AppDataStore.getListings(requireContext()));
+            }
+        });
     }
 
     private void setupSearchActions() {
