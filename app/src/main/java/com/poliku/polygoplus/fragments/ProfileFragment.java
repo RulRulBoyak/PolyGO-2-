@@ -36,6 +36,7 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         AppDataStore.initialize(requireContext());
         ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText(AppDataStore.userName(requireContext()));
+        ((android.widget.TextView)view.findViewById(R.id.tvUserRole)).setText(AppDataStore.userRole(requireContext()));
 
         view.findViewById(R.id.headerProfile).setOnClickListener(v -> profileIntent());
         view.findViewById(R.id.menuUserProfile).setOnClickListener(v -> profileIntent());

@@ -104,10 +104,16 @@ public class SearchActivity extends AppCompatActivity {
 
     private void reloadListings() {
         String currentUserId = AppDataStore.userId(this);
+        
+        // Always load local listings FIRST for demo reliability
+        all.clear();
+        all.addAll(AppDataStore.getListings(this));
+        filter();
+
         NetworkApi.getListings(new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                all.clear();
+                // Keep local products added during this session, then add remote ones
                 JSONArray list = response.optJSONArray("listings");
                 if (list != null) {
                     for (int i = 0; i < list.length(); i++) {
@@ -115,8 +121,15 @@ public class SearchActivity extends AppCompatActivity {
                         if (o != null) {
                             AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
                             if (p != null) {
-                                boolean isOwner = p.ownerId.equals(currentUserId);
-                                all.add(isOwner ? p.withOwnerStatus(true) : p);
+                                // Don't duplicate if already in 'all' (based on title/price)
+                                boolean exists = false;
+                                for (AppDataStore.ProductRecord local : all) {
+                                    if (local.title.equals(p.title) && local.price.equals(p.price)) { exists = true; break; }
+                                }
+                                if (!exists) {
+                                    boolean isOwner = p.ownerId.equals(currentUserId);
+                                    all.add(isOwner ? p.withOwnerStatus(true) : p);
+                                }
                             }
                         }
                     }

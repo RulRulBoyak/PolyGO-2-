@@ -1,6 +1,9 @@
 package com.poliku.polygoplus;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -30,6 +33,7 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView messageList;
     private ChatMessageAdapter adapter;
     private EditText input;
+    private TextView tvTyping;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +57,7 @@ public class ChatActivity extends AppCompatActivity {
         adapter = new ChatMessageAdapter(AppDataStore.userName(this));
         messageList.setAdapter(adapter);
         input = findViewById(R.id.etMessage);
+        tvTyping = findViewById(R.id.tvTypingStatus);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.chat_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -106,28 +111,81 @@ public class ChatActivity extends AppCompatActivity {
         if (text.isEmpty()) { input.setError("Write a message"); return; }
         
         String userId = AppDataStore.userId(this);
+        input.setText("");
+        
+        // Simulating the user's message locally immediately for speed
+        if (threadId != null) {
+            AppDataStore.sendMessage(this, threadId, text);
+            loadMessages();
+        }
+
         NetworkApi.sendMessage(userId, threadId, listingId, sellerId, text, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                input.setText("");
                 if (threadId == null || threadId.isEmpty()) {
                     threadId = response.optString("thread_id");
                 }
                 loadMessages();
+                
+                // Show typing status for demo
+                showTypingAndReply(text);
             }
 
             @Override
             public void onError(String message) {
-                // Local fallback
-                if (threadId != null) {
-                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
-                    input.setText("");
-                    loadMessages();
+                // For demo, we always want interactivity even without network
+                if (threadId == null) {
+                    threadId = AppDataStore.getOrCreateThread(ChatActivity.this, listingId, otherName, text);
                 } else {
-                    Toast.makeText(ChatActivity.this, message, Toast.LENGTH_SHORT).show();
+                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
                 }
+                loadMessages();
+                
+                showTypingAndReply(text);
             }
         });
+    }
+
+    private void showTypingAndReply(String userMessage) {
+        if (tvTyping != null) {
+            tvTyping.setText(otherName + " is typing...");
+            tvTyping.setVisibility(View.VISIBLE);
+        }
+        
+        // WhatsApp-style typing delay (4-5 seconds)
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (tvTyping != null) tvTyping.setVisibility(View.GONE);
+            
+            String reply = getAutoReply(userMessage);
+            if (threadId != null) {
+                AppDataStore.addReplyToThread(ChatActivity.this, threadId, otherName, reply);
+                loadMessages();
+            }
+        }, 4500);
+    }
+
+    private String getAutoReply(String userMessage) {
+        String msg = userMessage.toLowerCase();
+        
+        if (msg.contains("hi") || msg.contains("hello") || msg.contains("pagi") || msg.contains("assalam")) 
+            return "Walaikumussalam! Hi, I'm the seller. How can I help you today? 😊";
+            
+        if (msg.contains("available") || msg.contains("ada lagi") || msg.contains("still have")) 
+            return "Yes, it's still available! I have a few people asking, but first come first served. Are you a student or staff?";
+            
+        if (msg.contains("price") || msg.contains("cheap") || msg.contains("discount") || msg.contains("kurang")) 
+            return "I can give you a small student discount if you pick it up today at the Student Center! How does RM 5 less sound?";
+            
+        if (msg.contains("meet") || msg.contains("where") || msg.contains("jumpa") || msg.contains("pks")) 
+            return "We can meet at the PKS Library or Block A Cafeteria tomorrow between 1pm to 2pm. Is that okay for you?";
+            
+        if (msg.contains("condition") || msg.contains("okay") || msg.contains("rosak") || msg.contains("problem")) 
+            return "It's in almost perfect condition, only used for one semester. You can check it properly when we meet! 👍";
+
+        if (msg.contains("student") || msg.contains("lecturer") || msg.contains("staff"))
+            return "Great! It's good to deal with fellow PKS community members. Let me know when you want to proceed with the deal.";
+
+        return "That sounds good! Let me check my schedule and I'll confirm the meetup time with you shortly. Anything else you'd like to know?";
     }
 
     private void render() {
