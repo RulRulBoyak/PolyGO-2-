@@ -44,6 +44,18 @@
         android:paddingVertical="12dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
+    <TextView
+        android:id="@+id/tvTypingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="4dp"
+        android:text="Seller is typing..."
+        android:textColor="@color/pks_blue"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

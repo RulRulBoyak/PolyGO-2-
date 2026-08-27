@@ -50,17 +50,24 @@ public final class AppDataStore {
                 user.put("studentId", "05DIT24F1029");
                 user.put("email", "amirul@pks.edu.my");
                 user.put("password", "password123");
+                user.put("role", "Student"); // Default demo role
                 p.edit().putString(KEY_USER, user.toString()).apply();
             } catch (JSONException ignored) {
             }
         } else {
-            // Migration: Ensure existing local user has an ID
+            // Migration: Ensure existing local user has an ID and Role
             try {
                 JSONObject user = new JSONObject(p.getString(KEY_USER, "{}"));
+                boolean changed = false;
                 if (!user.has("id")) {
                     user.put("id", 1);
-                    p.edit().putString(KEY_USER, user.toString()).apply();
+                    changed = true;
                 }
+                if (!user.has("role")) {
+                    user.put("role", "Student");
+                    changed = true;
+                }
+                if (changed) p.edit().putString(KEY_USER, user.toString()).apply();
             } catch (JSONException ignored) {}
         }
 
@@ -169,6 +176,14 @@ public final class AppDataStore {
             return studentId.equalsIgnoreCase(user.optString("studentId")) && password.equals(user.optString("password"));
         } catch (JSONException e) {
             return false;
+        }
+    }
+
+    public static String userRole(Context context) {
+        try {
+            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("role", "Student");
+        } catch (JSONException e) {
+            return "Student";
         }
     }
 
@@ -401,6 +416,31 @@ public final class AppDataStore {
                     t.put("messages", msgs);
                     t.put("lastMessageTime", now);
                     t.put("unread", false);
+                    saveArray(context, KEY_THREADS, threads);
+                    return;
+                }
+            } catch (JSONException ignored) {
+            }
+    }
+
+    public static void addReplyToThread(Context context, String threadId, String senderName, String text) {
+        JSONArray threads = array(context, KEY_THREADS);
+        for (int i = 0; i < threads.length(); i++)
+            try {
+                JSONObject t = threads.getJSONObject(i);
+                if (threadId.equals(t.optString("id"))) {
+                    JSONArray msgs = t.optJSONArray("messages");
+                    if (msgs == null) msgs = new JSONArray();
+                    long now = System.currentTimeMillis();
+                    JSONObject m = new JSONObject();
+                    m.put("sender", senderName);
+                    m.put("mine", false);
+                    m.put("text", text);
+                    m.put("time", now);
+                    msgs.put(m);
+                    t.put("messages", msgs);
+                    t.put("lastMessageTime", now);
+                    t.put("unread", true);
                     saveArray(context, KEY_THREADS, threads);
                     return;
                 }

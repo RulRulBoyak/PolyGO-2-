@@ -71,6 +71,18 @@
                         android:textAppearance="?attr/textAppearanceTitleMedium"
                         android:textColor="@color/airbnb_ink"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvUserRole"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Student"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="@color/pks_blue"
+                        android:background="@drawable/bg_verified_badge"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginTop="4dp" />
                 </LinearLayout>
 
                 <ImageView
