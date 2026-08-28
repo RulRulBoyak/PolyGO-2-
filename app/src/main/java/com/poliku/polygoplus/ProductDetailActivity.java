@@ -75,6 +75,26 @@ public class ProductDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.productMeta)).setText("★ " + product.rating + "  •  " + product.distance + "  •  " + product.category);
         ((TextView) findViewById(R.id.productDescription)).setText(product.description);
         ((TextView) findViewById(R.id.sellerName)).setText(product.seller);
+        findViewById(R.id.sellerName).setOnClickListener(v -> {
+            Intent i = new Intent(this, SellerProfileActivity.class);
+            i.putExtra(SellerProfileActivity.EXTRA_SELLER_NAME, product.seller);
+            i.putExtra(SellerProfileActivity.EXTRA_SELLER_ID, product.ownerId);
+            startActivity(i);
+        });
+        findViewById(R.id.productImage).setOnClickListener(v -> {
+            Intent i = new Intent(this, ImageGalleryActivity.class);
+            java.util.ArrayList<String> images = new java.util.ArrayList<>(product.imageList());
+            i.putStringArrayListExtra(ImageGalleryActivity.EXTRA_IMAGES, images);
+            i.putExtra(ImageGalleryActivity.EXTRA_FALLBACK_RES, product.imageRes);
+            startActivity(i);
+        });
+        findViewById(R.id.btnReportListing).setOnClickListener(v -> {
+            Intent i = new Intent(this, ReportActivity.class);
+            i.putExtra(ReportActivity.EXTRA_TARGET_TYPE, "listing");
+            i.putExtra(ReportActivity.EXTRA_TARGET_ID, product.id);
+            i.putExtra(ReportActivity.EXTRA_TARGET_NAME, product.title);
+            startActivity(i);
+        });
 
         saveButton.setSelected(AppDataStore.isFavorite(this, product.id));
         saveButton.setOnClickListener(v -> toggleFavorite());

@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +21,7 @@ import com.poliku.polygoplus.SearchActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ConversationAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.EmptyStates;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,7 +31,7 @@ import java.util.List;
 
 public class MessagesFragment extends androidx.fragment.app.Fragment {
     private ConversationAdapter adapter;
-    private TextView empty;
+    private View empty;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -41,6 +41,9 @@ public class MessagesFragment extends androidx.fragment.app.Fragment {
         adapter = new ConversationAdapter();
         recyclerView.setAdapter(adapter);
         empty = view.findViewById(R.id.tvEmptyMessages);
+        EmptyStates.bind(empty, android.R.drawable.ic_dialog_email, "No messages yet",
+                "Message a seller from a listing to start a campus chat.", "Find a listing",
+                v -> startActivity(new android.content.Intent(requireContext(), SearchActivity.class)));
 
         ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.message_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

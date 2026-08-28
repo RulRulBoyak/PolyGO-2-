@@ -2,7 +2,6 @@ package com.poliku.polygoplus;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -11,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.EmptyStates;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class SavedItemsActivity extends AppCompatActivity {
     private ProductCardAdapter adapter;
-    private TextView empty;
+    private View empty;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -29,6 +29,9 @@ public class SavedItemsActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         AppDataStore.initialize(this);
         empty = findViewById(R.id.tvEmpty);
+        EmptyStates.bind(empty, android.R.drawable.btn_star_big_off, "You haven't saved any items",
+                "Tap the star on a listing to keep it here for later.", "Explore listings",
+                v -> startActivity(new android.content.Intent(this, SearchActivity.class)));
         RecyclerView rv = findViewById(R.id.rvSaved);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
         adapter = new ProductCardAdapter(new ArrayList<>(), (a, p) -> {

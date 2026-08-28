@@ -29,7 +29,21 @@ public final class AppDataStore {
     private static final String KEY_NOTIFICATIONS = "notifications";
     private static final String KEY_TRANSACTIONS = "transactions";
     private static final String KEY_VERIFICATION = "verification";
+    private static final String KEY_VERIFICATION_STATUS = "verification_status";
     private static final String KEY_SEEDED = "seeded";
+    private static final String KEY_REVIEWS = "reviews";
+    private static final String KEY_REPORTS = "reports";
+    private static final String KEY_SEARCH_HISTORY = "search_history";
+    private static final String KEY_DRAFTS = "drafts";
+    private static final String KEY_ONBOARDING = "onboarding_seen";
+    private static final String KEY_MAINTENANCE = "maintenance_mode";
+    public static final String[] PKS_LANDMARKS = {
+            "Block A", "Block B", "Block C", "Cafeteria", "Library",
+            "Main Hall", "Mosque", "Sports Complex", "Student Centre", "Near campus"
+    };
+    public static final String[] TRENDING_SEARCHES = {
+            "Gaming Laptop", "Coffee Maker", "Textbooks", "Earbuds", "Repair"
+    };
 
     private AppDataStore() {
     }
@@ -83,14 +97,36 @@ public final class AppDataStore {
         addListing(listings, "Coffee Maker", "Home Kitchen", "65", "4.9", "0.6 km away", R.drawable.bg_product_home, "Home", "Compact coffee maker for your room or shared kitchen.", false);
         addListing(listings, "Wireless Earbuds", "Sound Box", "120", "4.6", "1.4 km away", R.drawable.bg_product_electronics, "Electronics", "Wireless earbuds with charging case.", false);
         addListing(listings, "Desk Lamp", "Office Pro", "38", "0.9", "0.9 km away", R.drawable.bg_product_home, "Home", "Adjustable desk lamp for late-night study sessions.", false);
+        JSONArray reviews = new JSONArray();
+        seedReview(reviews, "Furniture Store", "Amira", 5, "Smooth meetup at the cafeteria. Item as described.");
+        seedReview(reviews, "Tech World", "Hakim", 5, "Laptop works well. Seller was on time at Block A.");
+        seedReview(reviews, "Sport Center", "Siti", 4, "Shoes were lightly used as promised.");
         p.edit().putString(KEY_LISTINGS, listings.toString())
                 .putStringSet(KEY_FAVORITES, new HashSet<>())
                 .putString(KEY_THREADS, "[]")
                 .putString(KEY_NOTIFICATIONS, "[]")
                 .putString(KEY_TRANSACTIONS, "[]")
+                .putString(KEY_REVIEWS, reviews.toString())
+                .putString(KEY_REPORTS, "[]")
+                .putString(KEY_DRAFTS, "[]")
                 .putBoolean(KEY_VERIFICATION, false)
+                .putString(KEY_VERIFICATION_STATUS, "unverified")
                 .putBoolean(KEY_SEEDED, true)
                 .apply();
+    }
+
+    private static void seedReview(JSONArray list, String seller, String reviewer, int stars, String comment) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("id", UUID.randomUUID().toString());
+            o.put("seller", seller);
+            o.put("reviewer", reviewer);
+            o.put("stars", stars);
+            o.put("comment", comment);
+            o.put("time", System.currentTimeMillis() - (stars * 86400000L));
+            list.put(o);
+        } catch (JSONException ignored) {
+        }
     }
 
     private static void addListing(JSONArray list, String title, String seller, String price, String rating, String distance, int imageRes, String category, String description, boolean own) {
@@ -265,8 +301,13 @@ public final class AppDataStore {
     }
 
     public static ProductRecord addUserListing(Context context, String title, String category, String price, String description, String imageUri) {
+        return addUserListing(context, title, category, price, description, imageUri, "Near campus");
+    }
+
+    public static ProductRecord addUserListing(Context context, String title, String category, String price, String description, String imageUri, String location) {
         JSONArray list = array(context, KEY_LISTINGS);
-        ProductRecord product = new ProductRecord(UUID.randomUUID().toString(), title, userName(context), price, "New", "Near campus", imageForCategory(category), imageUri, category, description, true, true, userId(context));
+        String meetup = location == null || location.trim().isEmpty() ? "Near campus" : location.trim();
+        ProductRecord product = new ProductRecord(UUID.randomUUID().toString(), title, userName(context), price, "New", meetup, imageForCategory(category), imageUri, category, description, true, true, userId(context));
         try {
             list.put(product.toJson());
             saveArray(context, KEY_LISTINGS, list);
@@ -356,6 +397,29 @@ public final class AppDataStore {
             saveArray(context, KEY_THREADS, threads);
             return id;
         } catch (JSONException ignored) {
+            return null;
+        }
+    }
+
+    public static String ensureThread(Context context, String listingId, String otherName) {
+        for (ThreadRecord thread : getThreads(context)) {
+            if (listingId != null && listingId.equals(thread.listingId) && otherName != null && otherName.equals(thread.name))
+                return thread.id;
+        }
+        JSONArray threads = array(context, KEY_THREADS);
+        try {
+            JSONObject thread = new JSONObject();
+            String id = UUID.randomUUID().toString();
+            thread.put("id", id);
+            thread.put("listingId", listingId == null ? "" : listingId);
+            thread.put("name", otherName == null ? "Seller" : otherName);
+            thread.put("unread", false);
+            thread.put("messages", new JSONArray());
+            thread.put("lastMessageTime", System.currentTimeMillis());
+            threads.put(thread);
+            saveArray(context, KEY_THREADS, threads);
+            return id;
+        } catch (JSONException e) {
             return null;
         }
     }
@@ -463,6 +527,11 @@ public final class AppDataStore {
     }
 
     public static void addTransaction(Context context, String listingId, String title, String amount) {
+        ProductRecord listing = getListing(context, listingId);
+        addTransaction(context, listingId, title, amount, listing == null ? "" : listing.seller, listing == null ? "Near campus" : listing.distance);
+    }
+
+    public static void addTransaction(Context context, String listingId, String title, String amount, String seller, String location) {
         JSONArray list = array(context, KEY_TRANSACTIONS);
         try {
             JSONObject o = new JSONObject();
@@ -470,8 +539,11 @@ public final class AppDataStore {
             o.put("listingId", listingId);
             o.put("title", title);
             o.put("amount", amount);
+            o.put("seller", seller == null ? "" : seller);
+            o.put("location", location == null || location.isEmpty() ? "Near campus" : location);
             o.put("status", "Offer sent");
             o.put("time", System.currentTimeMillis());
+            o.put("reviewed", false);
             list.put(o);
             saveArray(context, KEY_TRANSACTIONS, list);
             addNotification(context, "Offer sent", "Your offer for " + title + " was saved.");
@@ -479,16 +551,258 @@ public final class AppDataStore {
         }
     }
 
-    public static List<String[]> getTransactions(Context context) {
-        List<String[]> result = new ArrayList<>();
+    public static List<TransactionRecord> getTransactions(Context context) {
+        List<TransactionRecord> result = new ArrayList<>();
         JSONArray list = array(context, KEY_TRANSACTIONS);
         for (int i = list.length() - 1; i >= 0; i--)
             try {
-                JSONObject o = list.getJSONObject(i);
-                result.add(new String[]{o.optString("title"), o.optString("amount"), o.optString("status")});
+                result.add(TransactionRecord.fromJson(list.getJSONObject(i)));
             } catch (JSONException ignored) {
             }
         return result;
+    }
+
+    public static TransactionRecord getTransaction(Context context, String id) {
+        for (TransactionRecord t : getTransactions(context)) if (t.id.equals(id)) return t;
+        return null;
+    }
+
+    public static boolean updateTransactionStatus(Context context, String id, String status) {
+        JSONArray list = array(context, KEY_TRANSACTIONS);
+        for (int i = 0; i < list.length(); i++) {
+            try {
+                JSONObject o = list.getJSONObject(i);
+                if (id.equals(o.optString("id"))) {
+                    o.put("status", status);
+                    saveArray(context, KEY_TRANSACTIONS, list);
+                    addNotification(context, "Deal update", o.optString("title") + " is now " + status + ".");
+                    return true;
+                }
+            } catch (JSONException ignored) {
+            }
+        }
+        return false;
+    }
+
+    public static void markTransactionReviewed(Context context, String id) {
+        JSONArray list = array(context, KEY_TRANSACTIONS);
+        for (int i = 0; i < list.length(); i++) {
+            try {
+                JSONObject o = list.getJSONObject(i);
+                if (id.equals(o.optString("id"))) {
+                    o.put("reviewed", true);
+                    saveArray(context, KEY_TRANSACTIONS, list);
+                    return;
+                }
+            } catch (JSONException ignored) {
+            }
+        }
+    }
+
+    public static List<ProductRecord> getListingsBySeller(Context context, String sellerName, String ownerId) {
+        List<ProductRecord> result = new ArrayList<>();
+        for (ProductRecord item : getListings(context)) {
+            boolean nameMatch = sellerName != null && sellerName.equalsIgnoreCase(item.seller);
+            boolean idMatch = ownerId != null && !ownerId.isEmpty() && !"0".equals(ownerId) && ownerId.equals(item.ownerId);
+            if (nameMatch || idMatch) result.add(item);
+        }
+        return result;
+    }
+
+    public static int countSoldBySeller(Context context, String sellerName, String ownerId) {
+        int sold = 0;
+        for (ProductRecord item : getListingsBySeller(context, sellerName, ownerId)) {
+            if (!item.available) sold++;
+        }
+        for (TransactionRecord t : getTransactions(context)) {
+            if ("Completed".equalsIgnoreCase(t.status) && sellerName != null && sellerName.equalsIgnoreCase(t.seller)) sold++;
+        }
+        return sold;
+    }
+
+    public static void addReview(Context context, String seller, int stars, String comment) {
+        JSONArray list = array(context, KEY_REVIEWS);
+        try {
+            JSONObject o = new JSONObject();
+            o.put("id", UUID.randomUUID().toString());
+            o.put("seller", seller);
+            o.put("reviewer", userName(context));
+            o.put("stars", stars);
+            o.put("comment", comment);
+            o.put("time", System.currentTimeMillis());
+            list.put(o);
+            saveArray(context, KEY_REVIEWS, list);
+        } catch (JSONException ignored) {
+        }
+    }
+
+    public static List<ReviewRecord> getReviewsForSeller(Context context, String seller) {
+        List<ReviewRecord> result = new ArrayList<>();
+        JSONArray list = array(context, KEY_REVIEWS);
+        for (int i = list.length() - 1; i >= 0; i--) {
+            try {
+                ReviewRecord r = ReviewRecord.fromJson(list.getJSONObject(i));
+                if (seller != null && seller.equalsIgnoreCase(r.seller)) result.add(r);
+            } catch (JSONException ignored) {
+            }
+        }
+        return result;
+    }
+
+    public static float averageRatingForSeller(Context context, String seller) {
+        List<ReviewRecord> reviews = getReviewsForSeller(context, seller);
+        if (reviews.isEmpty()) return 0f;
+        float sum = 0;
+        for (ReviewRecord r : reviews) sum += r.stars;
+        return sum / reviews.size();
+    }
+
+    public static void addReport(Context context, String targetType, String targetId, String targetName, String reason, String details) {
+        JSONArray list = array(context, KEY_REPORTS);
+        try {
+            JSONObject o = new JSONObject();
+            o.put("id", UUID.randomUUID().toString());
+            o.put("targetType", targetType);
+            o.put("targetId", targetId);
+            o.put("targetName", targetName);
+            o.put("reason", reason);
+            o.put("details", details);
+            o.put("reporter", userName(context));
+            o.put("time", System.currentTimeMillis());
+            list.put(o);
+            saveArray(context, KEY_REPORTS, list);
+            addNotification(context, "Report received", "Thanks. Our campus moderators will review this.");
+        } catch (JSONException ignored) {
+        }
+    }
+
+    public static void addSearchQuery(Context context, String query) {
+        if (query == null) return;
+        String q = query.trim();
+        if (q.isEmpty()) return;
+        JSONArray list = array(context, KEY_SEARCH_HISTORY);
+        JSONArray next = new JSONArray();
+        next.put(q);
+        for (int i = 0; i < list.length() && next.length() < 8; i++) {
+            String existing = list.optString(i, "");
+            if (!existing.equalsIgnoreCase(q) && !existing.isEmpty()) next.put(existing);
+        }
+        saveArray(context, KEY_SEARCH_HISTORY, next);
+    }
+
+    public static List<String> getSearchHistory(Context context) {
+        List<String> result = new ArrayList<>();
+        JSONArray list = array(context, KEY_SEARCH_HISTORY);
+        for (int i = 0; i < list.length(); i++) {
+            String q = list.optString(i, "");
+            if (!q.isEmpty()) result.add(q);
+        }
+        return result;
+    }
+
+    public static void clearSearchHistory(Context context) {
+        saveArray(context, KEY_SEARCH_HISTORY, new JSONArray());
+    }
+
+    public static void saveDraft(Context context, String title, String category, String price, String description, String imageUri, String location) {
+        JSONArray list = array(context, KEY_DRAFTS);
+        try {
+            JSONObject o = new JSONObject();
+            o.put("id", UUID.randomUUID().toString());
+            o.put("title", title);
+            o.put("category", category);
+            o.put("price", price);
+            o.put("description", description);
+            o.put("imageUri", imageUri);
+            o.put("location", location);
+            o.put("time", System.currentTimeMillis());
+            list.put(o);
+            saveArray(context, KEY_DRAFTS, list);
+        } catch (JSONException ignored) {
+        }
+    }
+
+    public static List<JSONObject> getDrafts(Context context) {
+        List<JSONObject> result = new ArrayList<>();
+        JSONArray list = array(context, KEY_DRAFTS);
+        for (int i = list.length() - 1; i >= 0; i--) {
+            JSONObject o = list.optJSONObject(i);
+            if (o != null) result.add(o);
+        }
+        return result;
+    }
+
+    public static JSONObject getDraft(Context context, String id) {
+        JSONArray list = array(context, KEY_DRAFTS);
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject o = list.optJSONObject(i);
+            if (o != null && id.equals(o.optString("id"))) return o;
+        }
+        return null;
+    }
+
+    public static void deleteDraft(Context context, String id) {
+        JSONArray list = array(context, KEY_DRAFTS);
+        JSONArray next = new JSONArray();
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject o = list.optJSONObject(i);
+            if (o != null && !id.equals(o.optString("id"))) next.put(o);
+        }
+        saveArray(context, KEY_DRAFTS, next);
+    }
+
+    public static boolean hasSeenOnboarding(Context context) {
+        return prefs(context).getBoolean(KEY_ONBOARDING, false);
+    }
+
+    public static void setOnboardingSeen(Context context) {
+        prefs(context).edit().putBoolean(KEY_ONBOARDING, true).apply();
+    }
+
+    public static boolean isMaintenanceMode(Context context) {
+        return prefs(context).getBoolean(KEY_MAINTENANCE, false);
+    }
+
+    public static void setMaintenanceMode(Context context, boolean on) {
+        prefs(context).edit().putBoolean(KEY_MAINTENANCE, on).apply();
+    }
+
+    public static String verificationStatus(Context context) {
+        if (isVerified(context)) return "approved";
+        return prefs(context).getString(KEY_VERIFICATION_STATUS, "unverified");
+    }
+
+    public static void submitVerification(Context context) {
+        prefs(context).edit().putString(KEY_VERIFICATION_STATUS, "pending").apply();
+        addNotification(context, "Verification submitted", "Waiting for admin approval of your PKS student ID.");
+    }
+
+    public static void approvePendingVerification(Context context) {
+        setVerified(context);
+        prefs(context).edit().putString(KEY_VERIFICATION_STATUS, "approved").apply();
+    }
+
+    public static String requestPasswordReset(Context context, String studentIdOrEmail) {
+        try {
+            JSONObject user = new JSONObject(prefs(context).getString(KEY_USER, "{}"));
+            boolean match = studentIdOrEmail.equalsIgnoreCase(user.optString("studentId"))
+                    || studentIdOrEmail.equalsIgnoreCase(user.optString("email"));
+            if (!match) return null;
+            String temp = "PKS" + (1000 + Math.abs(studentIdOrEmail.hashCode() % 9000));
+            user.put("password", temp);
+            prefs(context).edit().putString(KEY_USER, user.toString()).apply();
+            return temp;
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    public static void deleteAccount(Context context) {
+        prefs(context).edit()
+                .remove(KEY_USER)
+                .putBoolean("loggedIn", false)
+                .apply();
+        logout(context);
     }
 
     public static List<NotificationRecord> getNotifications(Context context) {
@@ -533,23 +847,83 @@ public final class AppDataStore {
     }
 
     public static boolean isVerified(Context context) {
-        return prefs(context).getBoolean(KEY_VERIFICATION, false);
+        return prefs(context).getBoolean(KEY_VERIFICATION, false)
+                || "approved".equals(prefs(context).getString(KEY_VERIFICATION_STATUS, ""));
     }
 
     public static boolean verifyAccount(Context context, String studentId, String email) {
         try {
             JSONObject user = new JSONObject(prefs(context).getString(KEY_USER, "{}"));
-            boolean valid = studentId.equalsIgnoreCase(user.optString("studentId")) && email.equalsIgnoreCase(user.optString("email"));
-            if (valid) setVerified(context);
-            return valid;
+            return studentId.equalsIgnoreCase(user.optString("studentId")) && email.equalsIgnoreCase(user.optString("email"));
         } catch (JSONException e) {
             return false;
         }
     }
 
     public static void setVerified(Context context) {
-        prefs(context).edit().putBoolean(KEY_VERIFICATION, true).apply();
+        prefs(context).edit()
+                .putBoolean(KEY_VERIFICATION, true)
+                .putString(KEY_VERIFICATION_STATUS, "approved")
+                .apply();
         addNotification(context, "Verification complete", "Your PolyGo account is now verified.");
+    }
+
+    public static final class TransactionRecord {
+        public final String id, listingId, title, amount, seller, location, status;
+        public final long time;
+        public final boolean reviewed;
+
+        public TransactionRecord(String id, String listingId, String title, String amount, String seller, String location, String status, long time, boolean reviewed) {
+            this.id = id;
+            this.listingId = listingId;
+            this.title = title;
+            this.amount = amount;
+            this.seller = seller;
+            this.location = location;
+            this.status = status;
+            this.time = time;
+            this.reviewed = reviewed;
+        }
+
+        public static TransactionRecord fromJson(JSONObject o) {
+            return new TransactionRecord(
+                    o.optString("id"),
+                    o.optString("listingId"),
+                    o.optString("title"),
+                    o.optString("amount"),
+                    o.optString("seller"),
+                    o.optString("location", "Near campus"),
+                    o.optString("status", "Offer sent"),
+                    o.optLong("time"),
+                    o.optBoolean("reviewed", false)
+            );
+        }
+    }
+
+    public static final class ReviewRecord {
+        public final String id, seller, reviewer, comment;
+        public final int stars;
+        public final long time;
+
+        public ReviewRecord(String id, String seller, String reviewer, String comment, int stars, long time) {
+            this.id = id;
+            this.seller = seller;
+            this.reviewer = reviewer;
+            this.comment = comment;
+            this.stars = stars;
+            this.time = time;
+        }
+
+        public static ReviewRecord fromJson(JSONObject o) {
+            return new ReviewRecord(
+                    o.optString("id"),
+                    o.optString("seller"),
+                    o.optString("reviewer"),
+                    o.optString("comment"),
+                    o.optInt("stars", 5),
+                    o.optLong("time")
+            );
+        }
     }
 
     public static final class ProductRecord {
@@ -579,6 +953,16 @@ public final class AppDataStore {
 
         public ProductRecord withOwnerStatus(boolean isOwner) {
             return new ProductRecord(id, title, seller, price, rating, distance, imageRes, imageUri, category, description, isOwner, available, ownerId);
+        }
+
+        public List<String> imageList() {
+            List<String> images = new ArrayList<>();
+            if (imageUri != null && !imageUri.isEmpty()) {
+                for (String part : imageUri.split("\\|")) {
+                    if (!part.trim().isEmpty()) images.add(part.trim());
+                }
+            }
+            return images;
         }
 
         public static ProductRecord fromJson(JSONObject o) {

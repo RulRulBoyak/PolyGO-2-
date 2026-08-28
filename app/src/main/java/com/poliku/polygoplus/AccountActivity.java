@@ -30,6 +30,16 @@ public class AccountActivity extends AppCompatActivity {
             Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show();
             finish();
         });
+        findViewById(R.id.btnDeleteAccount).setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete account")
+                .setMessage("This removes your local PolyGo+ session and profile from this device.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (d, w) -> {
+                    AppDataStore.deleteAccount(this);
+                    Intent intent = new Intent(this, MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                }).show());
     }
 
     private String value(int id) { TextInputEditText input=findViewById(id); return input.getText()==null?"":input.getText().toString().trim(); }

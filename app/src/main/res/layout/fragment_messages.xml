@@ -150,16 +150,12 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_message" />
 
-    <TextView
+    <include
         android:id="@+id/tvEmptyMessages"
+        layout="@layout/layout_empty_state"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:padding="32dp"
-        android:text="No conversations found.\nMessage a seller to start chatting."
-        android:textColor="@color/airbnb_muted"
-        android:textSize="15sp"
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

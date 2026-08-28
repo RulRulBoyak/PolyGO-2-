@@ -16,9 +16,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.EmptyStates;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,7 +36,9 @@ public class SearchActivity extends AppCompatActivity {
     private ProductCardAdapter adapter;
     private EditText search;
     private Spinner category;
-    private TextView count, empty;
+    private TextView count;
+    private View empty;
+    private View suggestions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +50,14 @@ public class SearchActivity extends AppCompatActivity {
         category = findViewById(R.id.spinnerCategory);
         count = findViewById(R.id.tvResultCount);
         empty = findViewById(R.id.tvEmptySearch);
+        suggestions = findViewById(R.id.searchSuggestions);
+        EmptyStates.bind(empty, android.R.drawable.ic_menu_search, "No results found",
+                "Try another keyword or browse a PKS category.", "Browse categories",
+                v -> startActivity(new android.content.Intent(this, CategoryBrowseActivity.class)));
+        bindSuggestions();
+        search.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && search.getText().toString().trim().isEmpty()) showSuggestions(true);
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.search_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -80,6 +93,7 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             public void onTextChanged(CharSequence s, int st, int b, int c) {
+                showSuggestions(s.toString().trim().isEmpty());
                 filter();
             }
 
@@ -95,6 +109,11 @@ public class SearchActivity extends AppCompatActivity {
             }
         });
         reloadListings();
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        if (search != null) AppDataStore.addSearchQuery(this, search.getText().toString());
     }
 
     @Override protected void onResume() {
@@ -163,6 +182,36 @@ public class SearchActivity extends AppCompatActivity {
         }
         if (count != null) count.setText(filtered.size() + " listings");
         if (empty != null) empty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void showSuggestions(boolean show) {
+        if (suggestions != null) suggestions.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    private void bindSuggestions() {
+        ChipGroup recent = findViewById(R.id.chipRecent);
+        ChipGroup trending = findViewById(R.id.chipTrending);
+        recent.removeAllViews();
+        for (String q : AppDataStore.getSearchHistory(this)) recent.addView(chip(q));
+        trending.removeAllViews();
+        for (String q : AppDataStore.TRENDING_SEARCHES) trending.addView(chip(q));
+        findViewById(R.id.tvClearHistory).setOnClickListener(v -> {
+            AppDataStore.clearSearchHistory(this);
+            bindSuggestions();
+        });
+    }
+
+    private Chip chip(String label) {
+        Chip chip = new Chip(this);
+        chip.setText(label);
+        chip.setOnClickListener(v -> {
+            search.setText(label);
+            search.setSelection(label.length());
+            AppDataStore.addSearchQuery(this, label);
+            showSuggestions(false);
+            filter();
+        });
+        return chip;
     }
 
     private boolean categoryMatches(String productCategory, String selectedCategory) {

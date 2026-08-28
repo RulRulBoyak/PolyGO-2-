@@ -22,6 +22,12 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         EdgeToEdge.enable(this);
+        com.poliku.polygoplus.data.AppDataStore.initialize(this);
+        if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
+            startActivity(new Intent(this, OnboardingActivity.class));
+            finish();
+            return;
+        }
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
         
@@ -48,11 +54,13 @@ public class HomeActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 fragment = new HomeFragment();
             } else if (id == R.id.nav_explore) {
-                fragment = new ExploreFragment(); // Unified Explore View
+                fragment = new ExploreFragment();
             } else if (id == R.id.nav_messages) {
                 fragment = new MessagesFragment();
             } else if (id == R.id.nav_profile) {
                 fragment = new ProfileFragment();
+            } else if (id == R.id.nav_placeholder) {
+                return false;
             }
 
             if (fragment != null) {
@@ -65,6 +73,35 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.fabAddProduct).setOnClickListener(v -> {
             startActivity(new Intent(this, EditProductActivity.class));
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        });
+        checkCampusService();
+    }
+
+    private void checkCampusService() {
+        if (!com.poliku.polygoplus.network.ConnectivityHelper.isOnline(this)) {
+            Intent i = new Intent(this, ErrorStateActivity.class);
+            i.putExtra(ErrorStateActivity.EXTRA_MODE, "offline");
+            startActivity(i);
+            return;
+        }
+        com.poliku.polygoplus.network.NetworkApi.getStatus(new com.poliku.polygoplus.network.NetworkApi.Callback() {
+            @Override
+            public void onSuccess(org.json.JSONObject response) {
+                boolean maintenance = response.optBoolean("maintenance", false);
+                com.poliku.polygoplus.data.AppDataStore.setMaintenanceMode(HomeActivity.this, maintenance);
+                if (maintenance) {
+                    Intent i = new Intent(HomeActivity.this, ErrorStateActivity.class);
+                    i.putExtra(ErrorStateActivity.EXTRA_MODE, "maintenance");
+                    startActivity(i);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                Intent i = new Intent(HomeActivity.this, ErrorStateActivity.class);
+                i.putExtra(ErrorStateActivity.EXTRA_MODE, "offline");
+                startActivity(i);
+            }
         });
     }
 

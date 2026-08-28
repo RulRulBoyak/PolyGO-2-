@@ -29,4 +29,20 @@
         &lt;b&gt;6. Contact Us&lt;/b&gt;\n
         If you have any questions about this Privacy Policy, please contact us at support@poliku.com.
     </string>
+
+    <string name="terms_of_service_text">
+        &lt;b&gt;Terms of Service for PolyGo+&lt;/b&gt;\n\n
+        Last updated: August 28, 2026\n\n
+        PolyGo+ is a campus-only marketplace for Politeknik Kuching Sarawak (PKS) students and staff.\n\n
+        &lt;b&gt;1. Eligibility&lt;/b&gt;\n
+        You must have a valid PKS student or staff identity. Accounts may remain unverified until an admin approves your request.\n\n
+        &lt;b&gt;2. Marketplace rules&lt;/b&gt;\n
+        List only items you own. Prohibited goods, scams, and harassment are not allowed. Meet in public campus locations such as Block A or the cafeteria.\n\n
+        &lt;b&gt;3. Transactions&lt;/b&gt;\n
+        PolyGo+ helps you record offers, meetups and receipts. Payment is arranged between buyer and seller. Mark a deal complete only after the meetup succeeds.\n\n
+        &lt;b&gt;4. Community moderation&lt;/b&gt;\n
+        Use Report listing or Report user if you see prohibited items or suspicious behaviour. We may remove content and suspend accounts.\n\n
+        &lt;b&gt;5. Contact&lt;/b&gt;\n
+        Questions: support@poliku.com
+    </string>
 </resources>

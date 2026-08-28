@@ -49,6 +49,58 @@ public final class NetworkApi {
         }
     }
 
+    public static void getStatus(Callback callback) {
+        post("status.php", new JSONObject(), callback);
+    }
+
+    public static void getSeller(String sellerId, String sellerName, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("seller_id", sellerId);
+            body.put("seller_name", sellerName);
+            post("seller.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void submitReport(String userId, String targetType, String targetId, String reason, String details, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("target_type", targetType);
+            body.put("target_id", targetId);
+            body.put("reason", reason);
+            body.put("details", details);
+            post("report.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void submitReview(String userId, String seller, int stars, String comment, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("seller", seller);
+            body.put("stars", stars);
+            body.put("comment", comment);
+            post("review.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void forgotPassword(String studentIdOrEmail, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("identifier", studentIdOrEmail);
+            post("forgot_password.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
     public static void getListings(Callback callback) {
         post("listings.php", new JSONObject(), callback);
     }

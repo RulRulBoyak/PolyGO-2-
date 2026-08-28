@@ -76,13 +76,17 @@
                         android:id="@+id/tvUserRole"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Student"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="@color/pks_blue"
-                        android:background="@drawable/bg_verified_badge"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="2dp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_role_chip"
+                        android:includeFontPadding="false"
+                        android:letterSpacing="0.08"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="5dp"
+                        android:text="★  Student"
+                        android:textAllCaps="true"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <ImageView
@@ -355,6 +359,31 @@
                     android:layout_height="20dp"
                     android:src="@android:drawable/ic_media_play"
                     app:tint="@color/airbnb_ink" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/menuPrivacy"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_info_details" app:tint="@color/airbnb_muted" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:text="Privacy Policy" android:textColor="@color/airbnb_ink" android:textStyle="bold" />
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@android:drawable/ic_media_play" app:tint="@color/airbnb_ink" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/menuTerms"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_info_details" app:tint="@color/airbnb_muted" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:text="Terms of Service" android:textColor="@color/airbnb_ink" android:textStyle="bold" />
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@android:drawable/ic_media_play" app:tint="@color/airbnb_ink" />
             </LinearLayout>
 
             <!-- Support Card -->

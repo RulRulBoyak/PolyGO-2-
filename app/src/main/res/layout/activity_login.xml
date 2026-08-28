@@ -89,6 +89,17 @@
             android:textAllCaps="false"
             android:textStyle="bold" />
 
+        <TextView
+            android:id="@+id/tvForgotPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Forgot password?"
+            android:textColor="@color/pks_blue"
+            android:textStyle="bold" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreateAccount"
             style="@style/Widget.PolyGo.Button.Outlined"

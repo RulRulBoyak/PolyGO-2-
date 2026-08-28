@@ -17,6 +17,7 @@ import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.EmptyStates;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,6 +30,7 @@ import java.util.List;
 
 public class ExploreFragment extends Fragment {
     private ProductCardAdapter adapter;
+    private View empty;
 
     @Nullable
     @Override
@@ -50,6 +52,10 @@ public class ExploreFragment extends Fragment {
             startActivity(intent);
         });
         list.setAdapter(adapter);
+        empty = view.findViewById(R.id.emptyExplore);
+        EmptyStates.bind(empty, android.R.drawable.ic_menu_search, "Nothing to explore yet",
+                "Listings from PKS students will show up here.", "Browse categories",
+                v -> startActivity(new android.content.Intent(requireContext(), com.poliku.polygoplus.CategoryBrowseActivity.class)));
         reloadListings();
         return view;
     }
@@ -69,12 +75,17 @@ public class ExploreFragment extends Fragment {
                         }
                     }
                 }
-                if (adapter != null) adapter.updateData(products);
+                if (adapter != null) {
+                    adapter.updateData(products);
+                    if (empty != null) empty.setVisibility(products.isEmpty() ? View.VISIBLE : View.GONE);
+                }
             }
 
             @Override
             public void onError(String message) {
-                if (adapter != null) adapter.updateData(AppDataStore.getListings(requireContext()));
+                java.util.List<AppDataStore.ProductRecord> local = AppDataStore.getListings(requireContext());
+                if (adapter != null) adapter.updateData(local);
+                if (empty != null) empty.setVisibility(local.isEmpty() ? View.VISIBLE : View.GONE);
             }
         });
     }

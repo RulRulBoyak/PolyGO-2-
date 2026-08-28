@@ -47,8 +47,66 @@ public class EditProductActivity extends AppCompatActivity {
         setupToolbar();
         setupPriceAdjuster();
         setupCategoryDropdown();
-        findViewById(R.id.btnAddPhoto).setOnClickListener(v -> { Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); intent.setType("image/*"); intent.addCategory(Intent.CATEGORY_OPENABLE); startActivityForResult(intent, 41); });
+        findViewById(R.id.btnAddPhoto).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(intent, 41);
+        });
         setupPublishAction();
+        setupLocationPicker();
+        setupDraftAction();
+        loadDraftIfAny();
+    }
+
+    private void setupLocationPicker() {
+        AutoCompleteTextView location = findViewById(R.id.autoCompleteLocation);
+        location.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, AppDataStore.PKS_LANDMARKS));
+        com.google.android.material.chip.ChipGroup chips = findViewById(R.id.chipGroupMeetup);
+        chips.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            android.view.View chip = group.findViewById(checkedIds.get(0));
+            if (chip instanceof com.google.android.material.chip.Chip) {
+                location.setText(((com.google.android.material.chip.Chip) chip).getText());
+            }
+        });
+    }
+
+    private String selectedLocation() {
+        AutoCompleteTextView location = findViewById(R.id.autoCompleteLocation);
+        String value = location.getText() == null ? "" : location.getText().toString().trim();
+        return value.isEmpty() ? "Near campus" : value;
+    }
+
+    private void setupDraftAction() {
+        findViewById(R.id.btnSaveDraft).setOnClickListener(v -> {
+            AppDataStore.saveDraft(this, value(R.id.etProductName),
+                    ((AutoCompleteTextView) findViewById(R.id.autoCompleteCategory)).getText().toString().trim(),
+                    value(R.id.etPrice), value(R.id.etDescription), selectedImageUri, selectedLocation());
+            Toast.makeText(this, "Draft saved", Toast.LENGTH_SHORT).show();
+            finish();
+        });
+    }
+
+    private void loadDraftIfAny() {
+        String draftId = getIntent().getStringExtra("draft_id");
+        if (draftId == null) return;
+        org.json.JSONObject draft = AppDataStore.getDraft(this, draftId);
+        if (draft == null) return;
+        ((TextInputEditText) findViewById(R.id.etProductName)).setText(draft.optString("title"));
+        ((AutoCompleteTextView) findViewById(R.id.autoCompleteCategory)).setText(draft.optString("category"), false);
+        ((TextInputEditText) findViewById(R.id.etPrice)).setText(draft.optString("price"));
+        ((TextInputEditText) findViewById(R.id.etDescription)).setText(draft.optString("description"));
+        ((AutoCompleteTextView) findViewById(R.id.autoCompleteLocation)).setText(draft.optString("location", "Near campus"), false);
+        selectedImageUri = draft.optString("imageUri");
+        if (!selectedImageUri.isEmpty()) {
+            android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
+            image.setImageURI(android.net.Uri.parse(selectedImageUri.split("\\|")[0]));
+            image.setVisibility(View.VISIBLE);
+            findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
+        }
     }
 
     private void setupToolbar() {
@@ -119,7 +177,9 @@ public class EditProductActivity extends AppCompatActivity {
             v.setEnabled(false);
             
             // HYBRID SYNC: Save locally first so it shows up in Search immediately even if XAMPP fails
-            AppDataStore.addUserListing(this, title, category, price, description, selectedImageUri);
+            AppDataStore.addUserListing(this, title, category, price, description, selectedImageUri, selectedLocation());
+            String draftId = getIntent().getStringExtra("draft_id");
+            if (draftId != null) AppDataStore.deleteDraft(this, draftId);
 
             NetworkApi.addListing(userId, title, category, price, description, selectedImageUri, new NetworkApi.Callback() {
                 @Override
@@ -140,7 +200,30 @@ public class EditProductActivity extends AppCompatActivity {
 
     private String value(int id) { TextInputEditText input = findViewById(id); return input.getText() == null ? "" : input.getText().toString().trim(); }
 
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) { super.onActivityResult(requestCode, resultCode, data); if (requestCode == 41 && resultCode == RESULT_OK && data != null && data.getData() != null) { selectedImageUri = data.getData().toString(); ImageView image = findViewById(R.id.imgSelectedPhoto); image.setImageURI(data.getData()); image.setVisibility(android.view.View.VISIBLE); findViewById(R.id.selectedPhotoCard).setVisibility(android.view.View.VISIBLE); } }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != 41 || resultCode != RESULT_OK || data == null) return;
+        java.util.ArrayList<String> uris = new java.util.ArrayList<>();
+        if (data.getClipData() != null) {
+            int count = Math.min(5, data.getClipData().getItemCount());
+            for (int i = 0; i < count; i++) uris.add(data.getClipData().getItemAt(i).getUri().toString());
+        } else if (data.getData() != null) {
+            uris.add(data.getData().toString());
+        }
+        if (uris.isEmpty()) return;
+        for (String uri : uris) {
+            try {
+                getContentResolver().takePersistableUriPermission(android.net.Uri.parse(uri), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (SecurityException ignored) {
+            }
+        }
+        selectedImageUri = String.join("|", uris);
+        android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
+        image.setImageURI(android.net.Uri.parse(uris.get(0)));
+        image.setVisibility(View.VISIBLE);
+        findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
+    }
 
     @Override
     public void finish() {

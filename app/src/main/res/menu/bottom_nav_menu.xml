@@ -10,6 +10,11 @@
         android:icon="@drawable/ic_nav_explore"
         android:title="Explore" />
     <item
+        android:id="@+id/nav_placeholder"
+        android:enabled="false"
+        android:icon="@drawable/ic_nav_placeholder"
+        android:title="" />
+    <item
         android:id="@+id/nav_messages"
         android:icon="@drawable/ic_nav_messages"
         android:title="Inbox" />

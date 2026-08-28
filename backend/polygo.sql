@@ -93,3 +93,31 @@ CREATE TABLE IF NOT EXISTS verification_requests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_verification_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    seller_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    reviewer_id BIGINT UNSIGNED NOT NULL,
+    reviewer_name VARCHAR(120) NOT NULL,
+    stars TINYINT UNSIGNED NOT NULL,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reporter_id BIGINT UNSIGNED NOT NULL,
+    target_type VARCHAR(20) NOT NULL,
+    target_id VARCHAR(80),
+    reason VARCHAR(120) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key VARCHAR(80) PRIMARY KEY,
+    setting_value VARCHAR(255) NOT NULL
+);
+
+INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES ('maintenance', '0');
+

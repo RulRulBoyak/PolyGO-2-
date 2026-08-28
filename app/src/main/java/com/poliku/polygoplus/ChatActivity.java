@@ -23,6 +23,9 @@ import com.poliku.polygoplus.network.NetworkApi;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 public class ChatActivity extends AppCompatActivity {
     public static final String EXTRA_THREAD_ID = "thread_id";
     public static final String EXTRA_LISTING_ID = "listing_id";
@@ -34,6 +37,8 @@ public class ChatActivity extends AppCompatActivity {
     private ChatMessageAdapter adapter;
     private EditText input;
     private TextView tvTyping;
+    private boolean sending;
+    private String lastAutoReply = "";
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,42 +113,48 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessage() {
         String text = input.getText().toString().trim();
-        if (text.isEmpty()) { input.setError("Write a message"); return; }
-        
-        String userId = AppDataStore.userId(this);
-        input.setText("");
-        
-        // Simulating the user's message locally immediately for speed
-        if (threadId != null) {
-            AppDataStore.sendMessage(this, threadId, text);
-            loadMessages();
+        if (text.isEmpty()) {
+            input.setError("Write a message");
+            return;
         }
+        if (sending) return;
+        sending = true;
+        findViewById(R.id.btnSend).setEnabled(false);
+        input.setText("");
 
+        if (threadId == null || threadId.trim().isEmpty()) {
+            threadId = AppDataStore.ensureThread(this, listingId, otherName);
+        }
+        AppDataStore.sendMessage(this, threadId, text);
+        showLocalMessages();
+
+        String userId = AppDataStore.userId(this);
         NetworkApi.sendMessage(userId, threadId, listingId, sellerId, text, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                if (threadId == null || threadId.isEmpty()) {
-                    threadId = response.optString("thread_id");
-                }
-                loadMessages();
-                
-                // Show typing status for demo
+                String remoteId = response.optString("thread_id");
+                if (remoteId != null && !remoteId.isEmpty()) threadId = remoteId;
+                sending = false;
+                findViewById(R.id.btnSend).setEnabled(true);
                 showTypingAndReply(text);
             }
 
             @Override
             public void onError(String message) {
-                // For demo, we always want interactivity even without network
-                if (threadId == null) {
-                    threadId = AppDataStore.getOrCreateThread(ChatActivity.this, listingId, otherName, text);
-                } else {
-                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
-                }
-                loadMessages();
-                
+                sending = false;
+                findViewById(R.id.btnSend).setEnabled(true);
                 showTypingAndReply(text);
             }
         });
+    }
+
+    private void showLocalMessages() {
+        if (threadId == null || threadId.isEmpty()) return;
+        AppDataStore.ThreadRecord thread = AppDataStore.getThread(this, threadId);
+        if (thread == null) return;
+        adapter.submit(thread.messages);
+        if (adapter.getItemCount() > 0) messageList.scrollToPosition(adapter.getItemCount() - 1);
+        AppDataStore.markThreadRead(this, threadId);
     }
 
     private void showTypingAndReply(String userMessage) {
@@ -157,35 +168,56 @@ public class ChatActivity extends AppCompatActivity {
             if (tvTyping != null) tvTyping.setVisibility(View.GONE);
             
             String reply = getAutoReply(userMessage);
+            lastAutoReply = reply;
             if (threadId != null) {
                 AppDataStore.addReplyToThread(ChatActivity.this, threadId, otherName, reply);
-                loadMessages();
+                showLocalMessages();
             }
         }, 4500);
     }
 
     private String getAutoReply(String userMessage) {
-        String msg = userMessage.toLowerCase();
-        
-        if (msg.contains("hi") || msg.contains("hello") || msg.contains("pagi") || msg.contains("assalam")) 
-            return "Walaikumussalam! Hi, I'm the seller. How can I help you today? 😊";
-            
-        if (msg.contains("available") || msg.contains("ada lagi") || msg.contains("still have")) 
-            return "Yes, it's still available! I have a few people asking, but first come first served. Are you a student or staff?";
-            
-        if (msg.contains("price") || msg.contains("cheap") || msg.contains("discount") || msg.contains("kurang")) 
-            return "I can give you a small student discount if you pick it up today at the Student Center! How does RM 5 less sound?";
-            
-        if (msg.contains("meet") || msg.contains("where") || msg.contains("jumpa") || msg.contains("pks")) 
-            return "We can meet at the PKS Library or Block A Cafeteria tomorrow between 1pm to 2pm. Is that okay for you?";
-            
-        if (msg.contains("condition") || msg.contains("okay") || msg.contains("rosak") || msg.contains("problem")) 
-            return "It's in almost perfect condition, only used for one semester. You can check it properly when we meet! 👍";
+        String msg = userMessage == null ? "" : userMessage.toLowerCase(Locale.ROOT).trim();
+        String reply;
 
-        if (msg.contains("student") || msg.contains("lecturer") || msg.contains("staff"))
-            return "Great! It's good to deal with fellow PKS community members. Let me know when you want to proceed with the deal.";
+        if (containsPhrase(msg, "available", "ada lagi", "still have", "in stock", "sold out", "habis")) {
+            reply = "Yes, it's still available! A few people asked already, but first come first served. Are you a student or staff?";
+        } else if (containsPhrase(msg, "price", "berapa", "cheap", "discount", "kurang", "murah", "offer", "nego")) {
+            reply = "I can give a small student discount if you pick it up today at the Student Centre. How does RM 5 less sound?";
+        } else if (containsPhrase(msg, "meet", "meetup", "where", "jumpa", "lokasi", "location", "library", "cafeteria", "block")) {
+            reply = "We can meet at the PKS Library or Block A Cafeteria tomorrow between 1pm and 2pm. Does that work for you?";
+        } else if (containsPhrase(msg, "condition", "rosak", "problem", "used", "quality", "original")) {
+            reply = "It's in almost perfect condition, only used for one semester. You can check it properly when we meet.";
+        } else if (containsPhrase(msg, "student", "lecturer", "staff")) {
+            reply = "Great — always nicer dealing with fellow PKS community members. Tell me when you want to proceed.";
+        } else if (containsPhrase(msg, "thank", "thanks", "terima kasih", "tq")) {
+            reply = "You're welcome! Message me again if you need anything else.";
+        } else if (isGreeting(msg)) {
+            reply = "Walaikumussalam! Hi, I'm the seller. How can I help you today?";
+        } else {
+            reply = "Got it. Do you want to check availability, price, or a meetup spot at PKS?";
+        }
 
-        return "That sounds good! Let me check my schedule and I'll confirm the meetup time with you shortly. Anything else you'd like to know?";
+        if (reply.equals(lastAutoReply)) {
+            reply = "I already noted that. Want me to confirm if it's still available, the price, or a meetup time?";
+        }
+        return reply;
+    }
+
+    private boolean isGreeting(String msg) {
+        if (msg.contains("assalam") || msg.contains("salamualaikum")) return true;
+        return containsPhrase(msg, "hello", "hey", "hi", "pagi", "petang", "malam");
+    }
+
+    private boolean containsPhrase(String msg, String... phrases) {
+        for (String phrase : phrases) {
+            if (phrase.contains(" ")) {
+                if (msg.contains(phrase)) return true;
+            } else if (Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b").matcher(msg).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void render() {

@@ -2,7 +2,7 @@
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/white">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="28dp">
         <FrameLayout android:layout_width="match_parent" android:layout_height="300dp">
-            <com.google.android.material.imageview.ShapeableImageView android:id="@+id/productImage" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+            <com.google.android.material.imageview.ShapeableImageView android:id="@+id/productImage" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:clickable="true" android:focusable="true" />
             <ImageButton android:id="@+id/btnBack" android:layout_width="44dp" android:layout_height="44dp" android:layout_margin="16dp" android:background="@drawable/bg_favorite_button" android:contentDescription="Back" android:src="@android:drawable/ic_menu_revert" app:tint="@color/airbnb_ink" />
         </FrameLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="22dp">
@@ -16,10 +16,12 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="About this listing" android:textColor="@color/airbnb_ink" android:textSize="18sp" android:textStyle="bold" />
             <TextView android:id="@+id/productDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/airbnb_muted" android:textSize="15sp" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:text="Seller" android:textColor="@color/airbnb_ink" android:textSize="18sp" android:textStyle="bold" />
-            <TextView android:id="@+id/sellerName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/pks_blue" android:textSize="16sp" android:textStyle="bold" />
+            <TextView android:id="@+id/sellerName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/pks_blue" android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" android:paddingVertical="4dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tap to see reputation, sales and other listings" android:textColor="@color/airbnb_muted" android:textSize="13sp" />
             <com.google.android.material.button.MaterialButton android:id="@+id/btnMessageSeller" style="@style/Widget.PolyGo.Button.Outlined" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="24dp" android:text="Message seller" android:textAllCaps="false" />
             <com.google.android.material.button.MaterialButton android:id="@+id/btnMakeOffer" style="@style/Widget.PolyGo.Button" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:text="Make an offer" android:textAllCaps="false" />
             <com.google.android.material.button.MaterialButton android:id="@+id/btnMarkSold" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:text="Mark as sold" android:textAllCaps="false" android:visibility="gone" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnReportListing" style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Report this listing" android:textAllCaps="false" android:textColor="@color/airbnb_muted" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

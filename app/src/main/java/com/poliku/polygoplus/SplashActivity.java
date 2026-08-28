@@ -26,9 +26,14 @@ public class SplashActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Show splash for 2 seconds then transition to MainActivity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(SplashActivity.this, com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this) ? HomeActivity.class : MainActivity.class);
+            Class<?> next;
+            if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
+                next = OnboardingActivity.class;
+            } else {
+                next = com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this) ? HomeActivity.class : MainActivity.class;
+            }
+            Intent intent = new Intent(SplashActivity.this, next);
             startActivity(intent);
             finish();
         }, 2000);

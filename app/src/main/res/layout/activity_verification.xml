@@ -1,1 +1,71 @@
-<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="24dp" android:background="@color/white"><ImageButton android:id="@+id/btnBack" android:layout_width="44dp" android:layout_height="44dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Back" android:src="@android:drawable/ic_menu_revert" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:text="Campus verification" android:textColor="@color/airbnb_ink" android:textSize="26sp" android:textStyle="bold" /><TextView android:id="@+id/tvVerificationStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Use the same student ID and campus email from your account. This local check helps you test the verification flow before a server is connected." android:textColor="@color/airbnb_muted" android:textSize="16sp" /><EditText android:id="@+id/etVerificationId" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="20dp" android:hint="Student/Staff ID" android:inputType="text" android:paddingHorizontal="14dp" /><EditText android:id="@+id/etVerificationEmail" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="12dp" android:hint="Campus email" android:inputType="textEmailAddress" android:paddingHorizontal="14dp" /><com.google.android.material.button.MaterialButton android:id="@+id/btnVerify" style="@style/Widget.PolyGo.Button" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="24dp" android:text="Verify account" android:textAllCaps="false" /></LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back"
+        android:src="@drawable/ic_arrow_back"
+        android:tint="@color/airbnb_ink" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Campus verification"
+        android:textColor="@color/airbnb_ink"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvVerificationStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="@color/airbnb_muted"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/etVerificationId"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="20dp"
+        android:hint="Student/Staff ID"
+        android:inputType="text"
+        android:paddingHorizontal="14dp" />
+
+    <EditText
+        android:id="@+id/etVerificationEmail"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="12dp"
+        android:hint="Campus email"
+        android:inputType="textEmailAddress"
+        android:paddingHorizontal="14dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnVerify"
+        style="@style/Widget.PolyGo.Button"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="24dp"
+        android:text="Submit for admin approval"
+        android:textAllCaps="false" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSimulateApproval"
+        style="@style/Widget.PolyGo.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:text="Simulate admin approval"
+        android:textAllCaps="false"
+        android:visibility="gone" />
+</LinearLayout>

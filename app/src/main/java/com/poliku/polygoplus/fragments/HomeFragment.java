@@ -125,7 +125,7 @@ public class HomeFragment extends Fragment {
     private void setupSearchActions() {
         View.OnClickListener openSearch = v -> startActivity(new Intent(requireContext(), SearchActivity.class));
         binding.searchBarCard.setOnClickListener(openSearch);
-        binding.btnExploreNow.setOnClickListener(openSearch);
+        binding.btnExploreNow.setOnClickListener(v -> startActivity(new Intent(requireContext(), com.poliku.polygoplus.CategoryBrowseActivity.class)));
         binding.tvSeeAllProducts.setOnClickListener(openSearch);
     }
 

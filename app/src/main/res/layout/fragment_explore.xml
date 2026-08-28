@@ -68,4 +68,12 @@
         app:spanCount="2"
         tools:listitem="@layout/item_product_card" />
 
+    <include
+        android:id="@+id/emptyExplore"
+        layout="@layout/layout_empty_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

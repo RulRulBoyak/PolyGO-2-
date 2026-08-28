@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
 
@@ -43,6 +44,17 @@
         <activity android:name=".NotificationsActivity" />
         <activity android:name=".VerificationActivity" />
         <activity android:name=".HelpActivity" />
+        <activity android:name=".SellerProfileActivity" />
+        <activity android:name=".ReportActivity" />
+        <activity android:name=".ReviewActivity" />
+        <activity android:name=".OrderDetailActivity" />
+        <activity android:name=".ReceiptActivity" />
+        <activity android:name=".ForgotPasswordActivity" />
+        <activity android:name=".LegalActivity" />
+        <activity android:name=".OnboardingActivity" />
+        <activity android:name=".CategoryBrowseActivity" />
+        <activity android:name=".ErrorStateActivity" />
+        <activity android:name=".ImageGalleryActivity" android:theme="@style/Theme.PolyGo" />
     </application>
 
 </manifest>
