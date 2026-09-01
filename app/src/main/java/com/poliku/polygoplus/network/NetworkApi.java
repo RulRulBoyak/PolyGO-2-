@@ -115,13 +115,14 @@ public final class NetworkApi {
         }
     }
 
-    public static void updateProfile(String userId, String name, String email, String mobile, Callback callback) {
+    public static void updateProfile(String userId, String name, String email, String mobile, String photo, Callback callback) {
         try {
             JSONObject body = new JSONObject();
             body.put("user_id", userId);
             body.put("full_name", name);
             body.put("email", email);
             body.put("mobile", mobile);
+            body.put("profile_pic_url", photo);
             post("update_profile.php", body, callback);
         } catch (Exception e) {
             callback.onError("Request error");
@@ -241,18 +242,26 @@ public final class NetworkApi {
                 int status = connection.getResponseCode();
                 InputStream stream = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
                 String responseText = read(stream);
-                
+
                 android.util.Log.d("NetworkApi", "Response from " + endpoint + " (Status " + status + "): " + responseText);
-                
-                JSONObject response = new JSONObject(responseText);
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    if (response.optBoolean("success")) callback.onSuccess(response);
-                    else callback.onError(response.optString("message", "The server rejected the request"));
-                });
+
+                try {
+                    JSONObject response = new JSONObject(responseText);
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        if (response.optBoolean("success")) callback.onSuccess(response);
+                        else
+                            callback.onError(response.optString("message", "The server rejected the request"));
+                    });
+                } catch (org.json.JSONException e) {
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("The server returned an invalid response. Please try again later."));
+                }
+            } catch (java.net.SocketTimeoutException e) {
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("The request timed out. Please check your connection."));
+            } catch (java.io.IOException e) {
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network error. Cannot reach the PolyGo server."));
             } catch (Exception e) {
                 android.util.Log.e("NetworkApi", "Connection error for " + endpoint + ": " + e.getMessage(), e);
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError(
-                        "Cannot reach the PolyGo server. Error: " + e.getMessage()));
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("An unexpected error occurred: " + e.getLocalizedMessage()));
             } finally {
                 if (connection != null) connection.disconnect();
             }

@@ -71,8 +71,24 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.fabAddProduct).setOnClickListener(v -> {
-            startActivity(new Intent(this, EditProductActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            if (!com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this)) {
+                android.widget.Toast.makeText(this, "Login required to post listings", android.widget.Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+            com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+            dialog.setContentView(R.layout.layout_listing_type_choice);
+            dialog.findViewById(R.id.choiceProduct).setOnClickListener(view -> {
+                dialog.dismiss();
+                startActivity(new Intent(this, EditProductActivity.class));
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            });
+            dialog.findViewById(R.id.choiceService).setOnClickListener(view -> {
+                dialog.dismiss();
+                startActivity(new Intent(this, AddServiceActivity.class));
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            });
+            dialog.show();
         });
         checkCampusService();
     }

@@ -50,7 +50,13 @@ public class RegisterActivity extends AppCompatActivity {
                 }
                 @Override public void onError(String message) {
                     findViewById(R.id.btnRegisterAction).setEnabled(true);
-                    Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
+                    String userFriendlyMessage = message;
+                    if (message.toLowerCase().contains("already exists")) {
+                        userFriendlyMessage = "An account with this Student ID or Email already exists.";
+                    } else if (message.toLowerCase().contains("password")) {
+                        userFriendlyMessage = "Invalid password format. Please use a stronger password.";
+                    }
+                    Toast.makeText(RegisterActivity.this, userFriendlyMessage, Toast.LENGTH_LONG).show();
                 }
             });
         });

@@ -13,13 +13,15 @@ import com.poliku.polygoplus.data.NotificationAdapter;
 
 public class NotificationsActivity extends AppCompatActivity {
     private NotificationAdapter adapter;
-    private TextView empty;
+    private View empty;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notifications);
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        empty=findViewById(R.id.tvEmptyNotifications);
+        empty=findViewById(R.id.layoutEmptyNotifications);
+        com.poliku.polygoplus.ui.EmptyStates.bind(empty, android.R.drawable.ic_popup_reminder, "No notifications yet",
+                "Updates about your listings and messages will show up here.", null, null);
         RecyclerView list=findViewById(R.id.notificationList);
         list.setLayoutManager(new LinearLayoutManager(this));
         adapter=new NotificationAdapter(notification -> {

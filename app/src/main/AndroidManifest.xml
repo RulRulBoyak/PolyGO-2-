@@ -55,6 +55,7 @@
         <activity android:name=".CategoryBrowseActivity" />
         <activity android:name=".ErrorStateActivity" />
         <activity android:name=".ImageGalleryActivity" android:theme="@style/Theme.PolyGo" />
+        <activity android:name=".AddServiceActivity" />
     </application>
 
 </manifest>

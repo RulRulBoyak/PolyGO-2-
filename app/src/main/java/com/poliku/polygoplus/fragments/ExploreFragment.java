@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.tabs.TabLayout;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -31,6 +32,8 @@ import java.util.List;
 public class ExploreFragment extends Fragment {
     private ProductCardAdapter adapter;
     private View empty;
+    private final List<AppDataStore.ProductRecord> allItems = new ArrayList<>();
+    private int currentTab = 0; // 0 for Products, 1 for Services
 
     @Nullable
     @Override
@@ -38,6 +41,7 @@ public class ExploreFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
         AppDataStore.initialize(requireContext());
         RecyclerView list = view.findViewById(R.id.rvExplore);
+        TabLayout tabs = view.findViewById(R.id.exploreTabs);
 
         ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.explore_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -56,6 +60,13 @@ public class ExploreFragment extends Fragment {
         EmptyStates.bind(empty, android.R.drawable.ic_menu_search, "Nothing to explore yet",
                 "Listings from PKS students will show up here.", "Browse categories",
                 v -> startActivity(new android.content.Intent(requireContext(), com.poliku.polygoplus.CategoryBrowseActivity.class)));
+        
+        tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override public void onTabSelected(TabLayout.Tab tab) { currentTab = tab.getPosition(); filterItems(); }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
         reloadListings();
         return view;
     }
@@ -64,29 +75,46 @@ public class ExploreFragment extends Fragment {
         NetworkApi.getListings(new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                List<AppDataStore.ProductRecord> products = new ArrayList<>();
+                allItems.clear();
                 JSONArray list = response.optJSONArray("listings");
                 if (list != null) {
                     for (int i = 0; i < list.length(); i++) {
                         JSONObject o = list.optJSONObject(i);
                         if (o != null) {
                             AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
-                            if (p != null) products.add(p);
+                            if (p != null) allItems.add(p);
                         }
                     }
                 }
-                if (adapter != null) {
-                    adapter.updateData(products);
-                    if (empty != null) empty.setVisibility(products.isEmpty() ? View.VISIBLE : View.GONE);
-                }
+                filterItems();
             }
 
             @Override
             public void onError(String message) {
-                java.util.List<AppDataStore.ProductRecord> local = AppDataStore.getListings(requireContext());
-                if (adapter != null) adapter.updateData(local);
-                if (empty != null) empty.setVisibility(local.isEmpty() ? View.VISIBLE : View.GONE);
+                allItems.clear();
+                allItems.addAll(AppDataStore.getListings(requireContext()));
+                filterItems();
             }
         });
+    }
+
+    private void filterItems() {
+        List<AppDataStore.ProductRecord> filtered = new ArrayList<>();
+        String[] serviceCats = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Services"};
+        
+        for (AppDataStore.ProductRecord item : allItems) {
+            boolean isService = false;
+            for (String cat : serviceCats) {
+                if (cat.equalsIgnoreCase(item.category)) { isService = true; break; }
+            }
+            
+            if (currentTab == 1 && isService) filtered.add(item);
+            else if (currentTab == 0 && !isService) filtered.add(item);
+        }
+
+        if (adapter != null) {
+            adapter.updateData(filtered);
+            if (empty != null) empty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 }

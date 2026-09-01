@@ -125,9 +125,7 @@ public class ChatActivity extends AppCompatActivity {
         if (threadId == null || threadId.trim().isEmpty()) {
             threadId = AppDataStore.ensureThread(this, listingId, otherName);
         }
-        AppDataStore.sendMessage(this, threadId, text);
-        showLocalMessages();
-
+        
         String userId = AppDataStore.userId(this);
         NetworkApi.sendMessage(userId, threadId, listingId, sellerId, text, new NetworkApi.Callback() {
             @Override
@@ -136,14 +134,14 @@ public class ChatActivity extends AppCompatActivity {
                 if (remoteId != null && !remoteId.isEmpty()) threadId = remoteId;
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
-                showTypingAndReply(text);
+                loadMessages();
             }
 
             @Override
             public void onError(String message) {
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
-                showTypingAndReply(text);
+                Toast.makeText(ChatActivity.this, "Network error: " + message, Toast.LENGTH_SHORT).show();
             }
         });
     }

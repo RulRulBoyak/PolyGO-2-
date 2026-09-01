@@ -19,7 +19,8 @@
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingTop="18dp"
-            android:paddingBottom="8dp">
+            android:paddingBottom="16dp"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -73,7 +74,8 @@
                 android:layout_height="50dp"
                 android:layout_marginTop="18dp"
                 app:cardCornerRadius="25dp"
-                app:strokeColor="@color/airbnb_border">
+                app:strokeColor="@color/airbnb_border"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -87,7 +89,7 @@
                         android:layout_height="20dp"
                         android:contentDescription="Search"
                         android:src="@android:drawable/ic_menu_search"
-                        android:tint="@color/airbnb_muted" />
+                        app:tint="@color/airbnb_muted" />
 
                     <EditText
                         android:id="@+id/editTextMessageSearch"
@@ -140,22 +142,30 @@
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvMessages"
+    <!-- Wrap content area to handle scrolling behavior for both list and empty state -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="96dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/item_message" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <include
-        android:id="@+id/tvEmptyMessages"
-        layout="@layout/layout_empty_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMessages"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="100dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_message" />
+
+        <include
+            android:id="@+id/tvEmptyMessages"
+            layout="@layout/layout_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="80dp"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

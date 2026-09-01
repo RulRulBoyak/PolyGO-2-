@@ -53,35 +53,53 @@ public class HomeFragment extends Fragment {
         setupSearchActions();
         reloadProducts();
 
-        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.home_top), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.appBar), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(v.getPaddingLeft(), systemBars.top + v.getPaddingTop(), v.getPaddingRight(), v.getPaddingBottom());
+            v.setPadding(0, systemBars.top, 0, 0);
             return insets;
         });
     }
 
     private void setupHeader() {
+        boolean loggedIn = AppDataStore.isLoggedIn(requireContext());
         String name = AppDataStore.userName(requireContext());
-        if (name == null || name.trim().isEmpty() || "PolyGo member".equals(name)) {
-            binding.tvGreeting.setText("Good to see you 👋");
+        String firstName = name.split(" ")[0];
+        
+        String hourGreeting;
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        if (hour < 12) hourGreeting = "Good morning";
+        else if (hour < 18) hourGreeting = "Good afternoon";
+        else hourGreeting = "Good evening";
+
+        if (!loggedIn || name == null || name.trim().isEmpty() || "PolyGo member".equals(name)) {
+            binding.tvGreeting.setText(hourGreeting + "!");
         } else {
-            String hourGreeting;
-            int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
-            if (hour < 12) hourGreeting = "Good morning";
-            else if (hour < 18) hourGreeting = "Good afternoon";
-            else hourGreeting = "Good evening";
-            binding.tvGreeting.setText(hourGreeting + ", " + name + " 👋");
+            binding.tvGreeting.setText(hourGreeting + ",\n" + firstName);
         }
-        binding.ivProfilePic.setOnClickListener(v -> startActivity(new Intent(requireContext(), AccountActivity.class)));
+
+        String photo = AppDataStore.userProfilePic(requireContext());
+        if (!photo.isEmpty()) {
+            binding.ivProfilePic.setImageURI(android.net.Uri.parse(photo));
+            binding.ivProfilePic.setPadding(0, 0, 0, 0); // Remove padding if real photo exists
+        }
+
+        binding.ivProfilePic.setOnClickListener(v -> {
+            if (AppDataStore.isLoggedIn(requireContext())) {
+                startActivity(new Intent(requireContext(), AccountActivity.class));
+            } else {
+                startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+            }
+        });
     }
 
     private void setupCategories() {
         List<Category> categories = new ArrayList<>();
         categories.add(new Category("Food", R.drawable.ic_category_food));
-        categories.add(new Category("Drink", R.drawable.ic_category_drink));
+        categories.add(new Category("Drinks", R.drawable.ic_category_drink));
         categories.add(new Category("Tech", R.drawable.ic_category_tech));
         categories.add(new Category("Books", R.drawable.ic_category_books));
         categories.add(new Category("Repair", R.drawable.ic_category_repair));
+        categories.add(new Category("Others", R.drawable.ic_nav_explore));
 
         binding.recyclerViewCategories.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.recyclerViewCategories.setAdapter(new CategoryAdapter(categories));
@@ -112,14 +130,22 @@ public class HomeFragment extends Fragment {
                         }
                     }
                 }
-                if (productAdapter != null) productAdapter.updateData(list);
+                updateProductsList(list);
             }
 
             @Override
             public void onError(String message) {
-                if (productAdapter != null) productAdapter.updateData(AppDataStore.getListings(requireContext()));
+                updateProductsList(AppDataStore.getListings(requireContext()));
             }
         });
+    }
+
+    private void updateProductsList(List<AppDataStore.ProductRecord> list) {
+        if (productAdapter != null) productAdapter.updateData(list);
+        if (binding != null) {
+            boolean isEmpty = list == null || list.isEmpty();
+            binding.recyclerViewProducts.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void setupSearchActions() {

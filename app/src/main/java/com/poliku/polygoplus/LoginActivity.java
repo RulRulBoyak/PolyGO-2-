@@ -32,7 +32,13 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 @Override public void onError(String message) {
                     findViewById(R.id.btnLoginNormal).setEnabled(true);
-                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+                    String userFriendlyMessage = message;
+                    if (message.toLowerCase().contains("invalid") || message.toLowerCase().contains("credentials")) {
+                        userFriendlyMessage = "Invalid Student ID or Password. Please try again.";
+                    } else if (message.toLowerCase().contains("reach") || message.toLowerCase().contains("connection")) {
+                        userFriendlyMessage = "Cannot connect to server. Check your internet.";
+                    }
+                    Toast.makeText(LoginActivity.this, userFriendlyMessage, Toast.LENGTH_LONG).show();
                 }
             });
         });

@@ -35,11 +35,34 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         AppDataStore.initialize(requireContext());
-        ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText(AppDataStore.userName(requireContext()));
-        ((android.widget.TextView) view.findViewById(R.id.tvUserRole)).setText("★  " + AppDataStore.userRole(requireContext()));
+        
+        boolean loggedIn = AppDataStore.isLoggedIn(requireContext());
+        
+        if (loggedIn) {
+            ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText(AppDataStore.userName(requireContext()));
+            ((android.widget.TextView) view.findViewById(R.id.tvUserRole)).setText("★  " + AppDataStore.userRole(requireContext()));
+            
+            String photo = AppDataStore.userProfilePic(requireContext());
+            if (!photo.isEmpty()) {
+                ((android.widget.ImageView) view.findViewById(R.id.ivProfile)).setImageURI(android.net.Uri.parse(photo));
+            }
+            
+            view.findViewById(R.id.ivLogout).setVisibility(View.VISIBLE);
+        } else {
+            ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText("Guest User");
+            ((android.widget.TextView) view.findViewById(R.id.tvUserRole)).setText("Log in to access all features");
+            view.findViewById(R.id.ivLogout).setVisibility(View.GONE);
+        }
 
-        view.findViewById(R.id.headerProfile).setOnClickListener(v -> profileIntent());
-        view.findViewById(R.id.menuUserProfile).setOnClickListener(v -> profileIntent());
+        view.findViewById(R.id.headerProfile).setOnClickListener(v -> {
+            if (loggedIn) profileIntent();
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
+
+        view.findViewById(R.id.menuUserProfile).setOnClickListener(v -> {
+            if (loggedIn) profileIntent();
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.profile_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -48,6 +71,10 @@ public class ProfileFragment extends Fragment {
         });
 
         view.findViewById(R.id.menuChangePassword).setOnClickListener(v -> {
+            if (!loggedIn) {
+                startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+                return;
+            }
             BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
             dialog.setContentView(R.layout.bottom_sheet_change_password);
             dialog.setOnShowListener(ignored -> dialog.findViewById(R.id.btnSavePassword).setOnClickListener(button -> {
@@ -63,11 +90,26 @@ public class ProfileFragment extends Fragment {
         });
 
         view.findViewById(R.id.menuFaqs).setOnClickListener(v -> startActivity(new Intent(requireContext(), HelpActivity.class)));
-        view.findViewById(R.id.menuSavedItems).setOnClickListener(v -> startActivity(new Intent(requireContext(), SavedItemsActivity.class)));
-        view.findViewById(R.id.menuMyListings).setOnClickListener(v -> startActivity(new Intent(requireContext(), MyListingsActivity.class)));
-        view.findViewById(R.id.menuTransactions).setOnClickListener(v -> startActivity(new Intent(requireContext(), TransactionsActivity.class)));
-        view.findViewById(R.id.menuNotifications).setOnClickListener(v -> startActivity(new Intent(requireContext(), NotificationsActivity.class)));
-        view.findViewById(R.id.menuVerification).setOnClickListener(v -> startActivity(new Intent(requireContext(), VerificationActivity.class)));
+        view.findViewById(R.id.menuSavedItems).setOnClickListener(v -> {
+            if (loggedIn) startActivity(new Intent(requireContext(), SavedItemsActivity.class));
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
+        view.findViewById(R.id.menuMyListings).setOnClickListener(v -> {
+            if (loggedIn) startActivity(new Intent(requireContext(), MyListingsActivity.class));
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
+        view.findViewById(R.id.menuTransactions).setOnClickListener(v -> {
+            if (loggedIn) startActivity(new Intent(requireContext(), TransactionsActivity.class));
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
+        view.findViewById(R.id.menuNotifications).setOnClickListener(v -> {
+            if (loggedIn) startActivity(new Intent(requireContext(), NotificationsActivity.class));
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
+        view.findViewById(R.id.menuVerification).setOnClickListener(v -> {
+            if (loggedIn) startActivity(new Intent(requireContext(), VerificationActivity.class));
+            else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+        });
         view.findViewById(R.id.menuPrivacy).setOnClickListener(v -> {
             Intent i = new Intent(requireContext(), com.poliku.polygoplus.LegalActivity.class);
             i.putExtra(com.poliku.polygoplus.LegalActivity.EXTRA_PAGE, "privacy");

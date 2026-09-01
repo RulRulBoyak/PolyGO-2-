@@ -31,7 +31,8 @@ public class SplashActivity extends AppCompatActivity {
             if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
                 next = OnboardingActivity.class;
             } else {
-                next = com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this) ? HomeActivity.class : MainActivity.class;
+                // Always go to HomeActivity for both Guests and Logged-in users
+                next = HomeActivity.class;
             }
             Intent intent = new Intent(SplashActivity.this, next);
             startActivity(intent);

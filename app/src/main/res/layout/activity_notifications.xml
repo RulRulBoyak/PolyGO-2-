@@ -43,15 +43,12 @@
             android:clipToPadding="false"
             android:padding="12dp" />
 
-        <TextView
-            android:id="@+id/tvEmptyNotifications"
+        <include
+            android:id="@+id/layoutEmptyNotifications"
+            layout="@layout/layout_empty_state"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:gravity="center"
-            android:padding="32dp"
-            android:text="You are all caught up."
-            android:textColor="@color/airbnb_muted"
-            android:textSize="15sp" />
+            android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>

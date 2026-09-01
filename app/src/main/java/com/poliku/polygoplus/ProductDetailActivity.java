@@ -67,8 +67,18 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void renderProduct() {
         ShapeableImageView image = findViewById(R.id.productImage);
-        if (product.imageUri.isEmpty()) image.setImageResource(product.imageRes);
-        else image.setImageURI(android.net.Uri.parse(product.imageUri));
+        if (product.imageUri == null || product.imageUri.isEmpty()) {
+            image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
+        } else {
+            try {
+                image.setImageURI(android.net.Uri.parse(product.imageUri));
+                if (image.getDrawable() == null) {
+                    image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
+                }
+            } catch (Exception e) {
+                image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
+            }
+        }
 
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);
         ((TextView) findViewById(R.id.productPrice)).setText("RM " + product.price);
@@ -115,16 +125,34 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
 
         message.setOnClickListener(v -> {
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, "Please log in to contact the seller", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
             Intent i = new Intent(this, ChatActivity.class);
             i.putExtra(ChatActivity.EXTRA_LISTING_ID, product.id);
             i.putExtra(ChatActivity.EXTRA_SELLER_ID, product.ownerId);
             i.putExtra(ChatActivity.EXTRA_OTHER_NAME, product.seller);
             startActivity(i);
         });
-        findViewById(R.id.btnMakeOffer).setOnClickListener(v -> showOfferDialog());
+
+        findViewById(R.id.btnMakeOffer).setOnClickListener(v -> {
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, "Please log in to make an offer", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+            showOfferDialog();
+        });
     }
 
     private void toggleFavorite() {
+        if (!AppDataStore.isLoggedIn(this)) {
+            Toast.makeText(this, "Login required to save items", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
         String userId = AppDataStore.userId(this);
         NetworkApi.toggleFavorite(userId, product.id, new NetworkApi.Callback() {
             @Override

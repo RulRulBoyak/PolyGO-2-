@@ -90,23 +90,14 @@ public final class AppDataStore {
             favoriteIds(context);
             return;
         }
-        JSONArray listings = new JSONArray();
-        addListing(listings, "Modern Sofa", "Furniture Store", "180", "4.9", "0.4 km away", R.drawable.bg_product_furniture, "Furniture", "Clean modern sofa in good condition. Pickup near campus.", false);
-        addListing(listings, "Gaming Laptop", "Tech World", "2450", "4.8", "0.8 km away", R.drawable.bg_product_electronics, "Electronics", "Reliable gaming laptop, ideal for study and entertainment.", false);
-        addListing(listings, "Running Shoes", "Sport Center", "95", "4.7", "1.1 km away", R.drawable.bg_product_fashion, "Fashion", "Lightly used running shoes. Ask for available sizes.", false);
-        addListing(listings, "Coffee Maker", "Home Kitchen", "65", "4.9", "0.6 km away", R.drawable.bg_product_home, "Home", "Compact coffee maker for your room or shared kitchen.", false);
-        addListing(listings, "Wireless Earbuds", "Sound Box", "120", "4.6", "1.4 km away", R.drawable.bg_product_electronics, "Electronics", "Wireless earbuds with charging case.", false);
-        addListing(listings, "Desk Lamp", "Office Pro", "38", "0.9", "0.9 km away", R.drawable.bg_product_home, "Home", "Adjustable desk lamp for late-night study sessions.", false);
-        JSONArray reviews = new JSONArray();
-        seedReview(reviews, "Furniture Store", "Amira", 5, "Smooth meetup at the cafeteria. Item as described.");
-        seedReview(reviews, "Tech World", "Hakim", 5, "Laptop works well. Seller was on time at Block A.");
-        seedReview(reviews, "Sport Center", "Siti", 4, "Shoes were lightly used as promised.");
-        p.edit().putString(KEY_LISTINGS, listings.toString())
+        
+        // Removed local dummy products and mock reviews for production phase
+        p.edit().putString(KEY_LISTINGS, "[]")
                 .putStringSet(KEY_FAVORITES, new HashSet<>())
                 .putString(KEY_THREADS, "[]")
                 .putString(KEY_NOTIFICATIONS, "[]")
                 .putString(KEY_TRANSACTIONS, "[]")
-                .putString(KEY_REVIEWS, reviews.toString())
+                .putString(KEY_REVIEWS, "[]")
                 .putString(KEY_REPORTS, "[]")
                 .putString(KEY_DRAFTS, "[]")
                 .putBoolean(KEY_VERIFICATION, false)
@@ -177,6 +168,7 @@ public final class AppDataStore {
      * Stores the API session locally so existing screens can read the signed-in user.
      */
     public static void saveRemoteSession(Context context, JSONObject user) {
+        if (user == null) return;
         prefs(context).edit()
                 .putString(KEY_USER, user.toString())
                 .putBoolean("loggedIn", true)
@@ -185,7 +177,9 @@ public final class AppDataStore {
 
     public static String userId(Context context) {
         try {
-            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("id", "0");
+            String userJson = prefs(context).getString(KEY_USER, null);
+            if (userJson == null) return "0";
+            return new JSONObject(userJson).optString("id", "0");
         } catch (JSONException e) {
             return "0";
         }
@@ -217,15 +211,19 @@ public final class AppDataStore {
 
     public static String userRole(Context context) {
         try {
-            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("role", "Student");
+            String userJson = prefs(context).getString(KEY_USER, null);
+            if (userJson == null) return "Guest";
+            return new JSONObject(userJson).optString("role", "Student");
         } catch (JSONException e) {
-            return "Student";
+            return "Guest";
         }
     }
 
     public static String userName(Context context) {
         try {
-            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("name", "PolyGo member");
+            String userJson = prefs(context).getString(KEY_USER, null);
+            if (userJson == null) return "Guest User";
+            return new JSONObject(userJson).optString("name", "PolyGo member");
         } catch (JSONException e) {
             return "PolyGo member";
         }
@@ -255,12 +253,21 @@ public final class AppDataStore {
         }
     }
 
-    public static boolean updateProfile(Context context, String name, String email, String mobile) {
+    public static String userProfilePic(Context context) {
+        try {
+            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("profile_pic_url", "");
+        } catch (JSONException e) {
+            return "";
+        }
+    }
+
+    public static boolean updateProfile(Context context, String name, String email, String mobile, String photo) {
         try {
             JSONObject user = new JSONObject(prefs(context).getString(KEY_USER, "{}"));
             user.put("name", name);
             user.put("email", email);
             user.put("mobile", mobile);
+            user.put("profile_pic_url", photo);
             prefs(context).edit().putString(KEY_USER, user.toString()).apply();
             return true;
         } catch (JSONException e) {

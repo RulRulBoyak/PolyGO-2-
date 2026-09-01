@@ -70,7 +70,8 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void finishOnboarding() {
         AppDataStore.setOnboardingSeen(this);
-        startActivity(new Intent(this, AppDataStore.isLoggedIn(this) ? HomeActivity.class : MainActivity.class));
+        // Direct to Home regardless of login status
+        startActivity(new Intent(this, HomeActivity.class));
         finish();
     }
 

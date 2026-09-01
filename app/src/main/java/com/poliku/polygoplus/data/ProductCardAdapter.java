@@ -43,12 +43,28 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
         h.binding.textViewPrice.setText("RM " + p.price);
         h.binding.textViewRating.setText("★ " + p.rating);
         h.binding.textViewDistance.setText(p.distance);
-        if (p.imageUri.isEmpty()) h.binding.imageView.setImageResource(p.imageRes);
-        else h.binding.imageView.setImageURI(android.net.Uri.parse(p.imageUri));
+        if (p.imageUri.isEmpty()) {
+            h.binding.imageView.setImageResource(p.imageRes != 0 ? p.imageRes : com.poliku.polygoplus.R.drawable.bg_product_home);
+        } else {
+            try {
+                android.net.Uri uri = android.net.Uri.parse(p.imageUri);
+                h.binding.imageView.setImageURI(uri);
+                if (h.binding.imageView.getDrawable() == null) {
+                    h.binding.imageView.setImageResource(p.imageRes != 0 ? p.imageRes : com.poliku.polygoplus.R.drawable.bg_product_home);
+                }
+            } catch (Exception e) {
+                h.binding.imageView.setImageResource(p.imageRes != 0 ? p.imageRes : com.poliku.polygoplus.R.drawable.bg_product_home);
+            }
+        }
         h.binding.cardView.setAlpha(p.available ? 1f : 0.55f);
         h.binding.cardView.setOnClickListener(v -> listener.onProduct(this, p));
         h.binding.buttonFavorite.setSelected(AppDataStore.isFavorite(vContext(h), p.id));
         h.binding.buttonFavorite.setOnClickListener(v -> {
+            if (!AppDataStore.isLoggedIn(v.getContext())) {
+                android.widget.Toast.makeText(v.getContext(), "Login required to save favorites", android.widget.Toast.LENGTH_SHORT).show();
+                v.getContext().startActivity(new android.content.Intent(v.getContext(), com.poliku.polygoplus.LoginActivity.class));
+                return;
+            }
             AppDataStore.toggleFavorite(v.getContext(), p.id);
             v.setSelected(AppDataStore.isFavorite(v.getContext(), p.id));
         });

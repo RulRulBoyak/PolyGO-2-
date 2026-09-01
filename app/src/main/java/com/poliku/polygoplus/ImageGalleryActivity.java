@@ -45,7 +45,14 @@ public class ImageGalleryActivity extends AppCompatActivity {
                 if (finalImages.isEmpty()) {
                     image.setImageResource(fallback);
                 } else {
-                    image.setImageURI(Uri.parse(finalImages.get(position)));
+                    try {
+                        image.setImageURI(Uri.parse(finalImages.get(position)));
+                        if (image.getDrawable() == null) {
+                            image.setImageResource(fallback != 0 ? fallback : R.drawable.bg_product_home);
+                        }
+                    } catch (Exception e) {
+                        image.setImageResource(fallback != 0 ? fallback : R.drawable.bg_product_home);
+                    }
                 }
             }
 

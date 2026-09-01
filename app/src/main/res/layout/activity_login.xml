@@ -85,7 +85,7 @@
             android:layout_height="52dp"
             android:minHeight="0dp"
             android:layout_marginTop="24dp"
-            android:text="Continue"
+            android:text="Log in"
             android:textAllCaps="false"
             android:textStyle="bold" />
 
@@ -100,13 +100,27 @@
             android:textColor="@color/pks_blue"
             android:textStyle="bold" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="@color/grey_200" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="New to PolyGo+?"
+            android:textColor="@color/airbnb_muted" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreateAccount"
             style="@style/Widget.PolyGo.Button.Outlined"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:minHeight="0dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:text="Create an account"
             android:textAllCaps="false"
             android:textStyle="bold" />
