@@ -16,6 +16,8 @@
     <style name="Theme.PolyGo" parent="Base.Theme.PolyGo">
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowContentTransitions">true</item>
     </style>
 
     <style name="Widget.PolyGo.Card" parent="Widget.Material3.CardView.Elevated">

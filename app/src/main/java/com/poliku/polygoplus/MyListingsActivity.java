@@ -35,10 +35,13 @@ public class MyListingsActivity extends AppCompatActivity {
         }
         RecyclerView rv = findViewById(R.id.rvSaved);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
-        rv.setAdapter(new ProductCardAdapter(items, (a, p) -> {
-            Intent i = new Intent(this, ProductDetailActivity.class);
-            i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
-            startActivity(i);
+        rv.setAdapter(new ProductCardAdapter(items, new ProductCardAdapter.Listener() {
+            @Override
+            public void onProduct(ProductCardAdapter adapter, AppDataStore.ProductRecord p, View sharedView) {
+                Intent i = new Intent(MyListingsActivity.this, ProductDetailActivity.class);
+                i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
+                startActivity(i);
+            }
         }));
         View empty = findViewById(R.id.tvEmpty);
         EmptyStates.bind(empty, android.R.drawable.ic_menu_edit, "You haven't published any listings",

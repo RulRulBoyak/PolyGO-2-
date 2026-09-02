@@ -8,39 +8,104 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.widget.Toast;
+
 import com.google.android.material.card.MaterialCardView;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.EmptyStates;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class TransactionsActivity extends AppCompatActivity {
+    private LinearLayout listContainer;
+    private View emptyView;
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_transactions);
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        LinearLayout list = findViewById(R.id.transactionList);
-        java.util.List<AppDataStore.TransactionRecord> items = AppDataStore.getTransactions(this);
-        View empty = findViewById(R.id.emptyTransactions);
-        EmptyStates.bind(empty, android.R.drawable.ic_menu_agenda, "No transactions yet",
+        listContainer = findViewById(R.id.transactionList);
+        emptyView = findViewById(R.id.emptyTransactions);
+
+        EmptyStates.bind(emptyView, android.R.drawable.ic_menu_agenda, "No transactions yet",
                 "When you make an offer, the order will show here with meetup details.", "Browse listings",
                 v -> startActivity(new Intent(this, SearchActivity.class)));
-        empty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+
+        fetchTransactions();
+    }
+
+    private void fetchTransactions() {
+        String userId = AppDataStore.userId(this);
+        NetworkApi.getTransactions(userId, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                JSONArray arr = response.optJSONArray("transactions");
+                List<AppDataStore.TransactionRecord> items = new ArrayList<>();
+                if (arr != null) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        items.add(AppDataStore.TransactionRecord.fromJson(arr.optJSONObject(i)));
+                    }
+                }
+                renderTransactions(items);
+            }
+
+            @Override
+            public void onError(String message) {
+                // FALLBACK: Show local transactions if network fails
+                renderTransactions(AppDataStore.getTransactions(TransactionsActivity.this));
+                Toast.makeText(TransactionsActivity.this, "Viewing offline history", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderTransactions(List<AppDataStore.TransactionRecord> items) {
+        listContainer.removeAllViews();
+        emptyView.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        
         for (AppDataStore.TransactionRecord t : items) {
             MaterialCardView card = new MaterialCardView(this);
             card.setRadius(16);
-            card.setCardElevation(0);
+            card.setCardElevation(2);
             card.setUseCompatPadding(true);
-            TextView text = new TextView(this);
-            text.setPadding(20, 18, 20, 18);
-            text.setText(t.title + "\n" + t.amount + "  •  " + t.status + "\nMeetup: " + t.location);
-            text.setTextSize(15);
-            card.addView(text);
+            
+            LinearLayout inner = new LinearLayout(this);
+            inner.setOrientation(LinearLayout.VERTICAL);
+            inner.setPadding(24, 20, 24, 20);
+            
+            TextView title = new TextView(this);
+            title.setText(t.title);
+            title.setTextSize(17);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            title.setTextColor(getResources().getColor(R.color.airbnb_ink));
+            
+            TextView details = new TextView(this);
+            details.setText(t.amount + "  •  " + t.status);
+            details.setTextSize(14);
+            details.setPadding(0, 4, 0, 0);
+            
+            TextView location = new TextView(this);
+            location.setText("📍 " + t.location);
+            location.setTextSize(13);
+            location.setPadding(0, 8, 0, 0);
+            location.setTextColor(getResources().getColor(R.color.airbnb_muted));
+
+            inner.addView(title);
+            inner.addView(details);
+            inner.addView(location);
+            
+            card.addView(inner);
             card.setOnClickListener(v -> {
                 Intent i = new Intent(this, OrderDetailActivity.class);
                 i.putExtra(OrderDetailActivity.EXTRA_TRANSACTION_ID, t.id);
                 startActivity(i);
             });
-            list.addView(card);
+            listContainer.addView(card);
         }
     }
 }

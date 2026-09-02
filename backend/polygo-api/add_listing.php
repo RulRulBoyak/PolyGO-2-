@@ -2,8 +2,10 @@
 require_once __DIR__ . '/config.php';
 
 try {
+    // SECURITY: Verify JWT and get actual User ID
+    $ownerId = verify_jwt();
+
     $input = input_json();
-    $ownerId = (int)($input['owner_id'] ?? 0);
     $title = $input['title'] ?? '';
     $category = $input['category'] ?? '';
     $description = $input['description'] ?? '';
