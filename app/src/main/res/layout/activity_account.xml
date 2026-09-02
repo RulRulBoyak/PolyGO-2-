@@ -49,6 +49,7 @@
                     android:layout_height="140dp"
                     android:scaleType="centerCrop"
                     android:src="@android:drawable/ic_menu_report_image"
+                    android:transitionName="profile_pic_hero"
                     app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                     app:strokeColor="@color/grey_200"
                     app:strokeWidth="1dp" />

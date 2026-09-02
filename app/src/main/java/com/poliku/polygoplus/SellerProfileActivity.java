@@ -45,10 +45,13 @@ public class SellerProfileActivity extends AppCompatActivity {
 
         RecyclerView rv = findViewById(R.id.rvSellerListings);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
-        rv.setAdapter(new ProductCardAdapter(active, (a, p) -> {
-            Intent i = new Intent(this, ProductDetailActivity.class);
-            i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
-            startActivity(i);
+        rv.setAdapter(new ProductCardAdapter(active, new ProductCardAdapter.Listener() {
+            @Override
+            public void onProduct(ProductCardAdapter adapter, AppDataStore.ProductRecord p, View sharedView) {
+                Intent i = new Intent(SellerProfileActivity.this, ProductDetailActivity.class);
+                i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
+                startActivity(i);
+            }
         }));
         View emptyListings = findViewById(R.id.emptyListings);
         emptyListings.setVisibility(active.isEmpty() ? View.VISIBLE : View.GONE);

@@ -17,13 +17,13 @@ import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
-import com.poliku.polygoplus.network.NetworkApi;
+import androidx.lifecycle.ViewModelProvider;
+import com.poliku.polygoplus.viewmodel.ExploreViewModel;
 import com.poliku.polygoplus.ui.EmptyStates;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -32,14 +32,14 @@ import java.util.List;
 public class ExploreFragment extends Fragment {
     private ProductCardAdapter adapter;
     private View empty;
-    private final List<AppDataStore.ProductRecord> allItems = new ArrayList<>();
-    private int currentTab = 0; // 0 for Products, 1 for Services
+    private ExploreViewModel viewModel;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_explore, container, false);
         AppDataStore.initialize(requireContext());
+        viewModel = new ViewModelProvider(this).get(ExploreViewModel.class);
         RecyclerView list = view.findViewById(R.id.rvExplore);
         TabLayout tabs = view.findViewById(R.id.exploreTabs);
 
@@ -50,10 +50,15 @@ public class ExploreFragment extends Fragment {
         });
 
         list.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-        adapter = new ProductCardAdapter(new ArrayList<>(), (a, product) -> {
+        adapter = new ProductCardAdapter(new ArrayList<>(), (a, product, sharedView) -> {
             android.content.Intent intent = new android.content.Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
-            startActivity(intent);
+
+            // Rule 3.1: Visual Clarity (Shared Element Transition)
+            androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    requireActivity(), sharedView, "product_image_hero"
+            );
+            startActivity(intent, options.toBundle());
         });
         list.setAdapter(adapter);
         empty = view.findViewById(R.id.emptyExplore);
@@ -61,60 +66,41 @@ public class ExploreFragment extends Fragment {
                 "Listings from PKS students will show up here.", "Browse categories",
                 v -> startActivity(new android.content.Intent(requireContext(), com.poliku.polygoplus.CategoryBrowseActivity.class)));
         
+        observeViewModel(view);
+
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override public void onTabSelected(TabLayout.Tab tab) { currentTab = tab.getPosition(); filterItems(); }
+            @Override public void onTabSelected(TabLayout.Tab tab) { viewModel.setTab(tab.getPosition()); }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        reloadListings();
+        viewModel.loadListings();
         return view;
     }
 
-    private void reloadListings() {
-        NetworkApi.getListings(new NetworkApi.Callback() {
-            @Override
-            public void onSuccess(JSONObject response) {
-                allItems.clear();
-                JSONArray list = response.optJSONArray("listings");
-                if (list != null) {
-                    for (int i = 0; i < list.length(); i++) {
-                        JSONObject o = list.optJSONObject(i);
-                        if (o != null) {
-                            AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
-                            if (p != null) allItems.add(p);
-                        }
-                    }
-                }
-                filterItems();
-            }
-
-            @Override
-            public void onError(String message) {
-                allItems.clear();
-                allItems.addAll(AppDataStore.getListings(requireContext()));
-                filterItems();
+    private void observeViewModel(View view) {
+        viewModel.filteredItems.observe(getViewLifecycleOwner(), list -> {
+            if (adapter != null) {
+                adapter.updateData(list);
+                RecyclerView rv = view.findViewById(R.id.rvExplore);
+                if (rv != null) rv.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
+                if (empty != null) empty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
             }
         });
-    }
 
-    private void filterItems() {
-        List<AppDataStore.ProductRecord> filtered = new ArrayList<>();
-        String[] serviceCats = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Services"};
-        
-        for (AppDataStore.ProductRecord item : allItems) {
-            boolean isService = false;
-            for (String cat : serviceCats) {
-                if (cat.equalsIgnoreCase(item.category)) { isService = true; break; }
-            }
+        viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            View shimmer = view.findViewById(R.id.shimmerExplore);
+            if (shimmer == null) return;
+            RecyclerView rv = view.findViewById(R.id.rvExplore);
             
-            if (currentTab == 1 && isService) filtered.add(item);
-            else if (currentTab == 0 && !isService) filtered.add(item);
-        }
-
-        if (adapter != null) {
-            adapter.updateData(filtered);
-            if (empty != null) empty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
-        }
+            if (isLoading) {
+                shimmer.setVisibility(View.VISIBLE);
+                ((com.facebook.shimmer.ShimmerFrameLayout) shimmer.findViewById(R.id.shimmerView)).startShimmer();
+                if (rv != null) rv.setVisibility(View.GONE);
+            } else {
+                shimmer.setVisibility(View.GONE);
+                ((com.facebook.shimmer.ShimmerFrameLayout) shimmer.findViewById(R.id.shimmerView)).stopShimmer();
+            }
+        });
     }
 }

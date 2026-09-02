@@ -81,10 +81,13 @@ public class SearchActivity extends AppCompatActivity {
         }
         RecyclerView rv = findViewById(R.id.rvSearchResults);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new ProductCardAdapter(new ArrayList<>(), (a, p) -> {
-            android.content.Intent i = new android.content.Intent(this, ProductDetailActivity.class);
-            i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
-            startActivity(i);
+        adapter = new ProductCardAdapter(new ArrayList<>(), new ProductCardAdapter.Listener() {
+            @Override
+            public void onProduct(ProductCardAdapter adapter, AppDataStore.ProductRecord p, View sharedView) {
+                android.content.Intent i = new android.content.Intent(SearchActivity.this, ProductDetailActivity.class);
+                i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
+                startActivity(i);
+            }
         });
         rv.setAdapter(adapter);
 

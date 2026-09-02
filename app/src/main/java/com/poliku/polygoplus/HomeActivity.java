@@ -23,6 +23,7 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
         EdgeToEdge.enable(this);
         com.poliku.polygoplus.data.AppDataStore.initialize(this);
+        com.poliku.polygoplus.network.NetworkApi.init(this);
         if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
             startActivity(new Intent(this, OnboardingActivity.class));
             finish();
@@ -71,6 +72,7 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.fabAddProduct).setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
             if (!com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this)) {
                 android.widget.Toast.makeText(this, "Login required to post listings", android.widget.Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, LoginActivity.class));
@@ -79,11 +81,13 @@ public class HomeActivity extends AppCompatActivity {
             com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
             dialog.setContentView(R.layout.layout_listing_type_choice);
             dialog.findViewById(R.id.choiceProduct).setOnClickListener(view -> {
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
                 dialog.dismiss();
                 startActivity(new Intent(this, EditProductActivity.class));
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             });
             dialog.findViewById(R.id.choiceService).setOnClickListener(view -> {
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
                 dialog.dismiss();
                 startActivity(new Intent(this, AddServiceActivity.class));
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);

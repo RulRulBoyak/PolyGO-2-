@@ -3,6 +3,7 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,34 +56,41 @@ public class AccountActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnUpdateProfile).setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
             String first = value(R.id.etFirstName);
-            String last = value(R.id.etLastName); 
-            String email = value(R.id.etEmail); 
+            String last = value(R.id.etLastName);
+            String email = value(R.id.etEmail);
             String mobile = value(R.id.etMobileNo);
-            
-            if (first.isEmpty() || last.isEmpty() || email.isEmpty()) { 
-                Toast.makeText(this, "Complete your profile", Toast.LENGTH_SHORT).show(); 
-                return; 
+
+            if (first.isEmpty() || last.isEmpty() || email.isEmpty()) {
+                Toast.makeText(this, "Complete your profile", Toast.LENGTH_SHORT).show();
+                return;
             }
 
             v.setEnabled(false);
             String userId = AppDataStore.userId(this);
             String fullName = first + " " + last;
 
-            NetworkApi.updateProfile(userId, fullName, email, mobile, selectedPhotoUri, new NetworkApi.Callback() {
-                @Override
-                public void onSuccess(JSONObject response) {
-                    AppDataStore.updateProfile(AccountActivity.this, fullName, email, mobile, selectedPhotoUri);
-                    Toast.makeText(AccountActivity.this, "Profile saved", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
+            // If user picked a new LOCAL photo, upload it FIRST
+            if (!selectedPhotoUri.isEmpty() && selectedPhotoUri.startsWith("content://")) {
+                Toast.makeText(this, "Uploading new profile picture...", Toast.LENGTH_SHORT).show();
+                NetworkApi.uploadImage(this, Uri.parse(selectedPhotoUri), new NetworkApi.Callback() {
+                    @Override
+                    public void onSuccess(JSONObject response) {
+                        String serverImageUrl = response.optString("url");
+                        saveProfile(v, userId, fullName, email, mobile, serverImageUrl);
+                    }
 
-                @Override
-                public void onError(String message) {
-                    v.setEnabled(true);
-                    Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-            });
+                    @Override
+                    public void onError(String message) {
+                        v.setEnabled(true);
+                        Toast.makeText(AccountActivity.this, "Upload failed: " + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                // No new photo, just update text data
+                saveProfile(v, userId, fullName, email, mobile, selectedPhotoUri);
+            }
         });
         findViewById(R.id.btnDeleteAccount).setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Delete account")
@@ -94,6 +102,23 @@ public class AccountActivity extends AppCompatActivity {
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }).show());
+    }
+
+    private void saveProfile(View btn, String userId, String name, String email, String mobile, String photoUrl) {
+        NetworkApi.updateProfile(userId, name, email, mobile, photoUrl, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                AppDataStore.updateProfile(AccountActivity.this, name, email, mobile, photoUrl);
+                Toast.makeText(AccountActivity.this, "Profile saved", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+
+            @Override
+            public void onError(String message) {
+                btn.setEnabled(true);
+                Toast.makeText(AccountActivity.this, "Save error: " + message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private String value(int id) { TextInputEditText input=findViewById(id); return input.getText()==null?"":input.getText().toString().trim(); }

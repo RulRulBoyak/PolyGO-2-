@@ -56,24 +56,38 @@
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvExplore"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingHorizontal="8dp"
-        android:clipToPadding="false"
-        android:layoutAnimation="@anim/layout_cascade"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:spanCount="2"
-        tools:listitem="@layout/item_product_card" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <include
-        android:id="@+id/emptyExplore"
-        layout="@layout/layout_empty_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvExplore"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false"
+            android:layoutAnimation="@anim/layout_cascade"
+            android:visibility="gone"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="2"
+            tools:listitem="@layout/item_product_card" />
+
+        <include
+            android:id="@+id/shimmerExplore"
+            layout="@layout/layout_market_shimmer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="8dp" />
+
+        <include
+            android:id="@+id/emptyExplore"
+            layout="@layout/layout_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

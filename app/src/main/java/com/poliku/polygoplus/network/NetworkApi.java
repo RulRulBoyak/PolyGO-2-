@@ -3,6 +3,8 @@ package com.poliku.polygoplus.network;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.poliku.polygoplus.data.AppDataStore;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -18,7 +20,13 @@ public final class NetworkApi {
     // Android emulator -> laptop. For a physical phone, use your laptop Wi-Fi IP instead.
     public static final String BASE_URL = "http://10.0.2.2/polygo-api/";
 
+    private static android.content.Context appContext;
+
     private NetworkApi() { }
+
+    public static void init(android.content.Context context) {
+        appContext = context.getApplicationContext();
+    }
 
     public interface Callback {
         void onSuccess(JSONObject response);
@@ -224,6 +232,97 @@ public final class NetworkApi {
         }
     }
 
+    public static void addTransaction(String userId, String listingId, String sellerId, String amount, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("listing_id", listingId);
+            body.put("seller_id", sellerId);
+            body.put("amount", amount);
+            body.put("action", "add");
+            post("transactions.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void getTransactions(String userId, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("action", "list");
+            post("transactions.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void updateTransactionStatus(String userId, String transactionId, String status, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("transaction_id", transactionId);
+            body.put("status", status);
+            body.put("action", "update");
+            post("transactions.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void uploadImage(android.content.Context context, android.net.Uri uri, Callback callback) {
+        new Thread(() -> {
+            HttpURLConnection connection = null;
+            try {
+                String boundary = "Boundary-" + System.currentTimeMillis();
+                connection = (HttpURLConnection) new URL(BASE_URL + "upload_image.php").openConnection();
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                // AUTHENTICATION: Add JWT Token if available
+                if (appContext != null) {
+                    String token = AppDataStore.userToken(appContext);
+                    if (token != null && !token.isEmpty()) {
+                        connection.setRequestProperty("Authorization", "Bearer " + token);
+                    }
+                }
+
+                try (OutputStream out = connection.getOutputStream();
+                     java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(out, StandardCharsets.UTF_8), true);
+                     InputStream imageStream = context.getContentResolver().openInputStream(uri)) {
+
+                    writer.append("--").append(boundary).append("\r\n");
+                    writer.append("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"\r\n");
+                    writer.append("Content-Type: image/jpeg\r\n\r\n");
+                    writer.flush();
+
+                    byte[] buffer = new byte[4096];
+                    int n;
+                    while ((n = imageStream.read(buffer)) != -1) out.write(buffer, 0, n);
+                    out.flush();
+
+                    writer.append("\r\n--").append(boundary).append("--\r\n");
+                    writer.flush();
+                }
+
+                int status = connection.getResponseCode();
+                InputStream stream = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
+                String responseText = read(stream);
+                JSONObject response = new JSONObject(responseText);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (response.optBoolean("success")) callback.onSuccess(response);
+                    else callback.onError(response.optString("message", "Upload failed"));
+                });
+
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Upload error: " + e.getMessage()));
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }).start();
+    }
+
     private static void post(String endpoint, JSONObject body, Callback callback) {
         new Thread(() -> {
             HttpURLConnection connection = null;
@@ -233,6 +332,15 @@ public final class NetworkApi {
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                
+                // AUTHENTICATION: Add JWT Token if available
+                if (appContext != null) {
+                    String token = AppDataStore.userToken(appContext);
+                    if (token != null && !token.isEmpty()) {
+                        connection.setRequestProperty("Authorization", "Bearer " + token);
+                    }
+                }
+
                 connection.setDoOutput(true);
                 byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
                 try (OutputStream output = connection.getOutputStream()) {
@@ -248,20 +356,39 @@ public final class NetworkApi {
                 try {
                     JSONObject response = new JSONObject(responseText);
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        if (response.optBoolean("success")) callback.onSuccess(response);
-                        else
-                            callback.onError(response.optString("message", "The server rejected the request"));
+                        if (response.optBoolean("success")) {
+                            callback.onSuccess(response);
+                        } else {
+                            String msg = response.optString("message", "The server rejected the request");
+                            
+                            // Rule 3.3: Human-readable Error Copywriting
+                            String humanMsg = msg;
+                            String lowerMsg = msg.toLowerCase();
+                            if (lowerMsg.contains("unauthorized") || lowerMsg.contains("invalid token")) {
+                                humanMsg = "Your session expired. Please sign in again.";
+                                if (appContext != null) AppDataStore.logout(appContext);
+                            } else if (lowerMsg.contains("failed to add") || lowerMsg.contains("listing error")) {
+                                humanMsg = "We couldn't save your listing. Please check your data.";
+                            } else if (lowerMsg.contains("duplicate") || lowerMsg.contains("already exists")) {
+                                humanMsg = "This item or account already exists. Try something else!";
+                            } else if (lowerMsg.contains("incorrect password") || lowerMsg.contains("invalid login")) {
+                                humanMsg = "Check your ID or password and try again.";
+                            } else if (lowerMsg.contains("database error") || lowerMsg.contains("sql")) {
+                                humanMsg = "Our database is having a moment. We're fixing it!";
+                            }
+                            callback.onError(humanMsg);
+                        }
                     });
                 } catch (org.json.JSONException e) {
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("The server returned an invalid response. Please try again later."));
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("The connection was successful, but the data is temporarily unavailable."));
                 }
             } catch (java.net.SocketTimeoutException e) {
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("The request timed out. Please check your connection."));
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Connection slow. Please try again when you have a better signal."));
             } catch (java.io.IOException e) {
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network error. Cannot reach the PolyGo server."));
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network offline. Please check your Wi-Fi or mobile data."));
             } catch (Exception e) {
                 android.util.Log.e("NetworkApi", "Connection error for " + endpoint + ": " + e.getMessage(), e);
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("An unexpected error occurred: " + e.getLocalizedMessage()));
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Something went wrong on our end. We're working on it!"));
             } finally {
                 if (connection != null) connection.disconnect();
             }

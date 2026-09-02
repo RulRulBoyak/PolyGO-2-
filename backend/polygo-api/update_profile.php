@@ -2,8 +2,10 @@
 require_once __DIR__ . '/config.php';
 
 try {
+    // SECURITY: Verify JWT and get actual User ID
+    $userId = verify_jwt();
+
     $input = input_json();
-    $userId = (int)($input['user_id'] ?? 0);
     $name = $input['full_name'] ?? '';
     $email = $input['email'] ?? '';
     $mobile = $input['mobile'] ?? '';

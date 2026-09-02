@@ -32,7 +32,6 @@
             android:background="@android:color/transparent"
             app:elevation="0dp"
             app:itemHorizontalTranslationEnabled="false"
-            app:itemRippleColor="@android:color/transparent"
             app:itemActiveIndicatorStyle="@null"
             app:itemIconTint="@color/nav_item_color"
             app:itemTextColor="@color/nav_item_color"

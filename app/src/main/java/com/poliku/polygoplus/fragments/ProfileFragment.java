@@ -21,6 +21,7 @@ import com.poliku.polygoplus.SavedItemsActivity;
 import com.poliku.polygoplus.TransactionsActivity;
 import com.poliku.polygoplus.VerificationActivity;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 public class ProfileFragment extends Fragment {
@@ -41,12 +42,16 @@ public class ProfileFragment extends Fragment {
         if (loggedIn) {
             ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText(AppDataStore.userName(requireContext()));
             ((android.widget.TextView) view.findViewById(R.id.tvUserRole)).setText("★  " + AppDataStore.userRole(requireContext()));
-            
+
             String photo = AppDataStore.userProfilePic(requireContext());
             if (!photo.isEmpty()) {
-                ((android.widget.ImageView) view.findViewById(R.id.ivProfile)).setImageURI(android.net.Uri.parse(photo));
+                Glide.with(this)
+                        .load(photo)
+                        .circleCrop()
+                        .placeholder(R.drawable.logo_polygo)
+                        .into((android.widget.ImageView) view.findViewById(R.id.ivProfile));
             }
-            
+
             view.findViewById(R.id.ivLogout).setVisibility(View.VISIBLE);
         } else {
             ((android.widget.TextView)view.findViewById(R.id.tvUserName)).setText("Guest User");

@@ -16,10 +16,12 @@
         android:paddingTop="16dp">
 
         <LinearLayout
+            android:id="@+id/searchBarContainer"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:transitionName="search_bar_hero">
 
             <ImageButton
                 android:id="@+id/btnBack"
