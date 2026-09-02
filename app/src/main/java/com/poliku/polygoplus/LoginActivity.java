@@ -8,37 +8,53 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.lifecycle.ViewModelProvider;
+import com.poliku.polygoplus.viewmodel.AuthViewModel;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.textfield.TextInputEditText;
+import android.text.Editable;
+import android.text.TextWatcher;
+
 public class LoginActivity extends AppCompatActivity {
+    private AuthViewModel viewModel;
+    private TextInputEditText etMatrix, etPassword;
+    private TextInputLayout tilMatrix, tilPassword;
+    private android.widget.Button btnLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         AppDataStore.initialize(this);
+        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+
+        etMatrix = findViewById(R.id.etMatrixNo);
+        etPassword = findViewById(R.id.etPassword);
+        tilMatrix = findViewById(R.id.tilMatrix);
+        tilPassword = findViewById(R.id.tilPassword);
+        btnLogin = findViewById(R.id.btnLoginNormal);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        
+        setupValidation();
 
-        findViewById(R.id.btnLoginNormal).setOnClickListener(v -> {
-            String studentId = ((com.google.android.material.textfield.TextInputEditText)findViewById(R.id.etMatrixNo)).getText().toString().trim();
-            String password = ((com.google.android.material.textfield.TextInputEditText)findViewById(R.id.etPassword)).getText().toString();
-            if (studentId.isEmpty() || password.isEmpty()) { Toast.makeText(this, "Enter your ID and password", Toast.LENGTH_SHORT).show(); return; }
-            findViewById(R.id.btnLoginNormal).setEnabled(false);
+        btnLogin.setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            String studentId = etMatrix.getText().toString().trim();
+            String password = etPassword.getText().toString();
+            btnLogin.setEnabled(false);
             NetworkApi.login(studentId, password, new NetworkApi.Callback() {
                 @Override public void onSuccess(org.json.JSONObject response) {
-                    AppDataStore.saveRemoteSession(LoginActivity.this, response.optJSONObject("user"));
+                    AppDataStore.saveRemoteSession(LoginActivity.this, 
+                            response.optJSONObject("user"), 
+                            response.optString("token"));
                     startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     finish();
                 }
                 @Override public void onError(String message) {
-                    findViewById(R.id.btnLoginNormal).setEnabled(true);
-                    String userFriendlyMessage = message;
-                    if (message.toLowerCase().contains("invalid") || message.toLowerCase().contains("credentials")) {
-                        userFriendlyMessage = "Invalid Student ID or Password. Please try again.";
-                    } else if (message.toLowerCase().contains("reach") || message.toLowerCase().contains("connection")) {
-                        userFriendlyMessage = "Cannot connect to server. Check your internet.";
-                    }
-                    Toast.makeText(LoginActivity.this, userFriendlyMessage, Toast.LENGTH_LONG).show();
+                    btnLogin.setEnabled(true);
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
                 }
             });
         });
@@ -48,6 +64,23 @@ public class LoginActivity extends AppCompatActivity {
         });
         findViewById(R.id.tvForgotPassword).setOnClickListener(v ->
                 startActivity(new Intent(this, ForgotPasswordActivity.class)));
+    }
+
+    private void setupValidation() {
+        TextWatcher watcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                viewModel.validateLogin(etMatrix.getText().toString(), etPassword.getText().toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        };
+
+        etMatrix.addTextChangedListener(watcher);
+        etPassword.addTextChangedListener(watcher);
+
+        viewModel.matrixError.observe(this, error -> tilMatrix.setError(error));
+        viewModel.passwordError.observe(this, error -> tilPassword.setError(error));
+        viewModel.isLoginFormValid.observe(this, isValid -> btnLogin.setEnabled(isValid));
     }
 
     @Override

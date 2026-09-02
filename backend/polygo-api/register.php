@@ -15,7 +15,13 @@ try {
     $query = $pdo->prepare('INSERT INTO users (full_name, student_id, email, password_hash) VALUES (?, ?, ?, ?)');
     $query->execute([$name, $studentId, $email, password_hash($password, PASSWORD_DEFAULT)]);
     $id = (int)$pdo->lastInsertId();
-    respond(true, 'Account created', ['user' => ['id' => $id, 'name' => $name, 'studentId' => $studentId, 'email' => $email, 'mobile' => '']]);
+
+    $token = create_jwt($id);
+
+    respond(true, 'Account created', [
+        'token' => $token,
+        'user' => ['id' => $id, 'name' => $name, 'studentId' => $studentId, 'email' => $email, 'mobile' => '']
+    ]);
 } catch (PDOException $error) {
     if ($error->getCode() === '23000') respond(false, 'Student ID or email already exists');
     respond(false, 'Could not create the account');

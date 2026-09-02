@@ -8,8 +8,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.imageview.ShapeableImageView;
+import androidx.core.view.ViewCompat;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
 
@@ -67,18 +70,21 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void renderProduct() {
         ShapeableImageView image = findViewById(R.id.productImage);
-        if (product.imageUri == null || product.imageUri.isEmpty()) {
-            image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
-        } else {
-            try {
-                image.setImageURI(android.net.Uri.parse(product.imageUri));
-                if (image.getDrawable() == null) {
-                    image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
-                }
-            } catch (Exception e) {
-                image.setImageResource(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home);
-            }
-        }
+        
+        // Rule 3.1: Visual Continuity (Shared Element Transition Target)
+        ViewCompat.setTransitionName(image, "product_image_hero");
+
+        // Use Glide for both Local and Server URLs
+        Object imageSource = (product.imageUri == null || product.imageUri.isEmpty()) 
+                ? (product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home) 
+                : product.imageUri;
+
+        Glide.with(this)
+                .load(imageSource)
+                .placeholder(R.drawable.bg_product_home)
+                .error(R.drawable.bg_product_home)
+                .centerCrop()
+                .into(image);
 
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);
         ((TextView) findViewById(R.id.productPrice)).setText("RM " + product.price);
@@ -107,7 +113,10 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
 
         saveButton.setSelected(AppDataStore.isFavorite(this, product.id));
-        saveButton.setOnClickListener(v -> toggleFavorite());
+        saveButton.setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+            toggleFavorite();
+        });
 
         MaterialButton message = findViewById(R.id.btnMessageSeller);
         if (product.owner) {
@@ -138,6 +147,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnMakeOffer).setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
             if (!AppDataStore.isLoggedIn(this)) {
                 Toast.makeText(this, "Please log in to make an offer", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, LoginActivity.class));
@@ -158,22 +168,72 @@ public class ProductDetailActivity extends AppCompatActivity {
             @Override
             public void onSuccess(org.json.JSONObject response) {
                 AppDataStore.toggleFavorite(ProductDetailActivity.this, product.id);
-                saveButton.setSelected(AppDataStore.isFavorite(ProductDetailActivity.this, product.id));
-                Toast.makeText(ProductDetailActivity.this, saveButton.isSelected() ? "Saved to your items" : "Removed from saved items", Toast.LENGTH_SHORT).show();
+                boolean isFav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
+                saveButton.setSelected(isFav);
+                
+                if (!isFav) {
+                    Snackbar.make(saveButton, "Removed from saved items", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO", v -> toggleFavorite())
+                            .setActionTextColor(getResources().getColor(R.color.pks_blue_variant))
+                            .show();
+                } else {
+                    Toast.makeText(ProductDetailActivity.this, "Saved to your items", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onError(String message) {
                 // Local toggle if network fails
                 AppDataStore.toggleFavorite(ProductDetailActivity.this, product.id);
-                saveButton.setSelected(AppDataStore.isFavorite(ProductDetailActivity.this, product.id));
-                Toast.makeText(ProductDetailActivity.this, saveButton.isSelected() ? "Saved (local only)" : "Removed (local only)", Toast.LENGTH_SHORT).show();
+                boolean isFav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
+                saveButton.setSelected(isFav);
+
+                if (!isFav) {
+                    Snackbar.make(saveButton, "Removed (offline)", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO", v -> toggleFavorite())
+                            .show();
+                } else {
+                    Toast.makeText(ProductDetailActivity.this, "Saved (offline)", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void showOfferDialog() {
-        EditText input = new EditText(this); input.setHint("Amount in RM"); input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL); input.setSingleLine(true);
-        new AlertDialog.Builder(this).setTitle("Make an offer").setMessage("Send an offer to " + product.seller).setView(input).setNegativeButton("Cancel", null).setPositiveButton("Send offer", (d,w) -> { String amount=input.getText().toString().trim(); if (amount.isEmpty()) { Toast.makeText(this,"Enter an offer amount",Toast.LENGTH_SHORT).show(); return; } AppDataStore.addTransaction(this, product.id, product.title, "RM " + amount); Toast.makeText(this,"Offer sent",Toast.LENGTH_SHORT).show(); }).show();
+        EditText input = new EditText(this);
+        input.setHint("Amount in RM");
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setSingleLine(true);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Make an offer")
+                .setMessage("Send an offer to " + product.seller)
+                .setView(input)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Send offer", (d, w) -> {
+                    String amount = input.getText().toString().trim();
+                    if (amount.isEmpty()) {
+                        Toast.makeText(this, "Enter an offer amount", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Professional Real Transaction Flow
+                    String userId = AppDataStore.userId(this);
+                    NetworkApi.addTransaction(userId, product.id, product.ownerId, amount, new NetworkApi.Callback() {
+                        @Override
+                        public void onSuccess(org.json.JSONObject response) {
+                            // HYBRID RESILIENCE: Save locally for offline view, but it's officially on the server now
+                            AppDataStore.addTransaction(ProductDetailActivity.this, product.id, product.title, "RM " + amount);
+                            Toast.makeText(ProductDetailActivity.this, "Offer sent successfully!", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            // Fallback to local only for demo stability if network fails
+                            AppDataStore.addTransaction(ProductDetailActivity.this, product.id, product.title, "RM " + amount);
+                            Toast.makeText(ProductDetailActivity.this, "Offer sent (Local Only)", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }).show();
     }
 }

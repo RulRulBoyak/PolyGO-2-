@@ -15,6 +15,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.lifecycle.ViewModelProvider;
+import com.poliku.polygoplus.viewmodel.AddServiceViewModel;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -26,7 +28,7 @@ import org.json.JSONObject;
 
 public class AddServiceActivity extends AppCompatActivity {
 
-    private String selectedImageUri = "";
+    private AddServiceViewModel viewModel;
     private TextInputLayout tilCustomCategory;
     private TextInputEditText etCustomCategory, etTitle, etPrice, etAvailability, etDescription, etTime;
     private AutoCompleteTextView autoCategory;
@@ -36,6 +38,7 @@ public class AddServiceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_service);
+        viewModel = new ViewModelProvider(this).get(AddServiceViewModel.class);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.topBar), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -45,6 +48,42 @@ public class AddServiceActivity extends AppCompatActivity {
 
         setupUI();
         setupCategory();
+        
+        // Rule 3.3: Observe and restore state
+        observeViewModel();
+    }
+
+    private void observeViewModel() {
+        viewModel.imageUri.observe(this, uri -> {
+            if (uri != null && !uri.isEmpty()) {
+                findViewById(R.id.layoutPortfolioPlaceholder).setVisibility(View.GONE);
+                ImageView img = findViewById(R.id.imgPortfolio);
+                img.setImageURI(Uri.parse(uri));
+                img.setVisibility(View.VISIBLE);
+            }
+        });
+        
+        // Restore non-observed simple strings
+        etTitle.setText(viewModel.getTitle());
+        autoCategory.setText(viewModel.getCategory(), false);
+        etPrice.setText(viewModel.getPrice());
+        etAvailability.setText(viewModel.getAvailability());
+        etTime.setText(viewModel.getDeliveryTime());
+        etDescription.setText(viewModel.getDescription());
+        
+        // Note: ChipGroup selection restoration could be more complex, 
+        // for now we stick to text and images which are most critical.
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        viewModel.setTitle(etTitle.getText().toString());
+        viewModel.setCategory(autoCategory.getText().toString());
+        viewModel.setPrice(etPrice.getText().toString());
+        viewModel.setAvailability(etAvailability.getText().toString());
+        viewModel.setDeliveryTime(etTime.getText().toString());
+        viewModel.setDescription(etDescription.getText().toString());
     }
 
     private void setupUI() {
@@ -73,7 +112,7 @@ public class AddServiceActivity extends AppCompatActivity {
         findViewById(R.id.btnSaveServiceDraft).setOnClickListener(v -> {
             AppDataStore.saveDraft(this, etTitle.getText().toString(), 
                     autoCategory.getText().toString(), etPrice.getText().toString(), 
-                    etDescription.getText().toString(), selectedImageUri, "Campus Wide");
+                    etDescription.getText().toString(), viewModel.imageUri.getValue(), "Campus Wide");
             Toast.makeText(this, "Service draft saved", Toast.LENGTH_SHORT).show();
             finish();
         });
@@ -99,54 +138,68 @@ public class AddServiceActivity extends AppCompatActivity {
         String availability = etAvailability.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         String category = autoCategory.getText().toString();
-        
+
         if ("Others".equals(category)) {
             category = etCustomCategory.getText().toString().trim();
         }
 
-        if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
-            Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show();
+        if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty() || viewModel.imageUri.getValue().isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields including a photo", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Pricing Type Prefix
-        int checkedPriceId = chipGroupPriceType.getCheckedChipId();
-        String pricePrefix = "";
-        if (checkedPriceId != View.NO_ID) {
-            Chip chip = findViewById(checkedPriceId);
-            String type = chip.getText().toString();
-            if (type.contains("Starts")) pricePrefix = "Starts at ";
-            else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
-        }
-
-        // Fulfillment Type
-        int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
-        String fulfillment = "In-Person";
-        if (checkedFulfillId != View.NO_ID) {
-            Chip chip = findViewById(checkedFulfillId);
-            fulfillment = chip.getText().toString();
-        }
-
-        String finalPriceDisplay = pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
-        String finalDescription = description + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
-
         findViewById(R.id.btnPublishService).setEnabled(false);
-        String userId = AppDataStore.userId(this);
+        Toast.makeText(this, "Uploading service image...", Toast.LENGTH_SHORT).show();
 
-        // DEMO HYBRID SYNC: Same logic as products
-        AppDataStore.addUserListing(this, title, category, finalPriceDisplay, finalDescription, selectedImageUri, "Campus Wide (Service)");
-
-        NetworkApi.addListing(userId, title, category, finalPriceDisplay, finalDescription, selectedImageUri, new NetworkApi.Callback() {
+        // 1. Upload image first
+        String finalCategory = category;
+        NetworkApi.uploadImage(this, Uri.parse(viewModel.imageUri.getValue()), new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
-                finish();
+                String serverImageUrl = response.optString("url");
+
+                // Pricing logic
+                int checkedPriceId = chipGroupPriceType.getCheckedChipId();
+                String pricePrefix = "";
+                if (checkedPriceId != View.NO_ID) {
+                    Chip chip = findViewById(checkedPriceId);
+                    String type = chip.getText().toString();
+                    if (type.contains("Starts")) pricePrefix = "Starts at ";
+                    else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
+                }
+
+                // Fulfillment Type
+                int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
+                String fulfillment = "In-Person";
+                if (checkedFulfillId != View.NO_ID) {
+                    Chip chip = findViewById(checkedFulfillId);
+                    fulfillment = chip.getText().toString();
+                }
+
+                String finalPriceDisplay = pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
+                String finalDescription = description + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
+
+                // 2. Add listing with real URL
+                NetworkApi.addListing(AppDataStore.userId(AddServiceActivity.this), title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, new NetworkApi.Callback() {
+                    @Override
+                    public void onSuccess(JSONObject response) {
+                        AppDataStore.addUserListing(AddServiceActivity.this, title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, "Campus Wide (Service)");
+                        Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        findViewById(R.id.btnPublishService).setEnabled(true);
+                        Toast.makeText(AddServiceActivity.this, "Post error: " + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
             public void onError(String message) {
-                Toast.makeText(AddServiceActivity.this, "Service posted (Local Mode)", Toast.LENGTH_LONG).show();
-                finish();
+                findViewById(R.id.btnPublishService).setEnabled(true);
+                Toast.makeText(AddServiceActivity.this, "Upload failed: " + message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -158,11 +211,7 @@ public class AddServiceActivity extends AppCompatActivity {
             Uri uri = data.getData();
             try {
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                selectedImageUri = uri.toString();
-                findViewById(R.id.layoutPortfolioPlaceholder).setVisibility(View.GONE);
-                ImageView img = findViewById(R.id.imgPortfolio);
-                img.setImageURI(uri);
-                img.setVisibility(View.VISIBLE);
+                viewModel.setImageUri(uri.toString());
             } catch (Exception ignored) {}
         }
     }

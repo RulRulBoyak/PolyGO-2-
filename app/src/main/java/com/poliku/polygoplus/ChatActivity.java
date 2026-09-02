@@ -135,6 +135,9 @@ public class ChatActivity extends AppCompatActivity {
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
                 loadMessages();
+
+                // Rule 3.3: Interactive Demo - Simulate seller response
+                showTypingAndReply(text);
             }
 
             @Override
@@ -142,6 +145,11 @@ public class ChatActivity extends AppCompatActivity {
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
                 Toast.makeText(ChatActivity.this, "Network error: " + message, Toast.LENGTH_SHORT).show();
+                
+                // Even on error, show local message and trigger reply for demo feel
+                AppDataStore.sendMessage(ChatActivity.this, threadId, text);
+                showLocalMessages();
+                showTypingAndReply(text);
             }
         });
     }
@@ -159,9 +167,13 @@ public class ChatActivity extends AppCompatActivity {
         if (tvTyping != null) {
             tvTyping.setText(otherName + " is typing...");
             tvTyping.setVisibility(View.VISIBLE);
+            // Scroll to bottom so typing indicator is visible
+            if (adapter.getItemCount() > 0) messageList.scrollToPosition(adapter.getItemCount() - 1);
         }
         
-        // WhatsApp-style typing delay (4-5 seconds)
+        // Rule 3.1: Variability - Realistic typing delay (3-6 seconds)
+        long delay = 3000 + (long)(Math.random() * 3000);
+        
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (tvTyping != null) tvTyping.setVisibility(View.GONE);
             
@@ -171,7 +183,7 @@ public class ChatActivity extends AppCompatActivity {
                 AppDataStore.addReplyToThread(ChatActivity.this, threadId, otherName, reply);
                 showLocalMessages();
             }
-        }, 4500);
+        }, delay);
     }
 
     private String getAutoReply(String userMessage) {
@@ -179,25 +191,28 @@ public class ChatActivity extends AppCompatActivity {
         String reply;
 
         if (containsPhrase(msg, "available", "ada lagi", "still have", "in stock", "sold out", "habis")) {
-            reply = "Yes, it's still available! A few people asked already, but first come first served. Are you a student or staff?";
+            String[] options = {
+                "Yes, it's still available! Are you a student or staff? I'm usually at the Library area.",
+                "It's still here! A few people messaged me but nobody confirmed yet. Want to see it tomorrow?",
+                "Available! I can bring it to Block A Cafeteria later if you're interested."
+            };
+            reply = options[(int) (Math.random() * options.length)];
         } else if (containsPhrase(msg, "price", "berapa", "cheap", "discount", "kurang", "murah", "offer", "nego")) {
-            reply = "I can give a small student discount if you pick it up today at the Student Centre. How does RM 5 less sound?";
+            reply = "I can give a small student discount if you pick it up at the Student Centre. How about RM 5 less?";
         } else if (containsPhrase(msg, "meet", "meetup", "where", "jumpa", "lokasi", "location", "library", "cafeteria", "block")) {
-            reply = "We can meet at the PKS Library or Block A Cafeteria tomorrow between 1pm and 2pm. Does that work for you?";
+            reply = "We can meet at the PKS Library or Block B between 1pm and 2pm tomorrow. Does that work for you?";
         } else if (containsPhrase(msg, "condition", "rosak", "problem", "used", "quality", "original")) {
-            reply = "It's in almost perfect condition, only used for one semester. You can check it properly when we meet.";
-        } else if (containsPhrase(msg, "student", "lecturer", "staff")) {
-            reply = "Great — always nicer dealing with fellow PKS community members. Tell me when you want to proceed.";
+            reply = "It's in great condition! Used it for one semester only. No major scratches or issues.";
         } else if (containsPhrase(msg, "thank", "thanks", "terima kasih", "tq")) {
-            reply = "You're welcome! Message me again if you need anything else.";
+            reply = "You're welcome! Let me know if you want to proceed with the deal. 🤝";
         } else if (isGreeting(msg)) {
-            reply = "Walaikumussalam! Hi, I'm the seller. How can I help you today?";
+            reply = "Walaikumussalam! Hi, I'm at the campus now. Are you interested in the item?";
         } else {
-            reply = "Got it. Do you want to check availability, price, or a meetup spot at PKS?";
+            reply = "Got it. I'm usually around the Main Hall or Cafeteria if you want to meetup and check the item.";
         }
 
         if (reply.equals(lastAutoReply)) {
-            reply = "I already noted that. Want me to confirm if it's still available, the price, or a meetup time?";
+            reply = "Let me know if you want to set a time to meet up at PKS! I'm free after my lecture.";
         }
         return reply;
     }

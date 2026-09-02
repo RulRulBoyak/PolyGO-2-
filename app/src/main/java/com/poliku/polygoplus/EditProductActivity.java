@@ -12,6 +12,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.lifecycle.ViewModelProvider;
+import com.poliku.polygoplus.viewmodel.EditProductViewModel;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -21,16 +23,25 @@ import org.json.JSONObject;
 
 public class EditProductActivity extends AppCompatActivity {
 
-    private TextInputEditText etPrice, etCustomCategory;
+    private EditProductViewModel viewModel;
+    private TextInputEditText etName, etPrice, etDescription, etCustomCategory;
+    private AutoCompleteTextView autoCompleteCategory, autoCompleteLocation;
     private TextInputLayout tilCustomCategory;
-    private double currentPrice = 0.0;
-    private String selectedImageUri = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_product);
         AppDataStore.initialize(this);
+        viewModel = new ViewModelProvider(this).get(EditProductViewModel.class);
+
+        etName = findViewById(R.id.etProductName);
+        etPrice = findViewById(R.id.etPrice);
+        etDescription = findViewById(R.id.etDescription);
+        etCustomCategory = findViewById(R.id.etCustomCategory);
+        autoCompleteCategory = findViewById(R.id.autoCompleteCategory);
+        autoCompleteLocation = findViewById(R.id.autoCompleteLocation);
+        tilCustomCategory = findViewById(R.id.tilCustomCategory);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.topBar), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -58,33 +69,58 @@ public class EditProductActivity extends AppCompatActivity {
         setupPublishAction();
         setupLocationPicker();
         setupDraftAction();
+        
+        // Rule 3.3: Observe and restore state
+        observeViewModel();
+        
         loadDraftIfAny();
     }
 
+    private void observeViewModel() {
+        viewModel.price.observe(this, value -> etPrice.setText(String.format("%.2f", value)));
+        viewModel.imageUri.observe(this, uri -> {
+            if (uri != null && !uri.isEmpty()) {
+                android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
+                image.setImageURI(android.net.Uri.parse(uri.split("\\|")[0]));
+                image.setVisibility(View.VISIBLE);
+                findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Save current input to ViewModel
+        viewModel.setTitle(etName.getText().toString());
+        viewModel.setCategory(autoCompleteCategory.getText().toString());
+        viewModel.setDescription(etDescription.getText().toString());
+        viewModel.setLocation(autoCompleteLocation.getText().toString());
+    }
+
     private void setupLocationPicker() {
-        AutoCompleteTextView location = findViewById(R.id.autoCompleteLocation);
-        location.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, AppDataStore.PKS_LANDMARKS));
+        autoCompleteLocation.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, AppDataStore.PKS_LANDMARKS));
         com.google.android.material.chip.ChipGroup chips = findViewById(R.id.chipGroupMeetup);
         chips.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             android.view.View chip = group.findViewById(checkedIds.get(0));
             if (chip instanceof com.google.android.material.chip.Chip) {
-                location.setText(((com.google.android.material.chip.Chip) chip).getText());
+                autoCompleteLocation.setText(((com.google.android.material.chip.Chip) chip).getText());
             }
         });
     }
 
     private String selectedLocation() {
-        AutoCompleteTextView location = findViewById(R.id.autoCompleteLocation);
-        String value = location.getText() == null ? "" : location.getText().toString().trim();
+        String value = autoCompleteLocation.getText() == null ? "" : autoCompleteLocation.getText().toString().trim();
         return value.isEmpty() ? "Near campus" : value;
     }
 
     private void setupDraftAction() {
         findViewById(R.id.btnSaveDraft).setOnClickListener(v -> {
-            AppDataStore.saveDraft(this, value(R.id.etProductName),
-                    ((AutoCompleteTextView) findViewById(R.id.autoCompleteCategory)).getText().toString().trim(),
-                    value(R.id.etPrice), value(R.id.etDescription), selectedImageUri, selectedLocation());
+            AppDataStore.saveDraft(this, etName.getText().toString(),
+                    autoCompleteCategory.getText().toString().trim(),
+                    etPrice.getText().toString(), etDescription.getText().toString(), 
+                    viewModel.imageUri.getValue(), selectedLocation());
             Toast.makeText(this, "Draft saved", Toast.LENGTH_SHORT).show();
             finish();
         });
@@ -92,21 +128,22 @@ public class EditProductActivity extends AppCompatActivity {
 
     private void loadDraftIfAny() {
         String draftId = getIntent().getStringExtra("draft_id");
-        if (draftId == null) return;
+        if (draftId == null) {
+            // Restore from ViewModel if not a draft
+            etName.setText(viewModel.getTitle());
+            autoCompleteCategory.setText(viewModel.getCategory(), false);
+            etDescription.setText(viewModel.getDescription());
+            autoCompleteLocation.setText(viewModel.getLocation(), false);
+            return;
+        }
         org.json.JSONObject draft = AppDataStore.getDraft(this, draftId);
         if (draft == null) return;
-        ((TextInputEditText) findViewById(R.id.etProductName)).setText(draft.optString("title"));
-        ((AutoCompleteTextView) findViewById(R.id.autoCompleteCategory)).setText(draft.optString("category"), false);
-        ((TextInputEditText) findViewById(R.id.etPrice)).setText(draft.optString("price"));
-        ((TextInputEditText) findViewById(R.id.etDescription)).setText(draft.optString("description"));
-        ((AutoCompleteTextView) findViewById(R.id.autoCompleteLocation)).setText(draft.optString("location", "Near campus"), false);
-        selectedImageUri = draft.optString("imageUri");
-        if (!selectedImageUri.isEmpty()) {
-            android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
-            image.setImageURI(android.net.Uri.parse(selectedImageUri.split("\\|")[0]));
-            image.setVisibility(View.VISIBLE);
-            findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
-        }
+        etName.setText(draft.optString("title"));
+        autoCompleteCategory.setText(draft.optString("category"), false);
+        etPrice.setText(draft.optString("price"));
+        etDescription.setText(draft.optString("description"));
+        autoCompleteLocation.setText(draft.optString("location", "Near campus"), false);
+        viewModel.setImageUri(draft.optString("imageUri"));
     }
 
     private void setupToolbar() {
@@ -114,35 +151,21 @@ public class EditProductActivity extends AppCompatActivity {
     }
 
     private void setupPriceAdjuster() {
-        etPrice = findViewById(R.id.etPrice);
-        
         findViewById(R.id.btnPricePlus).setOnClickListener(v -> {
-            currentPrice += 1.0;
-            updatePriceDisplay();
+            viewModel.adjustPrice(1.0);
         });
 
         findViewById(R.id.btnPriceMinus).setOnClickListener(v -> {
-            if (currentPrice >= 1.0) {
-                currentPrice -= 1.0;
-                updatePriceDisplay();
-            }
+            viewModel.adjustPrice(-1.0);
         });
-    }
-
-    private void updatePriceDisplay() {
-        etPrice.setText(String.format("%.2f", currentPrice));
     }
 
     private void setupCategoryDropdown() {
         String[] categories = {"Electronics", "Fashion", "Home", "Books", "Services", "Others"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categories);
-        AutoCompleteTextView autoComplete = findViewById(R.id.autoCompleteCategory);
-        autoComplete.setAdapter(adapter);
+        autoCompleteCategory.setAdapter(adapter);
 
-        tilCustomCategory = findViewById(R.id.tilCustomCategory);
-        etCustomCategory = findViewById(R.id.etCustomCategory);
-
-        autoComplete.setOnItemClickListener((parent, view, position, id) -> {
+        autoCompleteCategory.setOnItemClickListener((parent, view, position, id) -> {
             String selected = categories[position];
             if ("Others".equalsIgnoreCase(selected)) {
                 tilCustomCategory.setVisibility(View.VISIBLE);
@@ -155,50 +178,62 @@ public class EditProductActivity extends AppCompatActivity {
 
     private void setupPublishAction() {
         findViewById(R.id.btnSaveProduct).setOnClickListener(v -> {
-            String title = value(R.id.etProductName);
-            String category = ((AutoCompleteTextView)findViewById(R.id.autoCompleteCategory)).getText().toString().trim();
+            String title = etName.getText().toString().trim();
+            String category = autoCompleteCategory.getText().toString().trim();
             if ("Others".equalsIgnoreCase(category)) {
                 category = etCustomCategory.getText() == null ? "" : etCustomCategory.getText().toString().trim();
             }
-            String price = value(R.id.etPrice);
-            String description = value(R.id.etDescription);
+            String price = etPrice.getText().toString();
+            String description = etDescription.getText().toString();
 
-            if (selectedImageUri.isEmpty()) { Toast.makeText(this, "Add at least one photo", Toast.LENGTH_SHORT).show(); return; }
-            if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
-                Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show();
-                if (category.isEmpty() && tilCustomCategory.getVisibility() == View.VISIBLE) {
-                    etCustomCategory.setError("Enter a category name");
-                }
+            String currentImage = viewModel.imageUri.getValue();
+            if (currentImage == null || currentImage.isEmpty()) {
+                Toast.makeText(this, "Add at least one photo", Toast.LENGTH_SHORT).show();
                 return;
             }
-            try { if (Double.parseDouble(price) <= 0) { Toast.makeText(this, "Price must be greater than zero", Toast.LENGTH_SHORT).show(); return; } } catch (NumberFormatException e) { Toast.makeText(this, "Enter a valid price", Toast.LENGTH_SHORT).show(); return; }
-            
-            String userId = AppDataStore.userId(this);
-            v.setEnabled(false);
-            
-            // HYBRID SYNC: Save locally first so it shows up in Search immediately even if XAMPP fails
-            AppDataStore.addUserListing(this, title, category, price, description, selectedImageUri, selectedLocation());
-            String draftId = getIntent().getStringExtra("draft_id");
-            if (draftId != null) AppDataStore.deleteDraft(this, draftId);
+            if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
+                Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            NetworkApi.addListing(userId, title, category, price, description, selectedImageUri, new NetworkApi.Callback() {
+            v.setEnabled(false);
+            Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
+
+            // 1. Get the first image URI
+            android.net.Uri uri = android.net.Uri.parse(currentImage.split("\\|")[0]);
+            String finalCategory = category;
+
+            // 2. Upload to server FIRST
+            NetworkApi.uploadImage(this, uri, new NetworkApi.Callback() {
                 @Override
                 public void onSuccess(JSONObject response) {
-                    Toast.makeText(EditProductActivity.this, "Listing published", Toast.LENGTH_LONG).show();
-                    finish();
+                    String serverImageUrl = response.optString("url");
+                    
+                    // 3. Now add the listing with the REAL server URL
+                    NetworkApi.addListing(AppDataStore.userId(EditProductActivity.this), title, finalCategory, price, description, serverImageUrl, new NetworkApi.Callback() {
+                        @Override
+                        public void onSuccess(JSONObject response) {
+                            AppDataStore.addUserListing(EditProductActivity.this, title, finalCategory, price, description, serverImageUrl, selectedLocation());
+                            Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            v.setEnabled(true);
+                            Toast.makeText(EditProductActivity.this, "Listing error: " + message, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
 
                 @Override
                 public void onError(String message) {
-                    // XAMPP failed but it's okay for demo, we already saved it locally
-                    Toast.makeText(EditProductActivity.this, "Published (Demo Mode)", Toast.LENGTH_LONG).show();
-                    finish();
+                    v.setEnabled(true);
+                    Toast.makeText(EditProductActivity.this, "Upload failed: " + message, Toast.LENGTH_SHORT).show();
                 }
             });
         });
     }
-
-    private String value(int id) { TextInputEditText input = findViewById(id); return input.getText() == null ? "" : input.getText().toString().trim(); }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -218,11 +253,7 @@ public class EditProductActivity extends AppCompatActivity {
             } catch (SecurityException ignored) {
             }
         }
-        selectedImageUri = String.join("|", uris);
-        android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
-        image.setImageURI(android.net.Uri.parse(uris.get(0)));
-        image.setVisibility(View.VISIBLE);
-        findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
+        viewModel.setImageUri(String.join("|", uris));
     }
 
     @Override

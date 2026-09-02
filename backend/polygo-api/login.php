@@ -19,11 +19,18 @@ try {
     }
 
     unset($user['password_hash']);
-    $user['id'] = (int)$user['id'];
+    $userId = (int)$user['id'];
+    $user['id'] = $userId;
     $user['name'] = $user['full_name'];
     $user['studentId'] = $user['student_id'];
 
-    respond(true, 'Login successful', ['user' => $user]);
+    // Generate Security Token
+    $token = create_jwt($userId);
+
+    respond(true, 'Login successful', [
+        'user' => $user,
+        'token' => $token
+    ]);
 
 } catch (Exception $e) {
     respond(false, 'Database error: ' . $e->getMessage());

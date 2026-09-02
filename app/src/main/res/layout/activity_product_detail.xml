@@ -3,12 +3,43 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="28dp">
         <FrameLayout android:layout_width="match_parent" android:layout_height="300dp">
             <com.google.android.material.imageview.ShapeableImageView android:id="@+id/productImage" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:clickable="true" android:focusable="true" />
-            <ImageButton android:id="@+id/btnBack" android:layout_width="44dp" android:layout_height="44dp" android:layout_margin="16dp" android:background="@drawable/bg_favorite_button" android:contentDescription="Back" android:src="@android:drawable/ic_menu_revert" app:tint="@color/airbnb_ink" />
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="16dp"
+                android:background="@drawable/bg_favorite_button"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/airbnb_ink" />
         </FrameLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="22dp">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-                <TextView android:id="@+id/productTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/airbnb_ink" android:textSize="24sp" android:textStyle="bold" />
-                <com.google.android.material.button.MaterialButton android:id="@+id/btnSave" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="42dp" android:text="Save" android:textAllCaps="false" app:icon="@android:drawable/btn_star_big_off" app:iconTint="@color/airbnb_coral" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="22dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/productTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSave"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Save"
+                    android:textAllCaps="false"
+                    app:icon="@android:drawable/btn_star_big_off"
+                    app:iconTint="@color/airbnb_coral" />
             </LinearLayout>
             <TextView android:id="@+id/productPrice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/pks_blue" android:textSize="22sp" android:textStyle="bold" />
             <TextView android:id="@+id/productMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/airbnb_muted" android:textSize="14sp" />

@@ -41,6 +41,7 @@
                         android:padding="2dp"
                         android:scaleType="centerCrop"
                         android:src="@android:drawable/ic_menu_myplaces"
+                        android:transitionName="profile_pic_hero"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
@@ -92,6 +93,7 @@
                     android:layout_height="60dp"
                     android:layout_marginHorizontal="24dp"
                     android:layout_marginTop="-30dp"
+                    android:transitionName="search_bar_hero"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="6dp"
                     app:strokeWidth="0dp">
@@ -255,9 +257,18 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginHorizontal="12dp"
                 android:nestedScrollingEnabled="false"
+                android:visibility="gone"
                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                 app:spanCount="2"
                 tools:listitem="@layout/item_product_card" />
+
+            <include
+                android:id="@+id/shimmerMarket"
+                layout="@layout/layout_market_shimmer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginHorizontal="12dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
