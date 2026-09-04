@@ -11,7 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
-
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.poliku.polygoplus.data.AppDataStore;
 
 public class OnboardingActivity extends AppCompatActivity {
@@ -54,6 +55,10 @@ public class OnboardingActivity extends AppCompatActivity {
                 return TITLES.length;
             }
         });
+
+        com.google.android.material.tabs.TabLayout tabLayoutDots = findViewById(R.id.tabLayoutDots);
+        new TabLayoutMediator(tabLayoutDots, pager, (tab, position) -> {}).attach();
+
         findViewById(R.id.btnOnboardingNext).setOnClickListener(v -> {
             if (pager.getCurrentItem() < TITLES.length - 1) pager.setCurrentItem(pager.getCurrentItem() + 1);
             else finishOnboarding();

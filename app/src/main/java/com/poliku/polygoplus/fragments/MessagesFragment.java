@@ -32,6 +32,7 @@ import java.util.List;
 public class MessagesFragment extends androidx.fragment.app.Fragment {
     private ConversationAdapter adapter;
     private View empty;
+    private View shimmer;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -41,6 +42,7 @@ public class MessagesFragment extends androidx.fragment.app.Fragment {
         adapter = new ConversationAdapter();
         recyclerView.setAdapter(adapter);
         empty = view.findViewById(R.id.tvEmptyMessages);
+        shimmer = view.findViewById(R.id.shimmerMessages);
         EmptyStates.bind(empty, android.R.drawable.ic_dialog_email, "No messages yet",
                 "Message a seller from a listing to start a campus chat.", "Find a listing",
                 v -> startActivity(new android.content.Intent(requireContext(), SearchActivity.class)));
@@ -77,9 +79,21 @@ public class MessagesFragment extends androidx.fragment.app.Fragment {
 
     private void loadThreads() {
         String userId = AppDataStore.userId(requireContext());
+        if (shimmer != null) {
+            shimmer.setVisibility(View.VISIBLE);
+            if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).startShimmer();
+            }
+        }
         NetworkApi.getThreads(userId, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
+                if (shimmer != null) {
+                    if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                        ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).stopShimmer();
+                    }
+                    shimmer.setVisibility(View.GONE);
+                }
                 List<AppDataStore.ThreadRecord> result = new ArrayList<>();
                 JSONArray list = response.optJSONArray("threads");
                 if (list != null) {
@@ -91,20 +105,36 @@ public class MessagesFragment extends androidx.fragment.app.Fragment {
                 if (adapter != null) {
                     adapter.submit(result);
                     updateEmpty();
+                    View rv = getView() != null ? getView().findViewById(R.id.rvMessages) : null;
+                    if (rv != null) rv.setVisibility(result.isEmpty() ? View.GONE : View.VISIBLE);
                 }
             }
 
             @Override
             public void onError(String message) {
+                if (shimmer != null) {
+                    if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                        ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).stopShimmer();
+                    }
+                    shimmer.setVisibility(View.GONE);
+                }
                 if (adapter != null) {
-                    adapter.submit(AppDataStore.getThreads(requireContext()));
+                    List<AppDataStore.ThreadRecord> local = AppDataStore.getThreads(requireContext());
+                    adapter.submit(local);
                     updateEmpty();
+                    View rv = getView() != null ? getView().findViewById(R.id.rvMessages) : null;
+                    if (rv != null) rv.setVisibility(local.isEmpty() ? View.GONE : View.VISIBLE);
                 }
             }
         });
     }
 
     private void updateEmpty() {
-        if (empty != null) empty.setVisibility(adapter.getItemCount() == 0 ? View.VISIBLE : View.GONE);
+        if (empty != null) {
+            boolean isEmpty = adapter.getItemCount() == 0;
+            empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            View rv = getView() != null ? getView().findViewById(R.id.rvMessages) : null;
+            if (rv != null && !isEmpty) rv.setVisibility(View.VISIBLE);
+        }
     }
 }

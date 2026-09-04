@@ -1,31 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:fitsSystemWindows="true">
 
+    <!-- Edge-to-edge Swipeable Pager Area -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/onboardingPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toTopOf="@id/bottomActionContainer"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnOnboardingNext"
-        style="@style/Widget.PolyGo.Button"
+    <!-- Bottom Action & Indicator Area -->
+    <LinearLayout
+        android:id="@+id/bottomActionContainer"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="Next"
-        android:textAllCaps="false" />
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="48dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnOnboardingSkip"
-        style="@style/Widget.PolyGo.Button.Outlined"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="8dp"
-        android:text="Skip"
-        android:textAllCaps="false" />
-</LinearLayout>
+        <!-- Modern Dot Progress Indicator -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayoutDots"
+            android:layout_width="wrap_content"
+            android:layout_height="12dp"
+            android:layout_marginBottom="28dp"
+            android:background="@android:color/transparent"
+            app:tabBackground="@drawable/bg_dot_indicator"
+            app:tabGravity="center"
+            app:tabIndicatorHeight="0dp"
+            app:tabMaxWidth="24dp"
+            app:tabMode="fixed"
+            app:tabPaddingEnd="8dp"
+            app:tabPaddingStart="8dp"
+            app:tabRippleColor="@android:color/transparent" />
+
+        <!-- Primary Call to Action -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOnboardingNext"
+            style="@style/Widget.PolyGo.Button"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:letterSpacing="0.01"
+            android:text="Next"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/pks_blue"
+            app:cornerRadius="16dp"
+            app:elevation="0dp" />
+
+        <!-- Secondary Skip Action -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOnboardingSkip"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:text="Skip"
+            android:textAllCaps="false"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="14sp"
+            app:rippleColor="#15000000" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

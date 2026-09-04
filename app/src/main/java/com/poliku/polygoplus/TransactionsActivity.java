@@ -69,43 +69,26 @@ public class TransactionsActivity extends AppCompatActivity {
         emptyView.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
         
         for (AppDataStore.TransactionRecord t : items) {
-            MaterialCardView card = new MaterialCardView(this);
-            card.setRadius(16);
-            card.setCardElevation(2);
-            card.setUseCompatPadding(true);
+            View view = getLayoutInflater().inflate(R.layout.item_transaction, listContainer, false);
             
-            LinearLayout inner = new LinearLayout(this);
-            inner.setOrientation(LinearLayout.VERTICAL);
-            inner.setPadding(24, 20, 24, 20);
+            ((TextView) view.findViewById(R.id.tvTransactionTitle)).setText(t.title);
+            ((TextView) view.findViewById(R.id.tvTransactionAmount)).setText(t.amount);
+            TextView status = view.findViewById(R.id.tvTransactionStatus);
+            status.setText(t.status);
+            ((TextView) view.findViewById(R.id.tvTransactionLocation)).setText(t.location);
             
-            TextView title = new TextView(this);
-            title.setText(t.title);
-            title.setTextSize(17);
-            title.setTypeface(null, android.graphics.Typeface.BOLD);
-            title.setTextColor(getResources().getColor(R.color.airbnb_ink));
-            
-            TextView details = new TextView(this);
-            details.setText(t.amount + "  •  " + t.status);
-            details.setTextSize(14);
-            details.setPadding(0, 4, 0, 0);
-            
-            TextView location = new TextView(this);
-            location.setText("📍 " + t.location);
-            location.setTextSize(13);
-            location.setPadding(0, 8, 0, 0);
-            location.setTextColor(getResources().getColor(R.color.airbnb_muted));
+            if ("Completed".equalsIgnoreCase(t.status)) {
+                status.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE8F5E9));
+                status.setTextColor(0xFF2E7D32);
+            }
 
-            inner.addView(title);
-            inner.addView(details);
-            inner.addView(location);
-            
-            card.addView(inner);
-            card.setOnClickListener(v -> {
+            view.setOnClickListener(v -> {
                 Intent i = new Intent(this, OrderDetailActivity.class);
                 i.putExtra(OrderDetailActivity.EXTRA_TRANSACTION_ID, t.id);
                 startActivity(i);
             });
-            listContainer.addView(card);
+            
+            listContainer.addView(view);
         }
     }
 }

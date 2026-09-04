@@ -5,50 +5,66 @@
     android:id="@+id/home_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:fitsSystemWindows="false">
 
+    <!-- Primary Destination Fragment Container -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="60dp" />
+        android:layout_height="match_parent" />
 
+    <!-- Bottom App Bar: Sleek, slim height -->
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottomAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:backgroundTint="@color/white"
+        android:minHeight="64dp"
+        app:contentInsetEnd="0dp"
+        app:contentInsetLeft="0dp"
+        app:contentInsetRight="0dp"
+        app:contentInsetStart="0dp"
+        app:elevation="8dp"
         app:fabAlignmentMode="center"
-        app:fabAnimationMode="slide"
-        app:fabCradleMargin="32dp"
-        app:fabCradleRoundedCornerRadius="24dp"
+        app:fabCradleMargin="12dp"
+        app:fabCradleRoundedCornerRadius="20dp"
         app:fabCradleVerticalOffset="0dp">
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavigationView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="64dp"
             android:background="@android:color/transparent"
             app:elevation="0dp"
-            app:itemHorizontalTranslationEnabled="false"
             app:itemActiveIndicatorStyle="@null"
+            app:itemHorizontalTranslationEnabled="false"
+            app:itemIconSize="22dp"
             app:itemIconTint="@color/nav_item_color"
+            app:itemPaddingTop="8dp"
+            app:itemPaddingBottom="4dp"
             app:itemTextColor="@color/nav_item_color"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav_menu" />
 
     </com.google.android.material.bottomappbar.BottomAppBar>
 
+    <!-- Center Floating Action Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddProduct"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
         android:contentDescription="Add Product"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/airbnb_coral"
+        app:elevation="4dp"
+        app:fabSize="normal"
         app:layout_anchor="@id/bottomAppBar"
         app:layout_anchorGravity="center"
+        app:maxImageSize="24dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

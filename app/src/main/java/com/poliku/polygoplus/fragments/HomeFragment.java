@@ -58,12 +58,6 @@ public class HomeFragment extends Fragment {
         
         observeViewModel();
         viewModel.loadProducts();
-
-        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.appBar), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
-            return insets;
-        });
     }
 
     private void observeViewModel() {

@@ -25,6 +25,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_detail);
+        postponeEnterTransition();
 
         String id = getIntent().getStringExtra(EXTRA_LISTING_ID);
         if (id == null || id.isEmpty()) {
@@ -84,6 +85,19 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .placeholder(R.drawable.bg_product_home)
                 .error(R.drawable.bg_product_home)
                 .centerCrop()
+                .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
+                        startPostponedEnterTransition();
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
+                        startPostponedEnterTransition();
+                        return false;
+                    }
+                })
                 .into(image);
 
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);

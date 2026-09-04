@@ -9,6 +9,10 @@
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:stateListAnimator="@animator/press_scale"
     app:strokeWidth="0dp">
 
     <LinearLayout

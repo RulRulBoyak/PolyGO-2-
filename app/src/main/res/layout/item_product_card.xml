@@ -10,6 +10,7 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    android:stateListAnimator="@animator/press_scale"
     app:cardBackgroundColor="@color/white"
     app:cardElevation="2dp"
     app:strokeWidth="0dp">

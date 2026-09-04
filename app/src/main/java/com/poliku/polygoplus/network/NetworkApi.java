@@ -137,7 +137,7 @@ public final class NetworkApi {
         }
     }
 
-    public static void addListing(String ownerId, String title, String category, String price, String description, String image, Callback callback) {
+    public static void addListing(String ownerId, String title, String category, String price, String description, String image, String location, Callback callback) {
         try {
             JSONObject body = new JSONObject();
             body.put("owner_id", ownerId);
@@ -146,6 +146,7 @@ public final class NetworkApi {
             body.put("price", price);
             body.put("description", description);
             body.put("image_url", image);
+            body.put("location", location);
             post("add_listing.php", body, callback);
         } catch (Exception e) {
             callback.onError("Request error");

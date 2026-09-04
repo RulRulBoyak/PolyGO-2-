@@ -95,11 +95,15 @@ public class ExploreFragment extends Fragment {
             
             if (isLoading) {
                 shimmer.setVisibility(View.VISIBLE);
-                ((com.facebook.shimmer.ShimmerFrameLayout) shimmer.findViewById(R.id.shimmerView)).startShimmer();
+                if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                    ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).startShimmer();
+                }
                 if (rv != null) rv.setVisibility(View.GONE);
             } else {
                 shimmer.setVisibility(View.GONE);
-                ((com.facebook.shimmer.ShimmerFrameLayout) shimmer.findViewById(R.id.shimmerView)).stopShimmer();
+                if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                    ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).stopShimmer();
+                }
             }
         });
     }

@@ -180,7 +180,7 @@ public class AddServiceActivity extends AppCompatActivity {
                 String finalDescription = description + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
 
                 // 2. Add listing with real URL
-                NetworkApi.addListing(AppDataStore.userId(AddServiceActivity.this), title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, new NetworkApi.Callback() {
+                NetworkApi.addListing(AppDataStore.userId(AddServiceActivity.this), title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, "Campus Wide (Service)", new NetworkApi.Callback() {
                     @Override
                     public void onSuccess(JSONObject response) {
                         AppDataStore.addUserListing(AddServiceActivity.this, title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, "Campus Wide (Service)");

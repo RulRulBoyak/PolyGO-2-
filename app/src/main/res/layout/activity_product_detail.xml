@@ -1,58 +1,355 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/white">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="28dp">
-        <FrameLayout android:layout_width="match_parent" android:layout_height="300dp">
-            <com.google.android.material.imageview.ShapeableImageView android:id="@+id/productImage" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:clickable="true" android:focusable="true" />
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="16dp"
-                android:background="@drawable/bg_favorite_button"
-                android:contentDescription="Back"
-                android:src="@drawable/ic_arrow_back"
-                app:tint="@color/airbnb_ink" />
-        </FrameLayout>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- Scrollable Main Product Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="22dp">
+            android:paddingBottom="120dp">
+
+            <!-- Immersive Hero Image Container -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="330dp">
+
+                <!-- Hero Product Image (Shared Element Transition ready) -->
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/productImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:contentDescription="Product Image"
+                    android:focusable="true"
+                    android:scaleType="centerCrop"
+                    android:transitionName="product_image_hero"
+                    tools:src="@tools:sample/backgrounds/scenic" />
+
+                <!-- Subtle Top Gradient Scrim for Contrast -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="90dp"
+                    android:background="#25000000" />
+
+                <!-- Floating Glass Back Button -->
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnBack"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:layout_margin="16dp"
+                    android:background="@color/white"
+                    android:clickable="true"
+                    android:contentDescription="Back"
+                    android:elevation="4dp"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_arrow_back"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                    app:strokeColor="@color/grey_200"
+                    app:strokeWidth="1dp"
+                    app:tint="@color/airbnb_ink" />
+
+            </FrameLayout>
+
+            <!-- Product Details Body -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/productTitle"
-                    android:layout_width="0dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="20dp">
+
+                <!-- Title & Save Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="@color/airbnb_ink"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSave"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:gravity="top"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/productTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="12dp"
+                        android:layout_weight="1"
+                        android:letterSpacing="-0.02"
+                        android:lineSpacingExtra="3dp"
+                        android:textColor="@color/airbnb_ink"
+                        android:textSize="23sp"
+                        android:textStyle="bold"
+                        tools:text="Engineering Mathematics 2 (Used, Good Condition)" />
+
+                    <!-- Save / Favorite Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSave"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:letterSpacing="0.01"
+                        android:paddingHorizontal="14dp"
+                        android:text="Save"
+                        android:textAllCaps="false"
+                        android:textColor="@color/airbnb_ink"
+                        android:textSize="13sp"
+                        app:cornerRadius="21dp"
+                        app:icon="@android:drawable/btn_star_big_off"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/airbnb_coral"
+                        app:strokeColor="@color/grey_200"
+                        app:strokeWidth="1.2dp" />
+                </LinearLayout>
+
+                <!-- Product Price -->
+                <TextView
+                    android:id="@+id/productPrice"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:text="Save"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:letterSpacing="-0.01"
+                    android:textColor="@color/pks_blue"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="RM 45.00" />
+
+                <!-- Rating, Distance, Category Meta Tag -->
+                <TextView
+                    android:id="@+id/productMeta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/airbnb_muted"
+                    android:textSize="13.5sp"
+                    tools:text="★ 4.9 (18 reviews) • Block B, PKS • Textbooks" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@color/grey_200" />
+
+                <!-- Description Section -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="-0.01"
+                    android:text="About this listing"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/productDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="14.5sp"
+                    tools:text="Barely used for 1 semester only. All pages are intact with minor pencil highlights on chapter 3. Can meet up at PKS Library or Student Center anytime after 4pm." />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="22dp"
+                    android:layout_marginBottom="22dp"
+                    android:background="@color/grey_200" />
+
+                <!-- Seller Profile Snippet Card -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="-0.01"
+                    android:text="Meet the seller"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/grey_200"
+                    app:strokeWidth="1.2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Avatar Badge -->
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@color/soft_blue"
+                            android:padding="8dp"
+                            android:src="@android:drawable/ic_menu_myplaces"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                            app:strokeColor="@color/grey_200"
+                            app:strokeWidth="1dp"
+                            app:tint="@color/pks_blue" />
+
+                        <!-- Seller Info Details -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/sellerName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:textColor="@color/pks_blue"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:text="Amirul Farhan" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Verified Student • PKS Campus"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
+
+                        <!-- Right Affordance Chevron -->
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="View Profile"
+                            android:src="@drawable/ic_nav_explore"
+                            app:tint="@color/airbnb_muted" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Owner Action: Mark as Sold (Default: Gone) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMarkSold"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Mark as Sold"
                     android:textAllCaps="false"
-                    app:icon="@android:drawable/btn_star_big_off"
-                    app:iconTint="@color/airbnb_coral" />
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="@color/grey_200"
+                    tools:visibility="visible" />
+
+                <!-- Secondary Action: Report Listing -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnReportListing"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Report this listing"
+                    android:textAllCaps="false"
+                    android:textColor="@color/airbnb_muted"
+                    android:textSize="13sp"
+                    app:rippleColor="#15000000" />
+
             </LinearLayout>
-            <TextView android:id="@+id/productPrice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/pks_blue" android:textSize="22sp" android:textStyle="bold" />
-            <TextView android:id="@+id/productMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/airbnb_muted" android:textSize="14sp" />
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginVertical="22dp" android:background="@color/airbnb_border" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="About this listing" android:textColor="@color/airbnb_ink" android:textSize="18sp" android:textStyle="bold" />
-            <TextView android:id="@+id/productDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/airbnb_muted" android:textSize="15sp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:text="Seller" android:textColor="@color/airbnb_ink" android:textSize="18sp" android:textStyle="bold" />
-            <TextView android:id="@+id/sellerName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/pks_blue" android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" android:paddingVertical="4dp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tap to see reputation, sales and other listings" android:textColor="@color/airbnb_muted" android:textSize="13sp" />
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnMessageSeller" style="@style/Widget.PolyGo.Button.Outlined" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="24dp" android:text="Message seller" android:textAllCaps="false" />
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnMakeOffer" style="@style/Widget.PolyGo.Button" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:text="Make an offer" android:textAllCaps="false" />
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnMarkSold" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:text="Mark as sold" android:textAllCaps="false" android:visibility="gone" />
-            <com.google.android.material.button.MaterialButton android:id="@+id/btnReportListing" style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Report this listing" android:textAllCaps="false" android:textColor="@color/airbnb_muted" />
+
         </LinearLayout>
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Sticky Floating Bottom CTA Bar -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/productBottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="12dp"
+        app:strokeColor="@color/grey_200"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <!-- Secondary: Message Seller -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMessageSeller"
+                style="@style/Widget.PolyGo.Button.Outlined"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:letterSpacing="0.01"
+                android:text="Chat"
+                android:textAllCaps="false"
+                android:textColor="@color/pks_blue"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@android:drawable/ic_dialog_email"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/pks_blue"
+                app:strokeColor="@color/pks_blue"
+                app:strokeWidth="1.2dp" />
+
+            <!-- Primary: Make Offer / Buy -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMakeOffer"
+                style="@style/Widget.PolyGo.Button"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1.5"
+                android:letterSpacing="0.01"
+                android:text="Make an Offer"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/airbnb_coral"
+                app:cornerRadius="14dp"
+                app:elevation="0dp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

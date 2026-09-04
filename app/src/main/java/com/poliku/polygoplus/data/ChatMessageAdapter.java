@@ -1,18 +1,16 @@
 package com.poliku.polygoplus.data;
 
-import android.graphics.Color;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.R;
+import com.poliku.polygoplus.databinding.ItemChatMessageBinding;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -38,21 +36,39 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
     }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new Holder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_message, parent, false));
+        return new Holder(ItemChatMessageBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         JSONObject message = messages.get(position);
         boolean mine = message.optBoolean("mine", currentUser.equals(message.optString("sender")));
-        holder.body.setText(message.optString("text"));
-        holder.time.setText(formatTime(message.optLong("time", 0)));
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) holder.bubble.getLayoutParams();
-        params.gravity = mine ? Gravity.END : Gravity.START;
-        holder.bubble.setLayoutParams(params);
-        holder.bubble.setBackgroundResource(mine ? R.drawable.bg_chat_bubble_mine : R.drawable.bg_chat_bubble_other);
-        holder.body.setTextColor(mine ? Color.WHITE : Color.parseColor("#222222"));
-        holder.time.setTextColor(mine ? 0xCCFFFFFF : Color.parseColor("#717171"));
-        holder.bubble.setGravity(mine ? Gravity.END : Gravity.START);
+        ItemChatMessageBinding binding = holder.binding;
+        android.content.Context context = binding.getRoot().getContext();
+
+        binding.messageBody.setText(message.optString("text"));
+        binding.messageTime.setText(formatTime(message.optLong("time", 0)));
+
+        if (mine) {
+            binding.layoutMessageContainer.setGravity(Gravity.END);
+            binding.messageBubble.setCardBackgroundColor(ContextCompat.getColor(context, R.color.pks_blue));
+            binding.messageBody.setTextColor(ContextCompat.getColor(context, R.color.white));
+            binding.messageTime.setTextColor(ContextCompat.getColor(context, R.color.white));
+            
+            // Adjust margins for gravity
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) binding.messageBubble.getLayoutParams();
+            params.gravity = Gravity.END;
+            binding.messageBubble.setLayoutParams(params);
+        } else {
+            binding.layoutMessageContainer.setGravity(Gravity.START);
+            binding.messageBubble.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white));
+            binding.messageBody.setTextColor(ContextCompat.getColor(context, R.color.airbnb_ink));
+            binding.messageTime.setTextColor(ContextCompat.getColor(context, R.color.airbnb_muted));
+
+            // Adjust margins for gravity
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) binding.messageBubble.getLayoutParams();
+            params.gravity = Gravity.START;
+            binding.messageBubble.setLayoutParams(params);
+        }
     }
 
     private String formatTime(long timestamp) {
@@ -63,8 +79,10 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
     @Override public int getItemCount() { return messages.size(); }
 
     static class Holder extends RecyclerView.ViewHolder {
-        final LinearLayout bubble;
-        final TextView body, time;
-        Holder(View view) { super(view); bubble=view.findViewById(R.id.messageBubble); body=view.findViewById(R.id.messageBody); time=view.findViewById(R.id.messageTime); }
+        final ItemChatMessageBinding binding;
+        Holder(ItemChatMessageBinding binding) { 
+            super(binding.getRoot()); 
+            this.binding = binding; 
+        }
     }
 }

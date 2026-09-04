@@ -1,56 +1,218 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fitsSystemWindows="true">
 
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Back"
-        android:src="@drawable/ic_arrow_back"
-        android:tint="@color/airbnb_ink" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Digital receipt"
-        android:textColor="@color/airbnb_ink"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-
-    <com.google.android.material.card.MaterialCardView
+    <!-- Sticky Navigation Header -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/receiptAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:padding="8dp">
+        android:background="@color/white"
+        app:elevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="Back"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:strokeColor="@color/grey_200"
+                app:strokeWidth="1dp"
+                app:tint="@color/airbnb_ink" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:letterSpacing="-0.01"
+                android:text="Digital Receipt"
+                android:textColor="@color/airbnb_ink"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/grey_200" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Scrollable Receipt Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="24dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="48dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="PolyGo+  •  PKS campus"
-                android:textColor="@color/pks_blue"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvReceiptBody"
+            <!-- E-Ticket / Digital Receipt Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:lineSpacingExtra="6dp"
-                android:textColor="@color/airbnb_ink"
-                android:textSize="15sp" />
+                app:cardBackgroundColor="#F9FAFC"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/grey_200"
+                app:strokeWidth="1.2dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Watermark Logo for Authenticity -->
+                    <ImageView
+                        android:layout_width="160dp"
+                        android:layout_height="160dp"
+                        android:alpha="0.03"
+                        android:contentDescription="Watermark"
+                        android:src="@drawable/bg_verified_badge"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.4"
+                        app:tint="@color/airbnb_ink" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <!-- Ticket Header -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="20dp"
+                            android:paddingTop="24dp"
+                            android:paddingBottom="16dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@android:drawable/ic_lock_idle_lock"
+                                app:tint="@color/pks_blue" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:letterSpacing="0.05"
+                                android:text="POLYGO+ OFFICIAL RECEIPT"
+                                android:textColor="@color/pks_blue"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <!-- Dashed Separator -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:layout_marginHorizontal="20dp"
+                            android:background="@drawable/bg_dashed_line"
+                            android:layerType="software" />
+
+                        <!-- Dynamic Transaction Body (Preserved ID) -->
+                        <!-- Uses monospace font to simulate a POS terminal/invoice layout -->
+                        <TextView
+                            android:id="@+id/tvReceiptBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:lineSpacingExtra="8dp"
+                            android:paddingHorizontal="24dp"
+                            android:paddingVertical="24dp"
+                            android:textColor="@color/airbnb_ink"
+                            android:textSize="14sp"
+                            tools:text="DATE: 24 AUG 2024\nTIME: 14:32 MYT\nORDER ID: #PG-88291A\n\nSELLER: Amirul Farhan\nITEM: Eng Math 2 Textbook\n\n------------------------\n\nTOTAL PAID:   RM 45.00\nSTATUS:       COMPLETED\n\n------------------------\n\nThank you for trading safely on the PKS Campus." />
+
+                        <!-- Dashed Separator -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:layout_marginHorizontal="20dp"
+                            android:background="@drawable/bg_dashed_line"
+                            android:layerType="software" />
+
+                        <!-- Ticket Footer (QR Placeholder) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="20dp"
+                            android:paddingTop="24dp"
+                            android:paddingBottom="32dp">
+
+                            <ImageView
+                                android:layout_width="80dp"
+                                android:layout_height="80dp"
+                                android:alpha="0.8"
+                                android:contentDescription="QR Code"
+                                android:src="@android:drawable/ic_dialog_dialer"
+                                app:tint="@color/airbnb_ink" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:fontFamily="monospace"
+                                android:letterSpacing="0.1"
+                                android:text="PG-88291A"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="12sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Helper Text Below Receipt -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:text="Present this digital receipt to campus administration if you need to resolve a dispute."
+                android:textColor="@color/airbnb_muted"
+                android:textSize="12sp" />
+
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-</LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

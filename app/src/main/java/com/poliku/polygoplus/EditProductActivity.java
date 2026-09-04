@@ -210,7 +210,7 @@ public class EditProductActivity extends AppCompatActivity {
                     String serverImageUrl = response.optString("url");
                     
                     // 3. Now add the listing with the REAL server URL
-                    NetworkApi.addListing(AppDataStore.userId(EditProductActivity.this), title, finalCategory, price, description, serverImageUrl, new NetworkApi.Callback() {
+                    NetworkApi.addListing(AppDataStore.userId(EditProductActivity.this), title, finalCategory, price, description, serverImageUrl, selectedLocation(), new NetworkApi.Callback() {
                         @Override
                         public void onSuccess(JSONObject response) {
                             AppDataStore.addUserListing(EditProductActivity.this, title, finalCategory, price, description, serverImageUrl, selectedLocation());

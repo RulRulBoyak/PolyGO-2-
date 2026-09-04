@@ -154,17 +154,32 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingBottom="100dp"
+            android:visibility="gone"
+            android:layoutAnimation="@anim/layout_cascade"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_message" />
 
         <include
-            android:id="@+id/tvEmptyMessages"
-            layout="@layout/layout_empty_state"
+            android:id="@+id/shimmerMessages"
+            layout="@layout/layout_message_shimmer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="80dp"
-            android:visibility="gone" />
+            android:layout_height="match_parent" />
+
+        <!-- Empty State Container (Wrapped in ScrollView to prevent clipping) -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/tvEmptyMessages"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <include
+                layout="@layout/layout_empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="80dp" />
+        </androidx.core.widget.NestedScrollView>
 
     </FrameLayout>
 

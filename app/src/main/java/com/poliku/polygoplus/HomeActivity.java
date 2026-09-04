@@ -44,8 +44,9 @@ public class HomeActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottomAppBar), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), systemBars.bottom);
-            return insets.CONSUMED;
+            // Add full system bar bottom padding to ensure text and icons are clear of the gesture bar
+            v.setPadding(0, 0, 0, systemBars.bottom); 
+            return insets;
         });
 
         bottomNavigationView.setOnItemSelectedListener(item -> {

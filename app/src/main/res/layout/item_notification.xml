@@ -1,58 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
+    android:layout_marginVertical="5dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/airbnb_border"
+    app:strokeColor="@color/grey_200"
     app:strokeWidth="1dp">
 
-    <LinearLayout
-        android:id="@+id/notificationContent"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="16dp">
 
+        <!-- Leading Bell / Alert Icon Badge -->
+        <FrameLayout
+            android:id="@+id/layoutNotificationIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_category_circle"
+            android:backgroundTint="@color/soft_blue"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:contentDescription="Notification Icon"
+                android:src="@drawable/ic_nav_explore"
+                app:tint="@color/pks_blue" />
+        </FrameLayout>
+
+        <!-- Unread Vibrant Dot Indicator -->
         <View
             android:id="@+id/notificationUnreadDot"
-            android:layout_width="9dp"
-            android:layout_height="9dp"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="5dp"
-            android:layout_marginEnd="10dp"
-            android:background="@drawable/bg_favorite_button" />
+            android:background="@drawable/bg_category_circle"
+            android:backgroundTint="@color/airbnb_coral"
+            app:layout_constraintStart_toEndOf="@id/layoutNotificationIcon"
+            app:layout_constraintTop_toTopOf="@id/layoutNotificationIcon" />
 
-        <LinearLayout
+        <!-- Notification Title -->
+        <TextView
+            android:id="@+id/notificationTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:letterSpacing="-0.01"
+            android:maxLines="1"
+            android:textColor="@color/airbnb_ink"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/notificationTime"
+            app:layout_constraintStart_toEndOf="@id/notificationUnreadDot"
+            app:layout_constraintTop_toTopOf="@id/layoutNotificationIcon"
+            tools:text="Offer Accepted!" />
 
-            <TextView
-                android:id="@+id/notificationTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/airbnb_ink"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+        <!-- Timestamp (e.g. '2m ago') -->
+        <TextView
+            android:id="@+id/notificationTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="11.5sp"
+            app:layout_constraintBaseline_toBaselineOf="@id/notificationTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="5m ago" />
 
-            <TextView
-                android:id="@+id/notificationBody"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="13sp" />
+        <!-- Notification Body Content -->
+        <TextView
+            android:id="@+id/notificationBody"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:lineSpacingExtra="2dp"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/layoutNotificationIcon"
+            app:layout_constraintTop_toBottomOf="@id/notificationTitle"
+            tools:text="Amirul accepted your request for 'Graphic Design Service'. Tap here to chat and set up a meetup location." />
 
-            <TextView
-                android:id="@+id/notificationTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="11sp" />
-        </LinearLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </com.google.android.material.card.MaterialCardView>

@@ -1,40 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="12dp"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:layout_marginEnd="16dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackgroundBorderless"
+    android:stateListAnimator="@animator/press_scale">
 
+    <!-- Tactile Category Bubble Container -->
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="74dp"
-        android:layout_height="74dp"
-        app:cardBackgroundColor="@color/surface_variant_light"
-        app:cardCornerRadius="20dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:clickable="false"
+        android:focusable="false"
+        app:cardBackgroundColor="#F6F8FB"
+        app:cardCornerRadius="36dp"
         app:cardElevation="0dp"
-        app:strokeColor="@color/grey_200"
-        app:strokeWidth="1dp"
-        android:stateListAnimator="@animator/press_scale">
+        app:strokeColor="#EAECEF"
+        app:strokeWidth="1.2dp">
 
         <ImageView
             android:id="@+id/imageViewCategory"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_gravity="center"
-            android:src="@android:drawable/ic_menu_gallery"
-            app:tint="@color/pks_blue" />
+            android:scaleType="fitCenter"
+            app:tint="#264653"
+            tools:src="@android:drawable/ic_menu_camera" />
 
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Refined Minimalist Label -->
     <TextView
         android:id="@+id/textViewCategoryName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Category"
+        android:layout_marginTop="8dp"
+        android:letterSpacing="-0.01"
+        android:maxLines="1"
         android:textColor="@color/airbnb_ink"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:textSize="12.5sp"
+        android:textStyle="bold"
+        tools:text="Electronics" />
 
 </LinearLayout>
