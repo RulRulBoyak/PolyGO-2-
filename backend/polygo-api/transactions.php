@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/NotificationManager.php';
 
 try {
     // SECURITY: Verify JWT and get actual User ID
@@ -26,7 +27,23 @@ try {
 
         $query = $pdo->prepare('INSERT INTO transactions (listing_id, buyer_id, seller_id, amount, status) VALUES (?, ?, ?, ?, "offer_sent")');
         if ($query->execute([$listingId, $userId, $sellerId, $amount])) {
-            respond(true, 'Offer sent successfully', ['id' => $pdo->lastInsertId()]);
+            $transactionId = $pdo->lastInsertId();
+
+            // Notify Seller
+            $bQuery = $pdo->prepare('SELECT full_name FROM users WHERE id = ?');
+            $bQuery->execute([$userId]);
+            $buyerName = $bQuery->fetchColumn();
+
+            $lQuery = $pdo->prepare('SELECT title FROM listings WHERE id = ?');
+            $lQuery->execute([$listingId]);
+            $itemTitle = $lQuery->fetchColumn();
+
+            NotificationManager::sendToUser($pdo, $sellerId, "New Offer Received!", $buyerName . " offered RM " . number_format($amount, 2) . " for your " . $itemTitle, [
+                'type' => 'offer',
+                'transaction_id' => (string)$transactionId
+            ]);
+
+            respond(true, 'Offer sent successfully', ['id' => $transactionId]);
         } else {
             respond(false, 'Failed to send offer');
         }

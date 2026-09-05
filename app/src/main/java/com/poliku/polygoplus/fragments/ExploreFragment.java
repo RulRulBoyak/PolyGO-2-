@@ -74,6 +74,24 @@ public class ExploreFragment extends Fragment {
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
+        list.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0) { // Scrolling down
+                    GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
+
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
+                            viewModel.loadMore();
+                        }
+                    }
+                }
+            }
+        });
+
         viewModel.loadListings();
         return view;
     }
@@ -105,6 +123,11 @@ public class ExploreFragment extends Fragment {
                     ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).stopShimmer();
                 }
             }
+        });
+
+        viewModel.isMoreLoading.observe(getViewLifecycleOwner(), isMoreLoading -> {
+            View progress = view.findViewById(R.id.loadMoreProgress);
+            if (progress != null) progress.setVisibility(isMoreLoading ? View.VISIBLE : View.GONE);
         });
     }
 }

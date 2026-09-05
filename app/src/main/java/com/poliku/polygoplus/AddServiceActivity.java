@@ -23,8 +23,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddServiceActivity extends AppCompatActivity {
 
@@ -33,6 +37,8 @@ public class AddServiceActivity extends AppCompatActivity {
     private TextInputEditText etCustomCategory, etTitle, etPrice, etAvailability, etDescription, etTime;
     private AutoCompleteTextView autoCategory;
     private ChipGroup chipGroupPriceType, chipGroupFulfillment;
+    private PhotoPreviewAdapter photoAdapter;
+    private final List<android.net.Uri> selectedUris = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +60,13 @@ public class AddServiceActivity extends AppCompatActivity {
     }
 
     private void observeViewModel() {
-        viewModel.imageUri.observe(this, uri -> {
-            if (uri != null && !uri.isEmpty()) {
-                findViewById(R.id.layoutPortfolioPlaceholder).setVisibility(View.GONE);
-                ImageView img = findViewById(R.id.imgPortfolio);
-                img.setImageURI(Uri.parse(uri));
-                img.setVisibility(View.VISIBLE);
+        viewModel.imageUri.observe(this, uriString -> {
+            if (uriString != null && !uriString.isEmpty()) {
+                String[] parts = uriString.split("\\|");
+                if (selectedUris.isEmpty()) {
+                    for (String p : parts) selectedUris.add(android.net.Uri.parse(p));
+                    photoAdapter.updateData(selectedUris);
+                }
             }
         });
         
@@ -70,9 +77,12 @@ public class AddServiceActivity extends AppCompatActivity {
         etAvailability.setText(viewModel.getAvailability());
         etTime.setText(viewModel.getDeliveryTime());
         etDescription.setText(viewModel.getDescription());
-        
-        // Note: ChipGroup selection restoration could be more complex, 
-        // for now we stick to text and images which are most critical.
+    }
+
+    private void updateViewModelUris() {
+        java.util.StringJoiner joiner = new java.util.StringJoiner("|");
+        for (android.net.Uri u : selectedUris) joiner.add(u.toString());
+        viewModel.setImageUri(joiner.toString());
     }
 
     @Override
@@ -100,9 +110,18 @@ public class AddServiceActivity extends AppCompatActivity {
         chipGroupPriceType = findViewById(R.id.chipGroupPriceType);
         chipGroupFulfillment = findViewById(R.id.chipGroupFulfillment);
 
+        photoAdapter = new PhotoPreviewAdapter(position -> {
+            selectedUris.remove(position);
+            photoAdapter.updateData(selectedUris);
+            updateViewModelUris();
+        });
+        androidx.recyclerview.widget.RecyclerView rv = findViewById(R.id.rvPortfolioPreviews);
+        rv.setAdapter(photoAdapter);
+
         findViewById(R.id.btnAddPortfolio).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(intent, 42);
         });
@@ -143,76 +162,118 @@ public class AddServiceActivity extends AppCompatActivity {
             category = etCustomCategory.getText().toString().trim();
         }
 
-        if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty() || viewModel.imageUri.getValue().isEmpty()) {
-            Toast.makeText(this, "Please fill in all fields including a photo", Toast.LENGTH_SHORT).show();
+        if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty() || selectedUris.isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields including photos", Toast.LENGTH_SHORT).show();
             return;
         }
 
         findViewById(R.id.btnPublishService).setEnabled(false);
-        Toast.makeText(this, "Uploading service image...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
 
-        // 1. Upload image first
-        String finalCategory = category;
-        NetworkApi.uploadImage(this, Uri.parse(viewModel.imageUri.getValue()), new NetworkApi.Callback() {
-            @Override
-            public void onSuccess(JSONObject response) {
-                String serverImageUrl = response.optString("url");
-
-                // Pricing logic
-                int checkedPriceId = chipGroupPriceType.getCheckedChipId();
-                String pricePrefix = "";
-                if (checkedPriceId != View.NO_ID) {
-                    Chip chip = findViewById(checkedPriceId);
-                    String type = chip.getText().toString();
-                    if (type.contains("Starts")) pricePrefix = "Starts at ";
-                    else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
-                }
-
-                // Fulfillment Type
-                int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
-                String fulfillment = "In-Person";
-                if (checkedFulfillId != View.NO_ID) {
-                    Chip chip = findViewById(checkedFulfillId);
-                    fulfillment = chip.getText().toString();
-                }
-
-                String finalPriceDisplay = pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
-                String finalDescription = description + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
-
-                // 2. Add listing with real URL
-                NetworkApi.addListing(AppDataStore.userId(AddServiceActivity.this), title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, "Campus Wide (Service)", new NetworkApi.Callback() {
+        final String finalCategory = category;
+        
+        new Thread(() -> {
+            List<String> serverUrls = new java.util.concurrent.CopyOnWriteArrayList<>();
+            java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(0);
+            
+            for (android.net.Uri rawUri : selectedUris) {
+                android.net.Uri compressed = com.poliku.polygoplus.network.ImageUtils.compressImage(this, rawUri);
+                
+                NetworkApi.uploadImage(this, compressed, new NetworkApi.Callback() {
                     @Override
                     public void onSuccess(JSONObject response) {
-                        AppDataStore.addUserListing(AddServiceActivity.this, title, finalCategory, finalPriceDisplay, finalDescription, serverImageUrl, "Campus Wide (Service)");
-                        Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
-                        finish();
+                        serverUrls.add(response.optString("url"));
+                        checkCompletion();
                     }
 
                     @Override
                     public void onError(String message) {
-                        findViewById(R.id.btnPublishService).setEnabled(true);
-                        Toast.makeText(AddServiceActivity.this, "Post error: " + message, Toast.LENGTH_SHORT).show();
+                        checkCompletion();
+                    }
+
+                    private void checkCompletion() {
+                        if (count.incrementAndGet() == selectedUris.size()) {
+                            finalizeServicePublish(title, finalCategory, price, time, availability, description, serverUrls);
+                        }
                     }
                 });
             }
+        }).start();
+    }
 
-            @Override
-            public void onError(String message) {
+    private void finalizeServicePublish(String title, String category, String price, String time, String availability, String desc, List<String> urls) {
+        if (urls.isEmpty()) {
+            runOnUiThread(() -> {
                 findViewById(R.id.btnPublishService).setEnabled(true);
-                Toast.makeText(AddServiceActivity.this, "Upload failed: " + message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
+            });
+            return;
+        }
+
+        String finalImageString = String.join("|", urls);
+
+        runOnUiThread(() -> {
+            // Pricing logic
+            int checkedPriceId = chipGroupPriceType.getCheckedChipId();
+            String pricePrefix = "";
+            if (checkedPriceId != View.NO_ID) {
+                com.google.android.material.chip.Chip chip = findViewById(checkedPriceId);
+                String type = chip.getText().toString();
+                if (type.contains("Starts")) pricePrefix = "Starts at ";
+                else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
             }
+
+            // Fulfillment Type
+            int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
+            String fulfillment = "In-Person";
+            if (checkedFulfillId != View.NO_ID) {
+                com.google.android.material.chip.Chip chip = findViewById(checkedFulfillId);
+                fulfillment = chip.getText().toString();
+            }
+
+            String finalPriceDisplay = pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
+            String finalDescription = desc + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
+
+            NetworkApi.addListing(AppDataStore.userId(this), title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)", new NetworkApi.Callback() {
+                @Override
+                public void onSuccess(JSONObject response) {
+                    AppDataStore.addUserListing(AddServiceActivity.this, title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)");
+                    Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+
+                @Override
+                public void onError(String message) {
+                    findViewById(R.id.btnPublishService).setEnabled(true);
+                    Toast.makeText(AddServiceActivity.this, "Post error: " + message, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 42 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri uri = data.getData();
-            try {
-                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                viewModel.setImageUri(uri.toString());
-            } catch (Exception ignored) {}
+        if (requestCode == 42 && resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int count = data.getClipData().getItemCount();
+                for (int i = 0; i < count; i++) {
+                    android.net.Uri uri = data.getClipData().getItemAt(i).getUri();
+                    if (!selectedUris.contains(uri)) selectedUris.add(uri);
+                }
+            } else if (data.getData() != null) {
+                android.net.Uri uri = data.getData();
+                if (!selectedUris.contains(uri)) selectedUris.add(uri);
+            }
+
+            photoAdapter.updateData(selectedUris);
+            updateViewModelUris();
+
+            for (android.net.Uri uri : selectedUris) {
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) {}
+            }
         }
     }
 }

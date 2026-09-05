@@ -68,6 +68,23 @@
                     android:textSize="14sp" />
             </FrameLayout>
 
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/btnSort"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="10dp"
+                android:background="@color/white"
+                android:clickable="true"
+                android:contentDescription="Sort"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_sort_alphabetically"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:strokeColor="@color/grey_200"
+                app:strokeWidth="1dp"
+                app:tint="@color/airbnb_ink" />
+
         </LinearLayout>
 
         <!-- Dynamic State 1: Discovery / Suggestions -->

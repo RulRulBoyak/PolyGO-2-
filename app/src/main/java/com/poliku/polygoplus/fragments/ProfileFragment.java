@@ -21,8 +21,14 @@ import com.poliku.polygoplus.SavedItemsActivity;
 import com.poliku.polygoplus.TransactionsActivity;
 import com.poliku.polygoplus.VerificationActivity;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.network.NetworkApi;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+
+import org.json.JSONObject;
+
+import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
 
@@ -134,7 +140,51 @@ public class ProfileFragment extends Fragment {
             requireActivity().overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         });
 
-        // Other menus can be wired here similarly
+        loadSellerMetrics(view);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getView() != null) loadSellerMetrics(getView());
+    }
+
+    private void loadSellerMetrics(View view) {
+        if (!AppDataStore.isLoggedIn(requireContext())) return;
+
+        String userId = AppDataStore.userId(requireContext());
+        NetworkApi.getSellerMetrics(userId, new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                if (!isAdded()) return;
+                
+                double earnings = response.optDouble("earnings", 0);
+                int active = response.optInt("active_listings", 0);
+                int sold = response.optInt("items_sold", 0);
+                double rating = response.optDouble("rating", 0);
+                int trust = response.optInt("trust_score", 0);
+
+                requireActivity().runOnUiThread(() -> {
+                    animateTextNumber((android.widget.TextView) view.findViewById(R.id.tvTotalEarnings), earnings, "RM %.2f");
+                    animateTextNumber((android.widget.TextView) view.findViewById(R.id.tvItemsSold), sold, "%d");
+                    animateTextNumber((android.widget.TextView) view.findViewById(R.id.tvActiveCount), active, "%d");
+                    ((android.widget.TextView) view.findViewById(R.id.tvAvgRating)).setText(String.format(Locale.getDefault(), "★ %.1f", rating));
+                    
+                    LinearProgressIndicator progress = view.findViewById(R.id.progressTrust);
+                    progress.setProgress(trust, true);
+                    ((android.widget.TextView) view.findViewById(R.id.tvTrustPercent)).setText(trust + "%");
+                });
+            }
+
+            @Override
+            public void onError(String message) {}
+        });
+    }
+
+    private void animateTextNumber(android.widget.TextView tv, double target, String format) {
+        tv.setText(String.format(Locale.getDefault(), format, target));
+        tv.setAlpha(0f);
+        tv.animate().alpha(1f).setDuration(500).start();
     }
 
     public void profileIntent() {

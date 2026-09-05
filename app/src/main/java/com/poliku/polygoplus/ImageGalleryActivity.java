@@ -42,18 +42,13 @@ public class ImageGalleryActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
                 ZoomImageView image = (ZoomImageView) holder.itemView;
-                if (finalImages.isEmpty()) {
-                    image.setImageResource(fallback);
-                } else {
-                    try {
-                        image.setImageURI(Uri.parse(finalImages.get(position)));
-                        if (image.getDrawable() == null) {
-                            image.setImageResource(fallback != 0 ? fallback : R.drawable.bg_product_home);
-                        }
-                    } catch (Exception e) {
-                        image.setImageResource(fallback != 0 ? fallback : R.drawable.bg_product_home);
-                    }
-                }
+                Object source = (finalImages.isEmpty()) ? (fallback != 0 ? fallback : R.drawable.bg_product_home) : finalImages.get(position);
+
+                com.bumptech.glide.Glide.with(ImageGalleryActivity.this)
+                        .load(source)
+                        .placeholder(R.drawable.bg_product_home)
+                        .error(R.drawable.bg_product_home)
+                        .into(image);
             }
 
             @Override
