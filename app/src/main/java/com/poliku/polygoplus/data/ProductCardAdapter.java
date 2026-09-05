@@ -51,7 +51,10 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
         h.binding.textViewDistance.setText(p.distance);
 
         // Load Image using Glide (supports both LOCAL and WEB URLs)
-        Object imageSource = p.imageUri.isEmpty() ? (p.imageRes != 0 ? p.imageRes : R.drawable.bg_product_home) : p.imageUri;
+        List<String> images = p.imageList();
+        Object imageSource = (images.isEmpty()) 
+                ? (p.imageRes != 0 ? p.imageRes : R.drawable.bg_product_home) 
+                : images.get(0);
 
         Glide.with(h.itemView.getContext())
                 .load(imageSource)

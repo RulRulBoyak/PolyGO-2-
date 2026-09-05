@@ -14,6 +14,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import android.text.Editable;
 import android.text.TextWatcher;
+import com.google.firebase.messaging.FirebaseMessaging;
+import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
     private AuthViewModel viewModel;
@@ -48,6 +50,9 @@ public class LoginActivity extends AppCompatActivity {
                     AppDataStore.saveRemoteSession(LoginActivity.this, 
                             response.optJSONObject("user"), 
                             response.optString("token"));
+                    
+                    syncFcmToken();
+
                     startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     finish();
@@ -81,6 +86,20 @@ public class LoginActivity extends AppCompatActivity {
         viewModel.matrixError.observe(this, error -> tilMatrix.setError(error));
         viewModel.passwordError.observe(this, error -> tilPassword.setError(error));
         viewModel.isLoginFormValid.observe(this, isValid -> btnLogin.setEnabled(isValid));
+    }
+
+    private void syncFcmToken() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) return;
+            String token = task.getResult();
+            String userId = AppDataStore.userId(this);
+            if (!userId.equals("0")) {
+                NetworkApi.updateFcmToken(userId, token, new NetworkApi.Callback() {
+                    @Override public void onSuccess(JSONObject response) {}
+                    @Override public void onError(String message) {}
+                });
+            }
+        });
     }
 
     @Override

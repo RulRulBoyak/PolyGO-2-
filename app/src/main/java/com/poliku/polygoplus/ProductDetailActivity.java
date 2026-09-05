@@ -13,13 +13,20 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.imageview.ShapeableImageView;
 import androidx.core.view.ViewCompat;
+import androidx.viewpager2.widget.ViewPager2;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.CarouselAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductDetailActivity extends AppCompatActivity {
     public static final String EXTRA_LISTING_ID = "listing_id";
     private AppDataStore.ProductRecord product;
     private com.google.android.material.button.MaterialButton saveButton;
+    private ViewPager2 carousel;
+    private android.widget.LinearLayout layoutIndicators;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,35 +77,30 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void renderProduct() {
-        ShapeableImageView image = findViewById(R.id.productImage);
+        carousel = findViewById(R.id.productCarousel);
+        layoutIndicators = findViewById(R.id.layoutIndicators);
         
-        // Rule 3.1: Visual Continuity (Shared Element Transition Target)
-        ViewCompat.setTransitionName(image, "product_image_hero");
+        // Shared Element Transition target
+        ViewCompat.setTransitionName(carousel, "product_image_hero");
 
-        // Use Glide for both Local and Server URLs
-        Object imageSource = (product.imageUri == null || product.imageUri.isEmpty()) 
-                ? (product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home) 
-                : product.imageUri;
+        List<String> images = product.imageList();
+        CarouselAdapter adapter = new CarouselAdapter(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home, position -> {
+            Intent i = new Intent(this, ImageGalleryActivity.class);
+            i.putStringArrayListExtra(ImageGalleryActivity.EXTRA_IMAGES, new ArrayList<>(images));
+            i.putExtra(ImageGalleryActivity.EXTRA_INDEX, position);
+            i.putExtra(ImageGalleryActivity.EXTRA_FALLBACK_RES, product.imageRes);
+            startActivity(i);
+        });
+        carousel.setAdapter(adapter);
+        adapter.submit(images);
 
-        Glide.with(this)
-                .load(imageSource)
-                .placeholder(R.drawable.bg_product_home)
-                .error(R.drawable.bg_product_home)
-                .centerCrop()
-                .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
-                        startPostponedEnterTransition();
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
-                        startPostponedEnterTransition();
-                        return false;
-                    }
-                })
-                .into(image);
+        setupIndicators(images.size());
+        carousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                updateIndicators(position);
+            }
+        });
 
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);
         ((TextView) findViewById(R.id.productPrice)).setText("RM " + product.price);
@@ -109,13 +111,6 @@ public class ProductDetailActivity extends AppCompatActivity {
             Intent i = new Intent(this, SellerProfileActivity.class);
             i.putExtra(SellerProfileActivity.EXTRA_SELLER_NAME, product.seller);
             i.putExtra(SellerProfileActivity.EXTRA_SELLER_ID, product.ownerId);
-            startActivity(i);
-        });
-        findViewById(R.id.productImage).setOnClickListener(v -> {
-            Intent i = new Intent(this, ImageGalleryActivity.class);
-            java.util.ArrayList<String> images = new java.util.ArrayList<>(product.imageList());
-            i.putStringArrayListExtra(ImageGalleryActivity.EXTRA_IMAGES, images);
-            i.putExtra(ImageGalleryActivity.EXTRA_FALLBACK_RES, product.imageRes);
             startActivity(i);
         });
         findViewById(R.id.btnReportListing).setOnClickListener(v -> {
@@ -169,6 +164,26 @@ public class ProductDetailActivity extends AppCompatActivity {
             }
             showOfferDialog();
         });
+    }
+
+    private void setupIndicators(int count) {
+        layoutIndicators.removeAllViews();
+        if (count <= 1) return;
+        for (int i = 0; i < count; i++) {
+            android.widget.ImageView dot = new android.widget.ImageView(this);
+            dot.setImageResource(R.drawable.dot_inactive);
+            android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(24, 24);
+            params.setMargins(8, 0, 8, 0);
+            layoutIndicators.addView(dot, params);
+        }
+        updateIndicators(0);
+    }
+
+    private void updateIndicators(int position) {
+        for (int i = 0; i < layoutIndicators.getChildCount(); i++) {
+            android.widget.ImageView dot = (android.widget.ImageView) layoutIndicators.getChildAt(i);
+            dot.setImageResource(i == position ? R.drawable.dot_active : R.drawable.dot_inactive);
+        }
     }
 
     private void toggleFavorite() {

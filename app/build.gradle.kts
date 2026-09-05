@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -22,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -48,6 +50,10 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.glide)
     implementation(libs.shimmer)
+    implementation(libs.play.services.maps)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.4")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.4")
     implementation("androidx.viewpager2:viewpager2:1.1.0")

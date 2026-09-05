@@ -12,6 +12,9 @@ constraintlayoutVersion = "2.2.2"
 cardview = "1.0.0"
 glide = "4.16.0"
 shimmer = "0.5.0"
+firebaseBom = "34.18.0"
+googleServices = "4.5.0"
+playServicesMaps = "19.0.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -26,6 +29,11 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

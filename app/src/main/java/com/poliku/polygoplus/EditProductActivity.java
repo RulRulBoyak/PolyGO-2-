@@ -18,8 +18,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EditProductActivity extends AppCompatActivity {
 
@@ -27,6 +31,8 @@ public class EditProductActivity extends AppCompatActivity {
     private TextInputEditText etName, etPrice, etDescription, etCustomCategory;
     private AutoCompleteTextView autoCompleteCategory, autoCompleteLocation;
     private TextInputLayout tilCustomCategory;
+    private PhotoPreviewAdapter photoAdapter;
+    private final List<android.net.Uri> selectedUris = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +64,15 @@ public class EditProductActivity extends AppCompatActivity {
         setupToolbar();
         setupPriceAdjuster();
         setupCategoryDropdown();
+        
+        photoAdapter = new PhotoPreviewAdapter(position -> {
+            selectedUris.remove(position);
+            photoAdapter.updateData(selectedUris);
+            updateViewModelUris();
+        });
+        androidx.recyclerview.widget.RecyclerView rv = findViewById(R.id.rvPhotoPreviews);
+        rv.setAdapter(photoAdapter);
+
         findViewById(R.id.btnAddPhoto).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.setType("image/*");
@@ -78,14 +93,21 @@ public class EditProductActivity extends AppCompatActivity {
 
     private void observeViewModel() {
         viewModel.price.observe(this, value -> etPrice.setText(String.format("%.2f", value)));
-        viewModel.imageUri.observe(this, uri -> {
-            if (uri != null && !uri.isEmpty()) {
-                android.widget.ImageView image = findViewById(R.id.imgSelectedPhoto);
-                image.setImageURI(android.net.Uri.parse(uri.split("\\|")[0]));
-                image.setVisibility(View.VISIBLE);
-                findViewById(R.id.selectedPhotoCard).setVisibility(View.VISIBLE);
+        viewModel.imageUri.observe(this, uriString -> {
+            if (uriString != null && !uriString.isEmpty()) {
+                String[] parts = uriString.split("\\|");
+                if (selectedUris.isEmpty()) { // Only auto-load if list is empty
+                    for (String p : parts) selectedUris.add(android.net.Uri.parse(p));
+                    photoAdapter.updateData(selectedUris);
+                }
             }
         });
+    }
+
+    private void updateViewModelUris() {
+        java.util.StringJoiner joiner = new java.util.StringJoiner("|");
+        for (android.net.Uri u : selectedUris) joiner.add(u.toString());
+        viewModel.setImageUri(joiner.toString());
     }
 
     @Override
@@ -186,8 +208,7 @@ public class EditProductActivity extends AppCompatActivity {
             String price = etPrice.getText().toString();
             String description = etDescription.getText().toString();
 
-            String currentImage = viewModel.imageUri.getValue();
-            if (currentImage == null || currentImage.isEmpty()) {
+            if (selectedUris.isEmpty()) {
                 Toast.makeText(this, "Add at least one photo", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -197,39 +218,65 @@ public class EditProductActivity extends AppCompatActivity {
             }
 
             v.setEnabled(false);
-            Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
 
-            // 1. Get the first image URI
-            android.net.Uri uri = android.net.Uri.parse(currentImage.split("\\|")[0]);
-            String finalCategory = category;
-
-            // 2. Upload to server FIRST
-            NetworkApi.uploadImage(this, uri, new NetworkApi.Callback() {
-                @Override
-                public void onSuccess(JSONObject response) {
-                    String serverImageUrl = response.optString("url");
+            final String finalCategory = category;
+            
+            // Rule 3.3: Background processing for multi-upload
+            new Thread(() -> {
+                List<String> serverUrls = new java.util.concurrent.CopyOnWriteArrayList<>();
+                java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(0);
+                
+                for (android.net.Uri rawUri : selectedUris) {
+                    android.net.Uri compressed = com.poliku.polygoplus.network.ImageUtils.compressImage(this, rawUri);
                     
-                    // 3. Now add the listing with the REAL server URL
-                    NetworkApi.addListing(AppDataStore.userId(EditProductActivity.this), title, finalCategory, price, description, serverImageUrl, selectedLocation(), new NetworkApi.Callback() {
+                    NetworkApi.uploadImage(this, compressed, new NetworkApi.Callback() {
                         @Override
                         public void onSuccess(JSONObject response) {
-                            AppDataStore.addUserListing(EditProductActivity.this, title, finalCategory, price, description, serverImageUrl, selectedLocation());
-                            Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
-                            finish();
+                            serverUrls.add(response.optString("url"));
+                            checkCompletion();
                         }
 
                         @Override
                         public void onError(String message) {
-                            v.setEnabled(true);
-                            Toast.makeText(EditProductActivity.this, "Listing error: " + message, Toast.LENGTH_SHORT).show();
+                            checkCompletion();
+                        }
+
+                        private void checkCompletion() {
+                            if (count.incrementAndGet() == selectedUris.size()) {
+                                finalizePublish(v, title, finalCategory, price, description, serverUrls);
+                            }
                         }
                     });
+                }
+            }).start();
+        });
+    }
+
+    private void finalizePublish(View btn, String title, String category, String price, String desc, List<String> urls) {
+        if (urls.isEmpty()) {
+            runOnUiThread(() -> {
+                btn.setEnabled(true);
+                Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
+            });
+            return;
+        }
+
+        String finalImageString = String.join("|", urls);
+        
+        runOnUiThread(() -> {
+            NetworkApi.addListing(AppDataStore.userId(this), title, category, price, desc, finalImageString, selectedLocation(), new NetworkApi.Callback() {
+                @Override
+                public void onSuccess(JSONObject response) {
+                    AppDataStore.addUserListing(EditProductActivity.this, title, category, price, desc, finalImageString, selectedLocation());
+                    Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
+                    finish();
                 }
 
                 @Override
                 public void onError(String message) {
-                    v.setEnabled(true);
-                    Toast.makeText(EditProductActivity.this, "Upload failed: " + message, Toast.LENGTH_SHORT).show();
+                    btn.setEnabled(true);
+                    Toast.makeText(EditProductActivity.this, "Listing error: " + message, Toast.LENGTH_SHORT).show();
                 }
             });
         });
@@ -239,21 +286,26 @@ public class EditProductActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != 41 || resultCode != RESULT_OK || data == null) return;
-        java.util.ArrayList<String> uris = new java.util.ArrayList<>();
+        
         if (data.getClipData() != null) {
-            int count = Math.min(5, data.getClipData().getItemCount());
-            for (int i = 0; i < count; i++) uris.add(data.getClipData().getItemAt(i).getUri().toString());
-        } else if (data.getData() != null) {
-            uris.add(data.getData().toString());
-        }
-        if (uris.isEmpty()) return;
-        for (String uri : uris) {
-            try {
-                getContentResolver().takePersistableUriPermission(android.net.Uri.parse(uri), Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (SecurityException ignored) {
+            int count = data.getClipData().getItemCount();
+            for (int i = 0; i < count; i++) {
+                android.net.Uri uri = data.getClipData().getItemAt(i).getUri();
+                if (!selectedUris.contains(uri)) selectedUris.add(uri);
             }
+        } else if (data.getData() != null) {
+            android.net.Uri uri = data.getData();
+            if (!selectedUris.contains(uri)) selectedUris.add(uri);
         }
-        viewModel.setImageUri(String.join("|", uris));
+
+        photoAdapter.updateData(selectedUris);
+        updateViewModelUris();
+
+        for (android.net.Uri uri : selectedUris) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (SecurityException ignored) {}
+        }
     }
 
     @Override
