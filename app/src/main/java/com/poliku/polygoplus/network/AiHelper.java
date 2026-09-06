@@ -13,14 +13,16 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import com.poliku.polygoplus.BuildConfig;
+
 import org.json.JSONObject;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public final class AiHelper {
-    // Replace with your real Gemini API Key from Google AI Studio
-    private static final String API_KEY = "YOUR_GEMINI_API_KEY";
+    // Loaded from local.properties via BuildConfig for security
+    private static final String API_KEY = BuildConfig.GEMINI_API_KEY;
 
     public interface Callback {
         void onResult(String title, String price, String description);
