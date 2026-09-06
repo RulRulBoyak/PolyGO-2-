@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 /** Small API client for the local PHP/MySQL server. Change BASE_URL for your network. */
 public final class NetworkApi {
     // Android emulator -> laptop. For a physical phone, use your laptop Wi-Fi IP instead.
-    public static final String BASE_URL = "http://10.0.2.2/polygo-api/";
+    public static final String BASE_URL = "https://api.poliku.com/";
 
     private static android.content.Context appContext;
 
@@ -66,6 +66,18 @@ public final class NetworkApi {
             JSONObject body = new JSONObject();
             body.put("seller_id", sellerId);
             body.put("seller_name", sellerName);
+            body.put("action", "profile");
+            post("seller.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void getSellerMetrics(String userId, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("seller_id", userId);
+            body.put("action", "metrics");
             post("seller.php", body, callback);
         } catch (Exception e) {
             callback.onError("Request error");
@@ -110,7 +122,34 @@ public final class NetworkApi {
     }
 
     public static void getListings(Callback callback) {
-        post("listings.php", new JSONObject(), callback);
+        getListings(0, 50, "newest", callback); // Default large page for non-paginated callers
+    }
+
+    public static void getListings(int offset, int limit, Callback callback) {
+        getListings(offset, limit, "newest", callback);
+    }
+
+    public static void getListings(int offset, int limit, String sort, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("offset", offset);
+            body.put("limit", limit);
+            body.put("sort", sort);
+            post("listings.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void searchListings(String query, String sort, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("query", query);
+            body.put("sort", sort);
+            post("listings.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
     }
 
     public static void getListing(String id, Callback callback) {
@@ -131,6 +170,17 @@ public final class NetworkApi {
             body.put("email", email);
             body.put("mobile", mobile);
             body.put("profile_pic_url", photo);
+            post("update_profile.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Request error");
+        }
+    }
+
+    public static void updateFcmToken(String userId, String token, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("fcm_token", token);
             post("update_profile.php", body, callback);
         } catch (Exception e) {
             callback.onError("Request error");

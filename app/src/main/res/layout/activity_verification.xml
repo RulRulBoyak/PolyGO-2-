@@ -4,139 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true">
 
-    <!-- Sticky App Header -->
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/verificationAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="?attr/colorSurface"
         app:elevation="0dp">
-
-        <LinearLayout
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@color/white"
-                android:clickable="true"
-                android:contentDescription="Back"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:src="@drawable/ic_arrow_back"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                app:strokeColor="@color/grey_200"
-                app:strokeWidth="1dp"
-                app:tint="@color/airbnb_ink" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:layout_weight="1"
-                android:letterSpacing="-0.01"
-                android:text="Trust &amp; Safety"
-                android:textColor="@color/airbnb_ink"
-                android:textSize="19sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/grey_200" />
-
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="Trust &amp; Safety"
+            app:titleCentered="true"
+            app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Scrollable Content Area -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:fillViewport="true"
-        android:overScrollMode="never"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="48dp">
+            android:padding="24dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="-0.02"
-                android:text="Campus Verification"
-                android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="@color/airbnb_ink"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <!-- Dynamic Identity Status Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                app:cardBackgroundColor="#F8FBFF"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#E3F2FD"
-                app:strokeWidth="1.2dp">
-
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:padding="24dp"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="24dp"
-                    android:paddingVertical="32dp">
-
-                    <FrameLayout
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:background="@drawable/bg_category_circle"
-                        android:backgroundTint="@color/soft_blue">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Security Shield"
-                            android:src="@android:drawable/ic_secure"
-                            app:tint="@color/pks_blue" />
-                    </FrameLayout>
-
-                    <!-- Preserved Dynamic Status Text -->
+                    android:orientation="vertical">
+                    <ImageView
+                        android:id="@+id/ivStatusIcon"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:contentDescription="@string/trust_safety"
+                        android:src="@android:drawable/ic_secure"
+                        app:tint="?attr/colorPrimary" />
                     <TextView
                         android:id="@+id/tvVerificationStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:gravity="center"
-                        android:lineSpacingExtra="4dp"
-                        android:textColor="@color/airbnb_ink"
-                        android:textSize="15sp"
-                        tools:text="Please verify your campus identity to unlock selling capabilities and build trust." />
-
+                        android:text="@string/campus_verification"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Verification Input Form (Wrapper allows easy java toggle View.GONE) -->
             <LinearLayout
-                android:id="@+id/layoutVerificationForm"
+                android:id="@+id/layoutForm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -145,116 +74,144 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:text="Verification Details"
-                    android:textColor="@color/airbnb_ink"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:text="@string/i_am_a"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                <!-- Matrix / Staff ID -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Student / Staff Matrix ID"
-                    app:boxCornerRadiusBottomEnd="14dp"
-                    app:boxCornerRadiusBottomStart="14dp"
-                    app:boxCornerRadiusTopEnd="14dp"
-                    app:boxCornerRadiusTopStart="14dp"
-                    app:boxStrokeColor="@color/pks_blue"
-                    app:hintTextColor="@color/pks_blue"
-                    app:startIconDrawable="@android:drawable/ic_menu_info_details"
-                    app:startIconTint="@color/airbnb_muted">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etVerificationId"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textCapCharacters"
-                        android:maxLines="1"
-                        android:textColor="@color/airbnb_ink"
-                        android:textSize="15sp" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Campus Email -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupRole"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:hint="Official Campus Email"
-                    app:boxCornerRadiusBottomEnd="14dp"
-                    app:boxCornerRadiusBottomStart="14dp"
-                    app:boxCornerRadiusTopEnd="14dp"
-                    app:boxCornerRadiusTopStart="14dp"
-                    app:boxStrokeColor="@color/pks_blue"
-                    app:hintTextColor="@color/pks_blue"
-                    app:startIconDrawable="@android:drawable/ic_dialog_email"
-                    app:startIconTint="@color/airbnb_muted">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etVerificationEmail"
-                        android:layout_width="match_parent"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStudent"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress"
-                        android:maxLines="1"
-                        android:textColor="@color/airbnb_ink"
-                        android:textSize="15sp" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:text="@string/student"
+                        app:chipIcon="@drawable/ic_category_books" />
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipAlumni"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alumni"
+                        app:chipIcon="@drawable/ic_nav_profile" />
+                </com.google.android.material.chip.ChipGroup>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="2dp"
-                    android:text="Your information is encrypted and securely sent to campus administration for manual approval."
-                    android:textColor="@color/airbnb_muted"
-                    android:textSize="12sp" />
-
-                <!-- Primary Submit Action -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnVerify"
-                    style="@style/Widget.PolyGo.Button"
+                <!-- Student Section -->
+                <LinearLayout
+                    android:id="@+id/layoutStudent"
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
                     android:layout_marginTop="24dp"
-                    android:letterSpacing="0.01"
-                    android:text="Submit securely for approval"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/pks_blue"
-                    app:cornerRadius="16dp"
-                    app:elevation="0dp" />
+                    android:visibility="visible">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/matrix_verification"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnSnapMatrix"
+                        android:layout_width="match_parent"
+                        android:layout_height="160dp"
+                        android:layout_marginTop="12dp"
+                        app:cardCornerRadius="16dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="?attr/colorOutline"
+                        app:cardBackgroundColor="?attr/colorSurface">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical">
+                            <ImageView
+                                android:id="@+id/ivMatrixPreview"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="@string/matrix_verification"
+                                android:scaleType="centerInside"
+                                android:src="@android:drawable/ic_menu_camera"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Matrix Number (Optional if snapped)">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etMatrixNo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <!-- Alumni Section -->
+                <LinearLayout
+                    android:id="@+id/layoutAlumni"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="24dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alumni_challenge"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="@string/alumni_q1">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etAlumniQ1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="@string/alumni_q2">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etAlumniQ2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSubmit"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="32dp"
+                    android:text="@string/submit_review" />
 
             </LinearLayout>
 
-            <!-- Spacer to push admin buttons to bottom -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:minHeight="48dp" />
-
-            <!-- Hidden Admin Simulator Action -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSimulateApproval"
-                style="@style/Widget.PolyGo.Button.Outlined"
+                android:id="@+id/btnSimulate"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:letterSpacing="0.05"
-                android:text="[ADMIN] Simulate Approval"
-                android:textAllCaps="true"
-                android:textColor="@color/airbnb_ink"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:cornerRadius="14dp"
-                app:strokeColor="@color/grey_200"
-                app:strokeWidth="1dp"
-                tools:visibility="visible" />
+                android:text="[Dev] Fast Approve"
+                android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

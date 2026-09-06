@@ -1,21 +1,16 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# PolyGo+ Production ProGuard Rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 1. Keep Data Store Records (Required for JSON parsing)
+-keep class com.poliku.polygoplus.data.AppDataStore$* { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# 2. Keep Glide and its models
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public class * extends com.bumptech.glide.module.LibraryGlideModule
+-dontwarn com.bumptech.glide.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 3. Keep ViewModels (to prevent R8 from stripping them)
+-keep class * extends androidx.lifecycle.ViewModel { *; }
+
+# 4. Maintain line numbers for easier debugging of crashes
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

@@ -94,54 +94,70 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Main Content Container with App Bar Scrolling Behavior -->
-    <FrameLayout
+    <!-- Main Content Container with Pull-to-Refresh -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshExplore"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Discovery Grid View -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvExplore"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:layoutAnimation="@anim/layout_cascade"
-            android:overScrollMode="never"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="96dp"
-            android:visibility="gone"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="2"
-            tools:itemCount="6"
-            tools:listitem="@layout/item_product_card"
-            tools:visibility="visible" />
+            android:layout_height="match_parent">
 
-        <!-- Shimmer Skeleton Loading Placeholder -->
-        <include
-            android:id="@+id/shimmerExplore"
-            layout="@layout/layout_market_shimmer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="12dp" />
-
-        <!-- Empty State Container (Wrapped in ScrollView to prevent clipping) -->
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/emptyExplore"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <include
-                layout="@layout/layout_empty_state"
+            <!-- Discovery Grid View -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvExplore"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </androidx.core.widget.NestedScrollView>
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:layoutAnimation="@anim/layout_cascade"
+                android:overScrollMode="never"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="96dp"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:spanCount="2"
+                tools:itemCount="6"
+                tools:listitem="@layout/item_product_card"
+                tools:visibility="visible" />
 
-    </FrameLayout>
+            <!-- Shimmer Skeleton Loading Placeholder -->
+            <include
+                android:id="@+id/shimmerExplore"
+                layout="@layout/layout_market_shimmer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="12dp" />
+
+            <!-- Empty State Container (Wrapped in ScrollView to prevent clipping) -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/emptyExplore"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <include
+                    layout="@layout/layout_empty_state"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- Load More Progress Indicator -->
+            <ProgressBar
+                android:id="@+id/loadMoreProgress"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="100dp"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKey;
 
 import com.poliku.polygoplus.R;
 
@@ -46,6 +48,7 @@ public final class AppDataStore {
     private static final String KEY_DRAFTS = "drafts";
     private static final String KEY_ONBOARDING = "onboarding_seen";
     private static final String KEY_MAINTENANCE = "maintenance_mode";
+    private static final String KEY_BIO_LOCK = "bio_lock_enabled";
 
     public static final String[] PKS_LANDMARKS = {
             "Block A", "Block B", "Block C", "Cafeteria", "Library",
@@ -59,7 +62,22 @@ public final class AppDataStore {
     private AppDataStore() {}
 
     private static SharedPreferences prefs(Context context) {
-        return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        try {
+            MasterKey masterKey = new MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build();
+
+            return EncryptedSharedPreferences.create(
+                    context,
+                    PREFS,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+        } catch (Exception e) {
+            // Fallback to standard prefs if encryption fails (e.g. key store issues)
+            return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        }
     }
 
     public static void initialize(Context context) {
@@ -203,6 +221,10 @@ public final class AppDataStore {
     }
 
     // --- Listings ---
+
+    public static void updateListingsCache(Context context, JSONArray list) {
+        saveArray(context, KEY_LISTINGS, list);
+    }
 
     @NonNull
     public static List<ProductRecord> getListings(Context context) {
@@ -538,6 +560,14 @@ public final class AppDataStore {
     
     public static void setMaintenanceMode(Context context, boolean on) { 
         diskExecutor.execute(() -> prefs(context).edit().putBoolean(KEY_MAINTENANCE, on).apply()); 
+    }
+
+    public static boolean isBioLockEnabled(Context context) {
+        return prefs(context).getBoolean(KEY_BIO_LOCK, false);
+    }
+
+    public static void setBioLockEnabled(Context context, boolean enabled) {
+        diskExecutor.execute(() -> prefs(context).edit().putBoolean(KEY_BIO_LOCK, enabled).apply());
     }
 
     public static String verificationStatus(Context context) {

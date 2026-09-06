@@ -11,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import com.poliku.polygoplus.ui.HapticManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,11 +28,13 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.tvSubtitle).startAnimation(fadeInUp);
         
         findViewById(R.id.btnLogin).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
         findViewById(R.id.btnRegister).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
             startActivity(new Intent(MainActivity.this, RegisterActivity.class));
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });

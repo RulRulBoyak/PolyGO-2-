@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Toast;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.HapticManager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.lifecycle.ViewModelProvider;
@@ -14,6 +15,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import android.text.Editable;
 import android.text.TextWatcher;
+import com.google.firebase.messaging.FirebaseMessaging;
+import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
     private AuthViewModel viewModel;
@@ -39,20 +42,25 @@ public class LoginActivity extends AppCompatActivity {
         setupValidation();
 
         btnLogin.setOnClickListener(v -> {
-            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            HapticManager.mediumTap(v);
             String studentId = etMatrix.getText().toString().trim();
             String password = etPassword.getText().toString();
             btnLogin.setEnabled(false);
             NetworkApi.login(studentId, password, new NetworkApi.Callback() {
                 @Override public void onSuccess(org.json.JSONObject response) {
+                    HapticManager.success(LoginActivity.this);
                     AppDataStore.saveRemoteSession(LoginActivity.this, 
                             response.optJSONObject("user"), 
                             response.optString("token"));
+                    
+                    syncFcmToken();
+
                     startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     finish();
                 }
                 @Override public void onError(String message) {
+                    HapticManager.error(LoginActivity.this);
                     btnLogin.setEnabled(true);
                     Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
                 }
@@ -81,6 +89,20 @@ public class LoginActivity extends AppCompatActivity {
         viewModel.matrixError.observe(this, error -> tilMatrix.setError(error));
         viewModel.passwordError.observe(this, error -> tilPassword.setError(error));
         viewModel.isLoginFormValid.observe(this, isValid -> btnLogin.setEnabled(isValid));
+    }
+
+    private void syncFcmToken() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) return;
+            String token = task.getResult();
+            String userId = AppDataStore.userId(this);
+            if (!userId.equals("0")) {
+                NetworkApi.updateFcmToken(userId, token, new NetworkApi.Callback() {
+                    @Override public void onSuccess(JSONObject response) {}
+                    @Override public void onError(String message) {}
+                });
+            }
+        });
     }
 
     @Override

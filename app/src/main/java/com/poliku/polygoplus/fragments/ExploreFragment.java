@@ -20,9 +20,11 @@ import com.poliku.polygoplus.data.ProductCardAdapter;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.ExploreViewModel;
 import com.poliku.polygoplus.ui.EmptyStates;
+import com.poliku.polygoplus.ui.HapticManager;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.json.JSONObject;
 
@@ -68,10 +70,35 @@ public class ExploreFragment extends Fragment {
         
         observeViewModel(view);
 
+        SwipeRefreshLayout swipeRefresh = view.findViewById(R.id.swipeRefreshExplore);
+        swipeRefresh.setColorSchemeResources(R.color.pks_blue);
+        swipeRefresh.setOnRefreshListener(() -> {
+            HapticManager.mediumTap(swipeRefresh);
+            viewModel.loadListings();
+        });
+
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) { viewModel.setTab(tab.getPosition()); }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
+        list.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0) { // Scrolling down
+                    GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
+
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
+                            viewModel.loadMore();
+                        }
+                    }
+                }
+            }
         });
 
         viewModel.loadListings();
@@ -92,19 +119,28 @@ public class ExploreFragment extends Fragment {
             View shimmer = view.findViewById(R.id.shimmerExplore);
             if (shimmer == null) return;
             RecyclerView rv = view.findViewById(R.id.rvExplore);
+            SwipeRefreshLayout swipeRefresh = view.findViewById(R.id.swipeRefreshExplore);
             
             if (isLoading) {
-                shimmer.setVisibility(View.VISIBLE);
-                if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
-                    ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).startShimmer();
+                if (swipeRefresh != null && !swipeRefresh.isRefreshing()) {
+                    shimmer.setVisibility(View.VISIBLE);
+                    if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
+                        ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).startShimmer();
+                    }
+                    if (rv != null) rv.setVisibility(View.GONE);
                 }
-                if (rv != null) rv.setVisibility(View.GONE);
             } else {
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                 shimmer.setVisibility(View.GONE);
                 if (shimmer instanceof com.facebook.shimmer.ShimmerFrameLayout) {
                     ((com.facebook.shimmer.ShimmerFrameLayout) shimmer).stopShimmer();
                 }
             }
+        });
+
+        viewModel.isMoreLoading.observe(getViewLifecycleOwner(), isMoreLoading -> {
+            View progress = view.findViewById(R.id.loadMoreProgress);
+            if (progress != null) progress.setVisibility(isMoreLoading ? View.VISIBLE : View.GONE);
         });
     }
 }

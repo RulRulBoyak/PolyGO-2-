@@ -6,5 +6,19 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/pks_green_variant</item>
         <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSurface">#121212</item>
+        <item name="colorOnSurface">#E1E1E1</item>
+        <item name="colorSurfaceVariant">#1E1E1E</item>
+        <item name="colorOnSurfaceVariant">#A0A0A0</item>
+        <item name="android:statusBarColor">#121212</item>
+        <item name="android:windowBackground">#121212</item>
+        <item name="android:textColorPrimary">#E1E1E1</item>
+        <item name="android:textColorSecondary">#A0A0A0</item>
+    </style>
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_polygo</item>
+        <item name="windowSplashScreenBackground">#121212</item>
+        <item name="postSplashScreenTheme">@style/Theme.PolyGo</item>
     </style>
 </resources>

@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.ui.HapticManager;
 
 public class OnboardingActivity extends AppCompatActivity {
     private static final String[] TITLES = {
@@ -57,16 +58,34 @@ public class OnboardingActivity extends AppCompatActivity {
         });
 
         com.google.android.material.tabs.TabLayout tabLayoutDots = findViewById(R.id.tabLayoutDots);
-        new TabLayoutMediator(tabLayoutDots, pager, (tab, position) -> {}).attach();
+        new TabLayoutMediator(tabLayoutDots, pager, (tab, position) -> {
+            // Configuration is empty, just creating the dots
+        }).attach();
+
+        // Rule 3.3: Interactive Dots (Touch to Move)
+        tabLayoutDots.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                HapticManager.lightTap(tabLayoutDots);
+                pager.setCurrentItem(tab.getPosition(), true);
+            }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
 
         findViewById(R.id.btnOnboardingNext).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
             if (pager.getCurrentItem() < TITLES.length - 1) pager.setCurrentItem(pager.getCurrentItem() + 1);
             else finishOnboarding();
         });
-        findViewById(R.id.btnOnboardingSkip).setOnClickListener(v -> finishOnboarding());
+        findViewById(R.id.btnOnboardingSkip).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            finishOnboarding();
+        });
         pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
+                HapticManager.lightTap(pager);
                 ((com.google.android.material.button.MaterialButton) findViewById(R.id.btnOnboardingNext))
                         .setText(position == TITLES.length - 1 ? "Get started" : "Next");
             }
@@ -74,6 +93,7 @@ public class OnboardingActivity extends AppCompatActivity {
     }
 
     private void finishOnboarding() {
+        HapticManager.swell(this);
         AppDataStore.setOnboardingSeen(this);
         // Direct to Home regardless of login status
         startActivity(new Intent(this, HomeActivity.class));
