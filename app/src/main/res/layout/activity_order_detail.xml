@@ -261,6 +261,22 @@
                 android:minHeight="36dp" />
 
             <!-- Action Buttons Group -->
+            <!-- Track Live Deal (Futuristic Feature) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTrackDeal"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginBottom="12dp"
+                android:text="Track Live Deal Status"
+                android:textAllCaps="false"
+                android:textColor="@color/pks_blue"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:icon="@android:drawable/ic_menu_recent_history"
+                app:iconPadding="8dp" />
+
             <!-- Primary CTA -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCompleteDeal"

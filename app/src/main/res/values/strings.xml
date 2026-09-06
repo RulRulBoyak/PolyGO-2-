@@ -33,6 +33,13 @@
     <string name="submit_review">Submit for Review</string>
     <string name="verified_member">Verified Member</string>
     <string name="review_in_progress">Review in Progress</string>
+    <string name="verification_required">Verification Required</string>
+
+    <!-- AI Features -->
+    <string name="ai_suggest_details">✨ AI: Suggest Details from Photo</string>
+    <string name="ai_suggest_service">✨ AI: Suggest Service Details</string>
+    <string name="ai_thinking">✨ AI is thinking...</string>
+    <string name="ai_timeout">AI Timeout: Campus Wi-Fi might be slow. Please try again.</string>
 
     <!-- General -->
     <string name="search_hint">Search campus...</string>
@@ -40,6 +47,10 @@
     <string name="save">Save</string>
     <string name="chat">Chat</string>
     <string name="make_offer">Make an Offer</string>
+
+    <string name="i_agree_to_terms">I agree to PolyGo+\'s Campus Community Rules and Safety Standards.</string>
+    <string name="pdpa_footer">PolyGo+ complies with the Personal Data Protection Act (PDPA) 2010. Your campus identity is only used for internal verification.</string>
+    <string name="please_agree_to_terms">Please agree to the terms to proceed</string>
 
     <string name="privacy_policy_text">
         &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n

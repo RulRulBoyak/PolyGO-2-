@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Floating Navigation Container -->
+    <!-- Floating Navigation Container: Glassmorphism Style -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottomAppBarContainer"
         android:layout_width="match_parent"
@@ -22,41 +22,44 @@
         android:layout_gravity="bottom"
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="32dp"
-        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardBackgroundColor="#F5F6F8"
         app:cardCornerRadius="32dp"
-        app:cardElevation="16dp"
-        app:strokeWidth="0dp">
+        app:cardElevation="24dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp">
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavigationView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="72dp"
             android:background="@android:color/transparent"
             app:elevation="0dp"
             app:itemActiveIndicatorStyle="@null"
             app:itemHorizontalTranslationEnabled="false"
-            app:itemIconSize="24dp"
+            app:itemIconSize="26dp"
             app:itemIconTint="@color/nav_item_color"
+            app:itemPaddingTop="14dp"
+            app:itemPaddingBottom="10dp"
             app:itemTextColor="@color/nav_item_color"
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav_menu" />
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Futuristic Floating Action Button -->
+    <!-- Futuristic Floating Action Button with Enhanced Glow -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddProduct"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="34dp"
+        android:layout_marginBottom="72dp"
         android:contentDescription="Add Product"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/airbnb_coral"
-        app:elevation="20dp"
+        app:elevation="28dp"
         app:fabSize="normal"
         app:layout_anchor="@id/bottomAppBarContainer"
         app:layout_anchorGravity="top|center_horizontal"
-        app:maxImageSize="28dp"
+        app:maxImageSize="30dp"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         app:tint="@color/white" />
 

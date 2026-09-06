@@ -104,7 +104,7 @@ public class EditProductActivity extends AppCompatActivity {
             }
             HapticManager.swell(this);
             v.setEnabled(false);
-            ((com.google.android.material.button.MaterialButton) v).setText("✨ AI is thinking...");
+            ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_thinking);
 
             com.poliku.polygoplus.network.AiHelper.suggestListingDetails(this, selectedUris.get(0), new com.poliku.polygoplus.network.AiHelper.Callback() {
                 @Override
@@ -113,7 +113,7 @@ public class EditProductActivity extends AppCompatActivity {
                     etPrice.setText(price);
                     etDescription.setText(description);
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText("✨ AI: Suggest Details from Photo");
+                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_details);
                     HapticManager.success(EditProductActivity.this);
                     Toast.makeText(EditProductActivity.this, "AI suggestions applied!", Toast.LENGTH_SHORT).show();
                 }
@@ -121,7 +121,7 @@ public class EditProductActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText("✨ AI: Suggest Details from Photo");
+                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_details);
                     Toast.makeText(EditProductActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             });

@@ -31,6 +31,8 @@ public class AuthViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _isRegisterFormValid = new MutableLiveData<>(false);
     public final LiveData<Boolean> isRegisterFormValid = _isRegisterFormValid;
 
+    private boolean termsAccepted = false;
+
     // Temporary storage for validation values
     private String currentMatrix = "";
     private String currentPassword = "";
@@ -48,6 +50,11 @@ public class AuthViewModel extends ViewModel {
         _passwordError.setValue(passwordValid ? null : "Password must be at least 6 characters");
 
         _isLoginFormValid.setValue(matrixValid && passwordValid);
+    }
+
+    public void setTermsAccepted(boolean accepted) {
+        this.termsAccepted = accepted;
+        validateRegister(currentName, currentMatrix, currentEmail, currentPassword);
     }
 
     public void validateRegister(String name, String matrix, String email, String password) {
@@ -68,6 +75,6 @@ public class AuthViewModel extends ViewModel {
         boolean passwordValid = password.length() >= 6;
         _passwordError.setValue(passwordValid ? null : "Password must be at least 6 characters");
 
-        _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid);
+        _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid && termsAccepted);
     }
 }

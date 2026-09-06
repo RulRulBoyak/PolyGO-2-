@@ -148,6 +148,19 @@ public class ProfileFragment extends Fragment {
             if (loggedIn) startActivity(new Intent(requireContext(), VerificationActivity.class));
             else startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
         });
+
+        // NEW: Sustainability Dashboard entry
+        view.findViewById(R.id.menuImpact).setOnClickListener(v -> {
+            HapticManager.swell(requireContext());
+            startActivity(new Intent(requireContext(), com.poliku.polygoplus.SustainabilityDashboardActivity.class));
+        });
+
+        // Hide Biometric option if hardware is missing
+        androidx.biometric.BiometricManager bioManager = androidx.biometric.BiometricManager.from(requireContext());
+        if (bioManager.canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK) != androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS) {
+            view.findViewById(R.id.menuBioLock).setVisibility(View.GONE);
+        }
+
         view.findViewById(R.id.menuPrivacy).setOnClickListener(v -> {
             Intent i = new Intent(requireContext(), com.poliku.polygoplus.LegalActivity.class);
             i.putExtra(com.poliku.polygoplus.LegalActivity.EXTRA_PAGE, "privacy");

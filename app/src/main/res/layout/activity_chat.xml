@@ -36,6 +36,20 @@
                 android:src="@drawable/ic_arrow_back"
                 app:tint="@color/airbnb_ink" />
 
+            <!-- NEW: Safe Meetup entry -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/btnOpenSafeMeetup"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="Safe Meetup"
+                android:focusable="true"
+                android:padding="8dp"
+                android:src="@drawable/bg_verified_badge"
+                app:tint="@color/pks_blue" />
+
             <!-- User Info (Title & Active/Campus Subtitle) -->
             <LinearLayout
                 android:layout_width="0dp"

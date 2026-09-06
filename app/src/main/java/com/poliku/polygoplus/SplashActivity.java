@@ -2,7 +2,6 @@ package com.poliku.polygoplus;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,8 +17,9 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void route() {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
             Intent intent;
+            // Rule 3.3: Verify first-run status immediately on cold start
             if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
                 intent = new Intent(SplashActivity.this, OnboardingActivity.class);
             } else {
@@ -28,6 +28,6 @@ public class SplashActivity extends AppCompatActivity {
             startActivity(intent);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             finish();
-        }, 800); // Shorter delay as system already showed splash
+        }, 800);
     }
 }

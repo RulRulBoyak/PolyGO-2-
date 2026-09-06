@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 /** Small API client for the local PHP/MySQL server. Change BASE_URL for your network. */
 public final class NetworkApi {
     // Android emulator -> laptop. For a physical phone, use your laptop Wi-Fi IP instead.
-    public static final String BASE_URL = "http://10.0.2.2/polygo-api/";
+    public static final String BASE_URL = "https://api.poliku.com/";
 
     private static android.content.Context appContext;
 

@@ -207,13 +207,38 @@
                         android:textSize="15sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Terms Consent Checkbox -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/cbTerms"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="@string/i_agree_to_terms"
+                        android:textColor="@color/airbnb_ink"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
                 <!-- Primary CTA Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRegisterAction"
                     style="@style/Widget.PolyGo.Button"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="24dp"
                     android:letterSpacing="0.01"
                     android:text="Agree and continue"
                     android:textAllCaps="false"
@@ -224,14 +249,14 @@
                     app:cornerRadius="16dp"
                     app:elevation="0dp" />
 
-                <!-- Terms and Conditions Notice -->
+                <!-- PDPA Footer Notice -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     android:gravity="center"
                     android:lineSpacingExtra="2dp"
-                    android:text="By continuing, you agree to PolyGo+'s Campus Community Rules and Safety Standards."
+                    android:text="@string/pdpa_footer"
                     android:textColor="@color/airbnb_muted"
                     android:textSize="11.5sp" />
 
