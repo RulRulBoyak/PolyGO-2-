@@ -180,7 +180,9 @@ public class HomeFragment extends Fragment {
         });
         binding.tvSeeAllProducts.setOnClickListener(v -> {
             HapticManager.lightTap(v);
+            HapticManager.lightTap(v);
             startActivity(new Intent(requireContext(), SearchActivity.class));
+            requireActivity().overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
     }
 

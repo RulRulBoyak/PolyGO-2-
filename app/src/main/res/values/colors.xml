@@ -13,6 +13,8 @@
     <color name="pks_green">#2E7D32</color>
     <color name="pks_green_dark">#1B5E20</color>
     <color name="pks_green_variant">#8FD19E</color>
+    <color name="pks_gold">#FFD700</color>
+    <color name="pks_bronze">#CD7F32</color>
 
     <!-- Secondary Backgrounds -->
     <color name="soft_blue">#E3F2FD</color>

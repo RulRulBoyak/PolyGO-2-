@@ -38,6 +38,7 @@
             android:windowSoftInputMode="adjustPan" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".RegisterActivity" />
+        <activity android:name=".OtpActivity" />
         <activity android:name=".AccountActivity" />
         <activity android:name=".SearchActivity" />
         <activity android:name=".EditProductActivity" />

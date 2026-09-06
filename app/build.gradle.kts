@@ -3,6 +3,9 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
+    alias(libs.plugins.google.firebase.firebase.perf)
+    alias(libs.plugins.google.firebase.appdistribution)
 }
 
 android {
@@ -57,10 +60,24 @@ android {
 dependencies {
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.appcompat)
+    implementation(libs.firebase.ai)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.config)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.functions)
+    implementation(libs.firebase.inappmessaging.display)
+    implementation(libs.firebase.perf)
+    implementation(libs.firebase.storage)
+    implementation(libs.googleid)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.play.services.ads)
     implementation(libs.recyclerview)
     implementation(libs.glide)
     implementation(libs.shimmer)

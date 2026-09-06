@@ -103,6 +103,23 @@ public class HomeActivity extends AppCompatActivity {
         }
         checkCampusService();
         requestNotificationPermission();
+        setupBackPress();
+    }
+
+    private long backPressedTime;
+    private void setupBackPress() {
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                    finish();
+                } else {
+                    android.widget.Toast.makeText(HomeActivity.this, "Press back again to exit", android.widget.Toast.LENGTH_SHORT).show();
+                    HapticManager.lightTap(findViewById(R.id.home_main));
+                }
+                backPressedTime = System.currentTimeMillis();
+            }
+        });
     }
 
     private void requestNotificationPermission() {

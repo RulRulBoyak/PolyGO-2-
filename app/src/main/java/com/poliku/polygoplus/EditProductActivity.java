@@ -24,6 +24,7 @@ import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -232,17 +233,37 @@ public class EditProductActivity extends AppCompatActivity {
     }
 
     private void setupCategoryDropdown() {
-        String[] categories = {"Electronics", "Fashion", "Home", "Books", "Services", "Others"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categories);
-        autoCompleteCategory.setAdapter(adapter);
+        NetworkApi.getCategories(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                JSONArray list = response.optJSONArray("categories");
+                List<String> names = new ArrayList<>();
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) names.add(o.optString("name"));
+                    }
+                }
+                names.add("Others");
 
-        autoCompleteCategory.setOnItemClickListener((parent, view, position, id) -> {
-            String selected = categories[position];
-            if ("Others".equalsIgnoreCase(selected)) {
-                tilCustomCategory.setVisibility(View.VISIBLE);
-            } else {
-                tilCustomCategory.setVisibility(View.GONE);
-                etCustomCategory.setText("");
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(EditProductActivity.this, android.R.layout.simple_list_item_1, names);
+                autoCompleteCategory.setAdapter(adapter);
+
+                autoCompleteCategory.setOnItemClickListener((parent, view, position, id) -> {
+                    String selected = names.get(position);
+                    if ("Others".equalsIgnoreCase(selected)) {
+                        tilCustomCategory.setVisibility(View.VISIBLE);
+                    } else {
+                        tilCustomCategory.setVisibility(View.GONE);
+                        etCustomCategory.setText("");
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                String[] fallback = {"Electronics", "Fashion", "Home", "Books", "Services", "Others"};
+                autoCompleteCategory.setAdapter(new ArrayAdapter<>(EditProductActivity.this, android.R.layout.simple_list_item_1, fallback));
             }
         });
     }
@@ -254,6 +275,13 @@ public class EditProductActivity extends AppCompatActivity {
             String category = autoCompleteCategory.getText().toString().trim();
             if ("Others".equalsIgnoreCase(category)) {
                 category = etCustomCategory.getText() == null ? "" : etCustomCategory.getText().toString().trim();
+                // Propose new category
+                if (!category.isEmpty()) {
+                    NetworkApi.proposeCategory(category, new NetworkApi.Callback() {
+                        @Override public void onSuccess(JSONObject response) {}
+                        @Override public void onError(String message) {}
+                    });
+                }
             }
             String price = etPrice.getText().toString();
             String description = etDescription.getText().toString();
@@ -336,6 +364,6 @@ public class EditProductActivity extends AppCompatActivity {
     @Override
     public void finish() {
         super.finish();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

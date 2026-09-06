@@ -74,20 +74,7 @@ public class SearchActivity extends AppCompatActivity {
             return insets;
         });
 
-        String[] categories = {"All categories", "Food", "Drink", "Tech", "Electronics", "Fashion", "Books", "Repair", "Home", "Services"};
-        category.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, categories));
-        String initial = getIntent().getStringExtra(EXTRA_CATEGORY);
-        if (initial != null) {
-            boolean isCategoryShortcut = false;
-            for (int i = 0; i < categories.length; i++) {
-                if (categories[i].equalsIgnoreCase(initial)) {
-                    category.setSelection(i);
-                    isCategoryShortcut = true;
-                    break;
-                }
-            }
-            if (!isCategoryShortcut) search.setText(initial);
-        }
+        loadCategories();
         RecyclerView rv = findViewById(R.id.rvSearchResults);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
         adapter = new ProductCardAdapter(new ArrayList<>(), new ProductCardAdapter.Listener() {
@@ -183,6 +170,42 @@ public class SearchActivity extends AppCompatActivity {
         });
     }
 
+    private void loadCategories() {
+        NetworkApi.getCategories(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                JSONArray list = response.optJSONArray("categories");
+                List<String> names = new ArrayList<>();
+                names.add("All categories");
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) names.add(o.optString("name"));
+                    }
+                }
+                
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, names);
+                category.setAdapter(adapter);
+
+                String initial = getIntent().getStringExtra(EXTRA_CATEGORY);
+                if (initial != null) {
+                    for (int i = 0; i < names.size(); i++) {
+                        if (names.get(i).equalsIgnoreCase(initial)) {
+                            category.setSelection(i);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                String[] fallback = {"All categories", "Food", "Drink", "Tech", "Electronics", "Fashion", "Books", "Repair", "Home", "Services"};
+                category.setAdapter(new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, fallback));
+            }
+        });
+    }
+
     private void showSortDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this, com.google.android.material.R.style.Theme_Design_BottomSheetDialog);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_sort, null);
@@ -268,6 +291,6 @@ public class SearchActivity extends AppCompatActivity {
     @Override
     public void finish() {
         super.finish();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

@@ -29,6 +29,7 @@ import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -187,14 +188,35 @@ public class AddServiceActivity extends AppCompatActivity {
     }
 
     private void setupCategory() {
-        String[] categories = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Others"};
-        autoCategory.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categories));
-        autoCategory.setOnItemClickListener((parent, view, position, id) -> {
-            if ("Others".equals(categories[position])) {
-                tilCustomCategory.setVisibility(View.VISIBLE);
-            } else {
-                tilCustomCategory.setVisibility(View.GONE);
-                etCustomCategory.setText("");
+        NetworkApi.getCategories(new NetworkApi.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                JSONArray list = response.optJSONArray("categories");
+                List<String> names = new ArrayList<>();
+                if (list != null) {
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject o = list.optJSONObject(i);
+                        if (o != null) names.add(o.optString("name"));
+                    }
+                }
+                names.add("Others");
+                
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, names);
+                autoCategory.setAdapter(adapter);
+                autoCategory.setOnItemClickListener((parent, view, position, id) -> {
+                    if ("Others".equals(names.get(position))) {
+                        tilCustomCategory.setVisibility(View.VISIBLE);
+                    } else {
+                        tilCustomCategory.setVisibility(View.GONE);
+                        etCustomCategory.setText("");
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                String[] fallback = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Others"};
+                autoCategory.setAdapter(new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, fallback));
             }
         });
     }
@@ -209,6 +231,13 @@ public class AddServiceActivity extends AppCompatActivity {
 
         if ("Others".equals(category)) {
             category = etCustomCategory.getText().toString().trim();
+            // Propose new category to backend
+            if (!category.isEmpty()) {
+                NetworkApi.proposeCategory(category, new NetworkApi.Callback() {
+                    @Override public void onSuccess(JSONObject response) {}
+                    @Override public void onError(String message) {}
+                });
+            }
         }
 
         if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty() || selectedUris.isEmpty()) {
@@ -303,6 +332,6 @@ public class AddServiceActivity extends AppCompatActivity {
     @Override
     public void finish() {
         super.finish();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

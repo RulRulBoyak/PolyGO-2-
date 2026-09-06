@@ -9,6 +9,7 @@ import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
 import com.poliku.polygoplus.R;
+import com.poliku.polygoplus.ui.PriceFormatter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -662,7 +663,8 @@ public final class AppDataStore {
 
         public static ProductRecord fromJson(JSONObject o) {
             if (o == null) return null;
-            return new ProductRecord(o.optString("id", "0"), o.optString("title", "Item"), o.optString("seller", "User"), o.optString("price", "0"), o.optString("rating", "4.5"), o.optString("distance", "Near"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri", ""), o.optString("category", "General"), o.optString("description", ""), o.optBoolean("owner", false), o.optBoolean("available", true), o.optString("owner_id", "0"));
+            String price = PriceFormatter.format(o.optString("price", "0"));
+            return new ProductRecord(o.optString("id", "0"), o.optString("title", "Item"), o.optString("seller", "User"), price, o.optString("rating", "4.5"), o.optString("distance", "Near"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri", ""), o.optString("category", "General"), o.optString("description", ""), o.optBoolean("owner", false), o.optBoolean("available", true), o.optString("owner_id", "0"));
         }
     }
 

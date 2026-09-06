@@ -74,21 +74,21 @@ public class RegisterActivity extends AppCompatActivity {
             String role = autoCompleteRole.getText().toString();
 
             btnRegister.setEnabled(false);
-            NetworkApi.register(name, studentId, email, password, new NetworkApi.Callback() {
-                @Override public void onSuccess(org.json.JSONObject response) {
+            NetworkApi.sendOtp(email, new NetworkApi.Callback() {
+                @Override
+                public void onSuccess(org.json.JSONObject response) {
                     HapticManager.success(RegisterActivity.this);
-                    try {
-                        org.json.JSONObject userObj = response.optJSONObject("user");
-                        String token = response.optString("token");
-                        if (userObj != null) userObj.put("role", role); // Inject role into user session
-                        AppDataStore.saveRemoteSession(RegisterActivity.this, userObj, token);
-                    } catch (Exception ignored) {}
-                    Toast.makeText(RegisterActivity.this, "Account created", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(RegisterActivity.this, HomeActivity.class));
-                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                    finish();
+                    Intent intent = new Intent(RegisterActivity.this, OtpActivity.class);
+                    intent.putExtra(OtpActivity.EXTRA_EMAIL, email);
+                    intent.putExtra(OtpActivity.EXTRA_NAME, name);
+                    intent.putExtra(OtpActivity.EXTRA_STUDENT_ID, studentId);
+                    intent.putExtra(OtpActivity.EXTRA_PASSWORD, password);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                 }
-                @Override public void onError(String message) {
+
+                @Override
+                public void onError(String message) {
                     HapticManager.error(RegisterActivity.this);
                     btnRegister.setEnabled(true);
                     Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
@@ -133,6 +133,6 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     public void finish() {
         super.finish();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

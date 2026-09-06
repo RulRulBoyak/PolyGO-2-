@@ -56,7 +56,7 @@ public class ExploreViewModel extends AndroidViewModel {
     }
 
     private void fetchData(boolean clear) {
-        NetworkApi.getListings(offset, limit, new NetworkApi.Callback() {
+        NetworkApi.getListings(offset, limit, "newest", new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
                 new Thread(() -> {

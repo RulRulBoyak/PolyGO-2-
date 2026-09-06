@@ -14,12 +14,18 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/** Small API client for the local PHP/MySQL server. Change BASE_URL for your network. */
+/** 
+ * Principal Rule 2.2: Managed Concurrency & Main-Thread Safety
+ * Optimized networking client with a central Executor and global session handling.
+ */
 public final class NetworkApi {
-    // Android emulator -> laptop. For a physical phone, use your laptop Wi-Fi IP instead.
-    public static final String BASE_URL = "https://api.poliku.com/";
+    public static final String BASE_URL = "http://10.0.2.2/polygo-api/";
 
+    // Centralized thread pool to prevent thread exhaustion
+    private static final ExecutorService netExecutor = Executors.newFixedThreadPool(4);
     private static android.content.Context appContext;
 
     private NetworkApi() { }
@@ -41,6 +47,50 @@ public final class NetworkApi {
             post("login.php", body, callback);
         } catch (Exception e) {
             callback.onError("Could not prepare login request");
+        }
+    }
+
+    public static void sendOtp(String email, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("email", email);
+            body.put("action", "send");
+            post("otp.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Could not prepare OTP request");
+        }
+    }
+
+    public static void verifyOtp(String email, String otp, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("email", email);
+            body.put("otp", otp);
+            body.put("action", "verify");
+            post("otp.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Could not verify OTP");
+        }
+    }
+
+    public static void getCategories(Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("action", "list");
+            post("categories.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Could not load categories");
+        }
+    }
+
+    public static void proposeCategory(String name, Callback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("name", name);
+            body.put("action", "propose");
+            post("categories.php", body, callback);
+        } catch (Exception e) {
+            callback.onError("Could not propose category");
         }
     }
 
@@ -122,11 +172,7 @@ public final class NetworkApi {
     }
 
     public static void getListings(Callback callback) {
-        getListings(0, 50, "newest", callback); // Default large page for non-paginated callers
-    }
-
-    public static void getListings(int offset, int limit, Callback callback) {
-        getListings(offset, limit, "newest", callback);
+        getListings(0, 50, "newest", callback);
     }
 
     public static void getListings(int offset, int limit, String sort, Callback callback) {
@@ -322,7 +368,7 @@ public final class NetworkApi {
     }
 
     public static void uploadImage(android.content.Context context, android.net.Uri uri, Callback callback) {
-        new Thread(() -> {
+        netExecutor.execute(() -> {
             HttpURLConnection connection = null;
             try {
                 String boundary = "Boundary-" + System.currentTimeMillis();
@@ -331,7 +377,6 @@ public final class NetworkApi {
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-                // AUTHENTICATION: Add JWT Token if available
                 if (appContext != null) {
                     String token = AppDataStore.userToken(appContext);
                     if (token != null && !token.isEmpty()) {
@@ -371,11 +416,11 @@ public final class NetworkApi {
             } finally {
                 if (connection != null) connection.disconnect();
             }
-        }).start();
+        });
     }
 
     private static void post(String endpoint, JSONObject body, Callback callback) {
-        new Thread(() -> {
+        netExecutor.execute(() -> {
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(BASE_URL + endpoint).openConnection();
@@ -384,7 +429,6 @@ public final class NetworkApi {
                 connection.setReadTimeout(10000);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 
-                // AUTHENTICATION: Add JWT Token if available
                 if (appContext != null) {
                     String token = AppDataStore.userToken(appContext);
                     if (token != null && !token.isEmpty()) {
@@ -411,17 +455,22 @@ public final class NetworkApi {
                             callback.onSuccess(response);
                         } else {
                             String msg = response.optString("message", "The server rejected the request");
-                            
-                            // Rule 3.3: Human-readable Error Copywriting
                             String humanMsg = msg;
                             String lowerMsg = msg.toLowerCase();
-                            if (lowerMsg.contains("unauthorized") || lowerMsg.contains("invalid token")) {
+
+                            // Global Session Management
+                            if (lowerMsg.contains("unauthorized") || lowerMsg.contains("invalid token") || lowerMsg.contains("expired")) {
                                 humanMsg = "Your session expired. Please sign in again.";
-                                if (appContext != null) AppDataStore.logout(appContext);
+                                if (appContext != null) {
+                                    AppDataStore.logout(appContext);
+                                    android.content.Intent intent = new android.content.Intent(appContext, com.poliku.polygoplus.LoginActivity.class);
+                                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    appContext.startActivity(intent);
+                                }
                             } else if (lowerMsg.contains("failed to add") || lowerMsg.contains("listing error")) {
                                 humanMsg = "We couldn't save your listing. Please check your data.";
                             } else if (lowerMsg.contains("duplicate") || lowerMsg.contains("already exists")) {
-                                humanMsg = "This item or account already exists. Try something else!";
+                                humanMsg = "This item already exists. Try something else!";
                             } else if (lowerMsg.contains("incorrect password") || lowerMsg.contains("invalid login")) {
                                 humanMsg = "Check your ID or password and try again.";
                             } else if (lowerMsg.contains("database error") || lowerMsg.contains("sql")) {
@@ -438,15 +487,15 @@ public final class NetworkApi {
                 android.util.Log.e("NetworkApi", "Timeout error for " + endpoint, e);
                 new Handler(Looper.getMainLooper()).post(() -> callback.onError("Connection slow. Please try again when you have a better signal."));
             } catch (java.io.IOException e) {
-                android.util.Log.e("NetworkApi", "IO Exception for " + endpoint + ": " + e.getMessage(), e); // Added missing log
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network offline. Please check your Wi-Fi or mobile data."));
+                android.util.Log.e("NetworkApi", "IO Error for " + endpoint + ": " + e.getMessage(), e);
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network offline or server down. Details: " + e.getMessage()));
             } catch (Exception e) {
                 android.util.Log.e("NetworkApi", "Connection error for " + endpoint + ": " + e.getMessage(), e);
                 new Handler(Looper.getMainLooper()).post(() -> callback.onError("Something went wrong on our end. We're working on it!"));
             } finally {
                 if (connection != null) connection.disconnect();
             }
-        }).start();
+        });
     }
 
     private static String read(InputStream stream) throws Exception {
