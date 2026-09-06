@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 /** Small API client for the local PHP/MySQL server. Change BASE_URL for your network. */
 public final class NetworkApi {
     // Android emulator -> laptop. For a physical phone, use your laptop Wi-Fi IP instead.
-    public static final String BASE_URL = "https://api.poliku.com/";
+    public static final String BASE_URL = "http://10.0.2.2/polygo-api/";
 
     private static android.content.Context appContext;
 
@@ -431,11 +431,14 @@ public final class NetworkApi {
                         }
                     });
                 } catch (org.json.JSONException e) {
+                    android.util.Log.e("NetworkApi", "JSON parsing error for " + endpoint, e);
                     new Handler(Looper.getMainLooper()).post(() -> callback.onError("The connection was successful, but the data is temporarily unavailable."));
                 }
             } catch (java.net.SocketTimeoutException e) {
+                android.util.Log.e("NetworkApi", "Timeout error for " + endpoint, e);
                 new Handler(Looper.getMainLooper()).post(() -> callback.onError("Connection slow. Please try again when you have a better signal."));
             } catch (java.io.IOException e) {
+                android.util.Log.e("NetworkApi", "IO Exception for " + endpoint + ": " + e.getMessage(), e); // Added missing log
                 new Handler(Looper.getMainLooper()).post(() -> callback.onError("Network offline. Please check your Wi-Fi or mobile data."));
             } catch (Exception e) {
                 android.util.Log.e("NetworkApi", "Connection error for " + endpoint + ": " + e.getMessage(), e);
