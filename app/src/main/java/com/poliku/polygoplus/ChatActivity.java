@@ -1,5 +1,6 @@
 package com.poliku.polygoplus;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -72,6 +73,10 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnOpenSafeMeetup).setOnClickListener(v -> {
+            HapticManager.swell(this);
+            startActivity(new Intent(this, SafeMeetupActivity.class));
+        });
         findViewById(R.id.btnSend).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             sendMessage();

@@ -32,6 +32,12 @@ public final class AiHelper {
     private AiHelper() {}
 
     public static void suggestListingDetails(Context context, Uri imageUri, Callback callback) {
+        // SAFETY CHECK: Prevent crash if API Key is missing
+        if (API_KEY == null || API_KEY.isEmpty()) {
+            callback.onError("AI Setup Required: Please add GEMINI_API_KEY to local.properties");
+            return;
+        }
+
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
             
@@ -51,6 +57,14 @@ public final class AiHelper {
 
             Executor executor = Executors.newSingleThreadExecutor();
             ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
+            
+            // TIMEOUT: Prevent infinite spinning if network is slow
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (!response.isDone()) {
+                    response.cancel(true);
+                    callback.onError("AI Timeout: Campus Wi-Fi might be slow. Please try again.");
+                }
+            }, 15000); // 15 second limit
 
             Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
                 @Override
@@ -73,7 +87,7 @@ public final class AiHelper {
                             callback.onResult(title, price, desc)
                         );
                     } catch (Exception e) {
-                        onFailure(e);
+                        callback.onError("JSON Error: " + e.getMessage());
                     }
                 }
 

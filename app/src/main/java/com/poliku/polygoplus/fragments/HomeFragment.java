@@ -170,6 +170,14 @@ public class HomeFragment extends Fragment {
             startActivity(intent, options.toBundle());
         };
         binding.searchBarCard.setOnClickListener(openSearch);
+        binding.tvSearchVisual.setOnClickListener(v -> {
+            HapticManager.swell(requireContext());
+            startActivity(new Intent(requireContext(), com.poliku.polygoplus.AiDiscoveryActivity.class));
+        });
+        binding.btnTextbookHub.setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            startActivity(new Intent(requireContext(), com.poliku.polygoplus.TextbookHubActivity.class));
+        });
         binding.tvSeeAllProducts.setOnClickListener(v -> {
             HapticManager.lightTap(v);
             startActivity(new Intent(requireContext(), SearchActivity.class));
@@ -213,7 +221,10 @@ public class HomeFragment extends Fragment {
             ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTitle)).setText(event.title);
             ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventSubtitle)).setText(event.subtitle);
             ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTag)).setText(event.tag);
-            holder.itemView.setOnClickListener(v -> HapticManager.swell(v.getContext()));
+            holder.itemView.setOnClickListener(v -> {
+                HapticManager.swell(v.getContext());
+                v.getContext().startActivity(new Intent(v.getContext(), com.poliku.polygoplus.CampusPulseActivity.class));
+            });
         }
 
         @Override

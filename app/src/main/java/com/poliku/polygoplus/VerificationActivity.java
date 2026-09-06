@@ -125,7 +125,7 @@ public class VerificationActivity extends AppCompatActivity {
         if ("approved".equals(state)) {
             ivStatusIcon.setImageResource(android.R.drawable.checkbox_on_background);
             ivStatusIcon.setColorFilter(getResources().getColor(R.color.pks_green));
-            tvStatus.setText(R.string.verified_member);
+            tvStatus.setText(getString(R.string.verified_member));
             layoutForm.setVisibility(View.GONE);
             btnSimulate.setVisibility(View.GONE);
         } else if ("pending".equals(state)) {
@@ -137,7 +137,7 @@ public class VerificationActivity extends AppCompatActivity {
         } else {
             ivStatusIcon.setImageResource(android.R.drawable.ic_lock_lock);
             ivStatusIcon.setColorFilter(getResources().getColor(R.color.airbnb_muted));
-            tvStatus.setText(R.string.campus_verification);
+            tvStatus.setText(R.string.verification_required);
             layoutForm.setVisibility(View.VISIBLE);
             btnSimulate.setVisibility(View.GONE);
         }

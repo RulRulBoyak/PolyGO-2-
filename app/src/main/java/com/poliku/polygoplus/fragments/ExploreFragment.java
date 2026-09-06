@@ -1,5 +1,6 @@
 package com.poliku.polygoplus.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -75,6 +76,12 @@ public class ExploreFragment extends Fragment {
         swipeRefresh.setOnRefreshListener(() -> {
             HapticManager.mediumTap(swipeRefresh);
             viewModel.loadListings();
+        });
+
+        view.findViewById(R.id.exploreAppBar).setOnClickListener(v -> {
+            // Secret entry to Student Creator Hub by tapping the app bar title area
+            HapticManager.swell(requireContext());
+            startActivity(new Intent(requireContext(), com.poliku.polygoplus.ServicePortfolioActivity.class));
         });
 
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

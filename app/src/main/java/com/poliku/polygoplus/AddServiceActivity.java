@@ -149,7 +149,7 @@ public class AddServiceActivity extends AppCompatActivity {
             }
             HapticManager.swell(this);
             v.setEnabled(false);
-            ((com.google.android.material.button.MaterialButton) v).setText("✨ AI is analyzing...");
+            ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_thinking);
 
             com.poliku.polygoplus.network.AiHelper.suggestListingDetails(this, selectedUris.get(0), new com.poliku.polygoplus.network.AiHelper.Callback() {
                 @Override
@@ -158,14 +158,14 @@ public class AddServiceActivity extends AppCompatActivity {
                     etPrice.setText(price);
                     etDescription.setText(description);
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText("✨ AI: Suggest Service Details");
+                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_service);
                     HapticManager.success(AddServiceActivity.this);
                 }
 
                 @Override
                 public void onError(String error) {
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText("✨ AI: Suggest Service Details");
+                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_service);
                     Toast.makeText(AddServiceActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             });

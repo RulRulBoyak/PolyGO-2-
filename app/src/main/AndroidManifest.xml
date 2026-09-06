@@ -34,7 +34,8 @@
             android:exported="true" />
         <activity
             android:name=".HomeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".RegisterActivity" />
         <activity android:name=".AccountActivity" />
@@ -49,7 +50,8 @@
                 <data android:scheme="https" android:host="polygo.pks.edu.my" android:pathPrefix="/listing/" />
             </intent-filter>
         </activity>
-        <activity android:name=".ChatActivity" />
+        <activity android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".SavedItemsActivity" />
         <activity android:name=".MyListingsActivity" />
         <activity android:name=".TransactionsActivity" />
@@ -68,6 +70,14 @@
         <activity android:name=".ErrorStateActivity" />
         <activity android:name=".ImageGalleryActivity" android:theme="@style/Theme.PolyGo" />
         <activity android:name=".AddServiceActivity" />
+        <activity android:name=".TextbookHubActivity" />
+        <activity android:name=".IsbnScannerActivity" />
+        <activity android:name=".SafeMeetupActivity" />
+        <activity android:name=".SustainabilityDashboardActivity" />
+        <activity android:name=".AiDiscoveryActivity" />
+        <activity android:name=".ServicePortfolioActivity" />
+        <activity android:name=".CampusPulseActivity" />
+        <activity android:name=".DealTrackerActivity" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

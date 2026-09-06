@@ -31,6 +31,7 @@ public class RegisterActivity extends AppCompatActivity {
     private AuthViewModel viewModel;
     private TextInputEditText etName, etMatrix, etEmail, etPassword;
     private TextInputLayout tilName, tilMatrix, tilEmail, tilPassword;
+    private com.google.android.material.checkbox.MaterialCheckBox cbTerms;
     private android.widget.Button btnRegister;
 
     @Override
@@ -44,6 +45,7 @@ public class RegisterActivity extends AppCompatActivity {
         etMatrix = findViewById(R.id.etMatrixNo);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
+        cbTerms = findViewById(R.id.cbTerms);
         
         tilName = findViewById(R.id.tilFullName);
         tilMatrix = findViewById(R.id.tilMatrix);
@@ -58,6 +60,10 @@ public class RegisterActivity extends AppCompatActivity {
         autoCompleteRole.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, roles));
 
         setupValidation();
+
+        cbTerms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            viewModel.setTermsAccepted(isChecked);
+        });
 
         btnRegister.setOnClickListener(v -> {
             HapticManager.mediumTap(v);

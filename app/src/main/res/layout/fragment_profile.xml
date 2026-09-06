@@ -404,6 +404,50 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <!-- Menu: Campus Impact -->
+                    <LinearLayout
+                        android:id="@+id/menuImpact"
+                        android:layout_width="match_parent"
+                        android:layout_height="58dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="Impact Icon"
+                            android:src="@drawable/bg_verified_badge"
+                            app:tint="@color/pks_green" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:text="My Campus Impact"
+                            android:textColor="@color/pks_green"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Top 15%"
+                            android:textColor="@color/pks_green"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginStart="50dp"
+                        android:background="@color/grey_200" />
+
                     <!-- Menu: User Profile -->
                     <LinearLayout
                         android:id="@+id/menuUserProfile"

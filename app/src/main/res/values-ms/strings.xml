@@ -32,6 +32,13 @@
     <string name="submit_review">Hantar untuk Semakan</string>
     <string name="verified_member">Ahli Sah PKS</string>
     <string name="review_in_progress">Semakan Sedang Berjalan</string>
+    <string name="verification_required">Pengesahan Diperlukan</string>
+
+    <!-- AI Features -->
+    <string name="ai_suggest_details">✨ AI: Cadang Butiran dari Foto</string>
+    <string name="ai_suggest_service">✨ AI: Cadang Butiran Perkhidmatan</string>
+    <string name="ai_thinking">✨ AI sedang berfikir...</string>
+    <string name="ai_timeout">Masa AI Tamat: Wi-Fi kampus mungkin lambat. Sila cuba lagi.</string>
 
     <!-- General -->
     <string name="search_hint">Cari di kampus...</string>
@@ -39,4 +46,8 @@
     <string name="save">Simpan</string>
     <string name="chat">Sembang</string>
     <string name="make_offer">Buat Tawaran</string>
+
+    <string name="i_agree_to_terms">Saya bersetuju dengan Peraturan Komuniti Kampus dan Standard Keselamatan PolyGo+.</string>
+    <string name="pdpa_footer">PolyGo+ mematuhi Akta Perlindungan Data Peribadi (PDPA) 2010. Identiti kampus anda hanya digunakan untuk pengesahan dalaman.</string>
+    <string name="please_agree_to_terms">Sila bersetuju dengan terma untuk meneruskan</string>
 </resources>

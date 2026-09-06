@@ -64,6 +64,13 @@ public class OrderDetailActivity extends AppCompatActivity {
                 }
             });
         });
+
+        // Rule 3.3: Link to Live Deal Tracker
+        findViewById(R.id.btnTrackDeal).setOnClickListener(v -> {
+            com.poliku.polygoplus.ui.HapticManager.swell(this);
+            startActivity(new Intent(this, DealTrackerActivity.class));
+        });
+
         findViewById(R.id.btnViewReceipt).setOnClickListener(v -> {
             Intent i = new Intent(this, ReceiptActivity.class);
             i.putExtra(ReceiptActivity.EXTRA_TRANSACTION_ID, order.id);
