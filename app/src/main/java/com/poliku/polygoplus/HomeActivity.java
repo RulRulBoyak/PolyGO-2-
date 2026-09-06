@@ -40,20 +40,20 @@ public class HomeActivity extends AppCompatActivity {
         if (mainView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(systemBars.left, 0, systemBars.right, 0);
+                v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
                 return insets;
             });
         }
 
-        View bottomBar = findViewById(R.id.bottomAppBarContainer);
-        if (bottomBar != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(bottomBar, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                // Ensure bottom nav is clear of gesture bar
-                v.setPadding(0, 0, 0, systemBars.bottom); 
-                return insets;
-            });
-        }
+//        View bottomBar = findViewById(R.id.bottomAppBarContainer);
+//        if (bottomBar != null) {
+//            ViewCompat.setOnApplyWindowInsetsListener(bottomBar, (v, insets) -> {
+//                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+//                // Ensure bottom nav is clear of gesture bar
+//                v.setPadding(0, 0, 0, systemBars.bottom);
+//                return insets;
+//            });
+//        }
         
         if (navView instanceof com.google.android.material.navigationrail.NavigationRailView) {
             ViewCompat.setOnApplyWindowInsetsListener(navView, (v, insets) -> {
