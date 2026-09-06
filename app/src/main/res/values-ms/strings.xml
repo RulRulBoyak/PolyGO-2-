@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">PolyGo+</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Eksklusif untuk PKS</string>
+    <string name="onboarding_body_1">PolyGo+ hanya untuk warga Politeknik Kuching Sarawak. ID kampus yang sah menjamin kepercayaan komuniti.</string>
+    <string name="onboarding_title_2">Jual Beli di Kampus</string>
+    <string name="onboarding_body_2">Cari makanan, gajet, buku dan banyak lagi dari rakan kampus anda. Mudah dan cepat.</string>
+    <string name="onboarding_title_3">Sembang Masa Nyata</string>
+    <string name="onboarding_body_3">Berhubung dengan penjual terus, bincang harga, dan selesaikan urusan dalam satu tempat.</string>
+    <string name="onboarding_title_4">Jumpa dengan Selamat</string>
+    <string name="onboarding_body_4">Berjumpa di lokasi ikonik PKS seperti Blok A atau Kafeteria. Pastikan urusan selesai sebelum bayar.</string>
+
+    <!-- Home & Navigation -->
+    <string name="greeting_morning">Selamat pagi</string>
+    <string name="greeting_afternoon">Selamat tengah hari</string>
+    <string name="greeting_evening">Selamat petang</string>
+    <string name="explore_campus">Terokai Kampus</string>
+    <string name="recent_listings">Iklan Terkini</string>
+    <string name="view_all">Lihat Semua</string>
+
+    <!-- Verification -->
+    <string name="trust_safety">Kepercayaan &amp; Keselamatan</string>
+    <string name="campus_verification">Pengesahan Kampus</string>
+    <string name="i_am_a">Saya seorang...</string>
+    <string name="student">Pelajar</string>
+    <string name="alumni">Alumni</string>
+    <string name="matrix_verification">Pengesahan Kad Matrik</string>
+    <string name="alumni_challenge">Cabaran Alumni</string>
+    <string name="alumni_q1">Apakah nama gelaran bagi PKS?</string>
+    <string name="alumni_q2">Tahun berapakah anda tamat pengajian?</string>
+    <string name="submit_review">Hantar untuk Semakan</string>
+    <string name="verified_member">Ahli Sah PKS</string>
+    <string name="review_in_progress">Semakan Sedang Berjalan</string>
+
+    <!-- General -->
+    <string name="search_hint">Cari di kampus...</string>
+    <string name="login_required">Sila log masuk untuk meneruskan</string>
+    <string name="save">Simpan</string>
+    <string name="chat">Sembang</string>
+    <string name="make_offer">Buat Tawaran</string>
+</resources>

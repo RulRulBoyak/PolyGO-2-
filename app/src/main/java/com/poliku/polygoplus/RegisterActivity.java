@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.HapticManager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 import com.google.android.material.textfield.TextInputEditText;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.HapticManager;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.AuthViewModel;
@@ -58,7 +60,7 @@ public class RegisterActivity extends AppCompatActivity {
         setupValidation();
 
         btnRegister.setOnClickListener(v -> {
-            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            HapticManager.mediumTap(v);
             String name = etName.getText().toString().trim();
             String studentId = etMatrix.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
@@ -68,6 +70,7 @@ public class RegisterActivity extends AppCompatActivity {
             btnRegister.setEnabled(false);
             NetworkApi.register(name, studentId, email, password, new NetworkApi.Callback() {
                 @Override public void onSuccess(org.json.JSONObject response) {
+                    HapticManager.success(RegisterActivity.this);
                     try {
                         org.json.JSONObject userObj = response.optJSONObject("user");
                         String token = response.optString("token");
@@ -80,6 +83,7 @@ public class RegisterActivity extends AppCompatActivity {
                     finish();
                 }
                 @Override public void onError(String message) {
+                    HapticManager.error(RegisterActivity.this);
                     btnRegister.setEnabled(true);
                     Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
                 }

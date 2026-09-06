@@ -14,12 +14,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-/**
- * Principal Rule 1.1: Separation of Concerns
- * This ViewModel handles all data filtering and fetching for the Explore Screen.
- */
 public class ExploreViewModel extends AndroidViewModel {
 
     private final List<AppDataStore.ProductRecord> allItems = new ArrayList<>();
@@ -30,7 +25,13 @@ public class ExploreViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     public final LiveData<Boolean> isLoading = _isLoading;
 
+    private final MutableLiveData<Boolean> _isMoreLoading = new MutableLiveData<>(false);
+    public final LiveData<Boolean> isMoreLoading = _isMoreLoading;
+
     private int currentTab = 0; // 0 for Products, 1 for Services
+    private int offset = 0;
+    private final int limit = 20;
+    private boolean hasNextPage = true;
 
     public ExploreViewModel(@NonNull Application application) {
         super(application);
@@ -42,14 +43,26 @@ public class ExploreViewModel extends AndroidViewModel {
     }
 
     public void loadListings() {
+        offset = 0;
+        hasNextPage = true;
         _isLoading.setValue(true);
-        NetworkApi.getListings(new NetworkApi.Callback() {
+        fetchData(true);
+    }
+
+    public void loadMore() {
+        if (_isMoreLoading.getValue() == Boolean.TRUE || !hasNextPage) return;
+        _isMoreLoading.setValue(true);
+        fetchData(false);
+    }
+
+    private void fetchData(boolean clear) {
+        NetworkApi.getListings(offset, limit, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                // Rule 2.2: Large array parsing on background thread
                 new Thread(() -> {
                     synchronized (allItems) {
-                        allItems.clear();
+                        if (clear) allItems.clear();
+                        
                         JSONArray list = response.optJSONArray("listings");
                         if (list != null) {
                             for (int i = 0; i < list.length(); i++) {
@@ -60,22 +73,29 @@ public class ExploreViewModel extends AndroidViewModel {
                                 }
                             }
                         }
+                        offset += limit;
+                        hasNextPage = response.optBoolean("has_next", false);
                     }
                     applyFilters();
                     _isLoading.postValue(false);
+                    _isMoreLoading.postValue(false);
                 }).start();
             }
 
             @Override
             public void onError(String message) {
-                new Thread(() -> {
-                    synchronized (allItems) {
-                        allItems.clear();
-                        allItems.addAll(AppDataStore.getListings(getApplication()));
-                    }
-                    applyFilters();
-                    _isLoading.postValue(false);
-                }).start();
+                if (clear) {
+                    new Thread(() -> {
+                        synchronized (allItems) {
+                            allItems.clear();
+                            allItems.addAll(AppDataStore.getListings(getApplication()));
+                        }
+                        applyFilters();
+                        _isLoading.postValue(false);
+                    }).start();
+                } else {
+                    _isMoreLoading.postValue(false);
+                }
             }
         });
     }

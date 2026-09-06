@@ -7,12 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.SearchActivity;
@@ -21,13 +17,12 @@ import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.databinding.FragmentHomeBinding;
-import com.poliku.polygoplus.databinding.ItemCategoryBinding;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.HomeViewModel;
-import com.poliku.polygoplus.network.NetworkApi;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.poliku.polygoplus.ui.HapticManager;
+import com.google.android.material.tabs.TabLayoutMediator;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.viewpager2.widget.ViewPager2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,11 +47,18 @@ public class HomeFragment extends Fragment {
 
         AppDataStore.initialize(requireContext());
         setupHeader();
-        setupCategories();
+        setupEventCarousel();
         setupProducts();
         setupSearchActions();
         
         observeViewModel();
+        
+        binding.swipeRefreshHome.setColorSchemeResources(R.color.pks_blue);
+        binding.swipeRefreshHome.setOnRefreshListener(() -> {
+            HapticManager.mediumTap(binding.swipeRefreshHome);
+            viewModel.loadProducts();
+        });
+        
         viewModel.loadProducts();
     }
 
@@ -72,10 +74,13 @@ public class HomeFragment extends Fragment {
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             if (binding == null) return;
             if (isLoading) {
-                binding.shimmerMarket.shimmerView.setVisibility(View.VISIBLE);
-                binding.shimmerMarket.shimmerView.startShimmer();
-                binding.recyclerViewProducts.setVisibility(View.GONE);
+                if (!binding.swipeRefreshHome.isRefreshing()) {
+                    binding.shimmerMarket.shimmerView.setVisibility(View.VISIBLE);
+                    binding.shimmerMarket.shimmerView.startShimmer();
+                    binding.recyclerViewProducts.setVisibility(View.GONE);
+                }
             } else {
+                binding.swipeRefreshHome.setRefreshing(false);
                 binding.shimmerMarket.shimmerView.stopShimmer();
                 binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
             }
@@ -89,9 +94,9 @@ public class HomeFragment extends Fragment {
         
         String hourGreeting;
         int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
-        if (hour < 12) hourGreeting = "Good morning";
-        else if (hour < 18) hourGreeting = "Good afternoon";
-        else hourGreeting = "Good evening";
+        if (hour < 12) hourGreeting = getString(R.string.greeting_morning);
+        else if (hour < 18) hourGreeting = getString(R.string.greeting_afternoon);
+        else hourGreeting = getString(R.string.greeting_evening);
 
         if (!loggedIn || name == null || name.trim().isEmpty() || "PolyGo member".equals(name)) {
             binding.tvGreeting.setText(hourGreeting + "!");
@@ -105,10 +110,10 @@ public class HomeFragment extends Fragment {
                     .load(photo)
                     .circleCrop()
                     .into(binding.ivProfilePic);
-            binding.ivProfilePic.setPadding(0, 0, 0, 0); // Remove padding if real photo exists
         }
 
         binding.ivProfilePic.setOnClickListener(v -> {
+            HapticManager.lightTap(v);
             if (AppDataStore.isLoggedIn(requireContext())) {
                 Intent intent = new Intent(requireContext(), AccountActivity.class);
                 androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -121,17 +126,24 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void setupCategories() {
-        List<Category> categories = new ArrayList<>();
-        categories.add(new Category("Food", R.drawable.ic_category_food));
-        categories.add(new Category("Drinks", R.drawable.ic_category_drink));
-        categories.add(new Category("Tech", R.drawable.ic_category_tech));
-        categories.add(new Category("Books", R.drawable.ic_category_books));
-        categories.add(new Category("Repair", R.drawable.ic_category_repair));
-        categories.add(new Category("Others", R.drawable.ic_nav_explore));
+    private void setupEventCarousel() {
+        List<Event> events = new ArrayList<>();
+        events.add(new Event("Digital Career Fair 2026", "Join the biggest tech event on campus", R.drawable.bg_home_header, "Career"));
+        events.add(new Event("Campus Night Market", "Support student entrepreneurs this Friday", R.drawable.bg_home_header, "Food"));
+        events.add(new Event("Book Exchange Program", "Swap your old textbooks for new ones", R.drawable.bg_home_header, "Education"));
 
-        binding.recyclerViewCategories.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        binding.recyclerViewCategories.setAdapter(new CategoryAdapter(categories));
+        EventAdapter adapter = new EventAdapter(events);
+        binding.eventCarousel.setAdapter(adapter);
+        
+        new TabLayoutMediator(binding.carouselIndicator, binding.eventCarousel, (tab, position) -> {}).attach();
+        
+        binding.eventCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                HapticManager.lightTap(binding.eventCarousel);
+            }
+        });
     }
 
     private void setupProducts() {
@@ -139,7 +151,6 @@ public class HomeFragment extends Fragment {
             Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
 
-            // Rule 3.1: Visual Clarity (Shared Element Transition)
             androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), sharedView, "product_image_hero"
             );
@@ -151,6 +162,7 @@ public class HomeFragment extends Fragment {
 
     private void setupSearchActions() {
         View.OnClickListener openSearch = v -> {
+            HapticManager.lightTap(v);
             Intent intent = new Intent(requireContext(), SearchActivity.class);
             androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), binding.searchBarCard, "search_bar_hero"
@@ -158,8 +170,10 @@ public class HomeFragment extends Fragment {
             startActivity(intent, options.toBundle());
         };
         binding.searchBarCard.setOnClickListener(openSearch);
-        binding.btnExploreNow.setOnClickListener(v -> startActivity(new Intent(requireContext(), com.poliku.polygoplus.CategoryBrowseActivity.class)));
-        binding.tvSeeAllProducts.setOnClickListener(v -> startActivity(new Intent(requireContext(), SearchActivity.class)));
+        binding.tvSeeAllProducts.setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            startActivity(new Intent(requireContext(), SearchActivity.class));
+        });
     }
 
     @Override
@@ -168,54 +182,48 @@ public class HomeFragment extends Fragment {
         binding = null;
     }
 
-    public static class Category {
-        String name;
-        int iconRes;
+    public static class Event {
+        String title, subtitle, tag;
+        int imageRes;
 
-        Category(String name, int iconRes) {
-            this.name = name;
-            this.iconRes = iconRes;
+        Event(String title, String subtitle, int imageRes, String tag) {
+            this.title = title;
+            this.subtitle = subtitle;
+            this.imageRes = imageRes;
+            this.tag = tag;
         }
     }
 
-    // --- Category adapter ---
+    private static class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder> {
+        private final List<Event> events;
 
-    private static class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
-        private final List<Category> categories;
-
-        CategoryAdapter(List<Category> categories) {
-            this.categories = categories;
+        EventAdapter(List<Event> events) {
+            this.events = events;
         }
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            ItemCategoryBinding binding = ItemCategoryBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
-            return new ViewHolder(binding);
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_event_card, parent, false));
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Category category = categories.get(position);
-            holder.binding.textViewCategoryName.setText(category.name);
-            holder.binding.imageViewCategory.setImageResource(category.iconRes);
-            holder.itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), SearchActivity.class);
-                intent.putExtra(SearchActivity.EXTRA_CATEGORY, category.name);
-                v.getContext().startActivity(intent);
-            });
+            Event event = events.get(position);
+            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTitle)).setText(event.title);
+            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventSubtitle)).setText(event.subtitle);
+            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTag)).setText(event.tag);
+            holder.itemView.setOnClickListener(v -> HapticManager.swell(v.getContext()));
         }
 
         @Override
         public int getItemCount() {
-            return categories.size();
+            return events.size();
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
-            ItemCategoryBinding binding;
-            ViewHolder(ItemCategoryBinding binding) {
-                super(binding.getRoot());
-                this.binding = binding;
+            ViewHolder(View itemView) {
+                super(itemView);
             }
         }
     }

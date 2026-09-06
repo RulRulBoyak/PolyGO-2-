@@ -46,6 +46,9 @@ public class HomeViewModel extends AndroidViewModel {
                     List<AppDataStore.ProductRecord> list = new ArrayList<>();
                     JSONArray arr = response.optJSONArray("listings");
                     if (arr != null) {
+                        // CACHING: Update local store with latest listings
+                        AppDataStore.updateListingsCache(getApplication(), arr);
+                        
                         for (int i = 0; i < arr.length(); i++) {
                             JSONObject o = arr.optJSONObject(i);
                             if (o != null) {

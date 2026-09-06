@@ -16,12 +16,14 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.EmptyStates;
+import com.poliku.polygoplus.ui.HapticManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +41,7 @@ public class SearchActivity extends AppCompatActivity {
     private TextView count;
     private View empty;
     private View suggestions;
+    private String currentSort = "newest";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,12 @@ public class SearchActivity extends AppCompatActivity {
         EmptyStates.bind(empty, android.R.drawable.ic_menu_search, "No results found",
                 "Try another keyword or browse a PKS category.", "Browse categories",
                 v -> startActivity(new android.content.Intent(this, CategoryBrowseActivity.class)));
+        
+        findViewById(R.id.btnSort).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            showSortDialog();
+        });
+
         bindSuggestions();
         search.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus && search.getText().toString().trim().isEmpty()) showSuggestions(true);
@@ -92,24 +101,18 @@ public class SearchActivity extends AppCompatActivity {
         rv.setAdapter(adapter);
 
         search.addTextChangedListener(new TextWatcher() {
-            public void beforeTextChanged(CharSequence s, int st, int c, int a) {
-            }
-
+            public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             public void onTextChanged(CharSequence s, int st, int b, int c) {
                 showSuggestions(s.toString().trim().isEmpty());
                 filter();
             }
-
-            public void afterTextChanged(Editable e) {
-            }
+            public void afterTextChanged(Editable e) {}
         });
         category.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
                 filter();
             }
-
-            public void onNothingSelected(android.widget.AdapterView<?> p) {
-            }
+            public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
         reloadListings();
     }
@@ -126,47 +129,82 @@ public class SearchActivity extends AppCompatActivity {
 
     private void reloadListings() {
         String currentUserId = AppDataStore.userId(this);
+        String q = search.getText().toString().trim();
         
-        // Always load local listings FIRST for demo reliability
-        all.clear();
-        all.addAll(AppDataStore.getListings(this));
-        filter();
+        if (adapter != null && q.isEmpty()) {
+             all.clear();
+             all.addAll(AppDataStore.getListings(this));
+             filter();
+        }
 
-        NetworkApi.getListings(new NetworkApi.Callback() {
+        NetworkApi.searchListings(q, currentSort, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
-                // Keep local products added during this session, then add remote ones
                 JSONArray list = response.optJSONArray("listings");
+                List<AppDataStore.ProductRecord> remote = new ArrayList<>();
                 if (list != null) {
                     for (int i = 0; i < list.length(); i++) {
                         JSONObject o = list.optJSONObject(i);
                         if (o != null) {
                             AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
                             if (p != null) {
-                                // Don't duplicate if already in 'all' (based on title/price)
-                                boolean exists = false;
-                                for (AppDataStore.ProductRecord local : all) {
-                                    if (local.title.equals(p.title) && local.price.equals(p.price)) { exists = true; break; }
-                                }
-                                if (!exists) {
-                                    boolean isOwner = p.ownerId.equals(currentUserId);
-                                    all.add(isOwner ? p.withOwnerStatus(true) : p);
-                                }
+                                boolean isOwner = p.ownerId.equals(currentUserId);
+                                remote.add(isOwner ? p.withOwnerStatus(true) : p);
                             }
                         }
                     }
+                }
+                
+                if (q.isEmpty()) {
+                    all.clear();
+                    all.addAll(AppDataStore.getListings(SearchActivity.this));
+                    for (AppDataStore.ProductRecord r : remote) {
+                        boolean exists = false;
+                        for (AppDataStore.ProductRecord l : all) {
+                            if (l.title.equals(r.title) && l.price.equals(r.price)) { exists = true; break; }
+                        }
+                        if (!exists) all.add(r);
+                    }
+                } else {
+                    all.clear();
+                    all.addAll(remote);
                 }
                 filter();
             }
 
             @Override
             public void onError(String message) {
-                // Fallback to local if server fails or handle error
-                all.clear();
-                all.addAll(AppDataStore.getListings(SearchActivity.this));
-                filter();
+                if (q.isEmpty()) {
+                    all.clear();
+                    all.addAll(AppDataStore.getListings(SearchActivity.this));
+                    filter();
+                }
             }
         });
+    }
+
+    private void showSortDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this, com.google.android.material.R.style.Theme_Design_BottomSheetDialog);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_sort, null);
+        dialog.setContentView(view);
+        
+        ChipGroup group = view.findViewById(R.id.sortChipGroup);
+        for (int i = 0; i < group.getChildCount(); i++) {
+            Chip chip = (Chip) group.getChildAt(i);
+            if (currentSort.equals(chip.getTag())) chip.setChecked(true);
+        }
+
+        view.findViewById(R.id.btnApplySort).setOnClickListener(v -> {
+            HapticManager.mediumTap(v);
+            int id = group.getCheckedChipId();
+            if (id != View.NO_ID) {
+                Chip selected = group.findViewById(id);
+                currentSort = selected.getTag().toString();
+                reloadListings();
+            }
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
     private void filter() {
@@ -180,9 +218,7 @@ public class SearchActivity extends AppCompatActivity {
             boolean categoryMatch = categoryMatches(p.category, cat);
             if (text && categoryMatch) filtered.add(p);
         }
-        if (adapter != null) {
-            adapter.updateData(filtered);
-        }
+        if (adapter != null) adapter.updateData(filtered);
         if (count != null) count.setText(filtered.size() + " listings");
         if (empty != null) empty.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
     }
@@ -199,6 +235,7 @@ public class SearchActivity extends AppCompatActivity {
         trending.removeAllViews();
         for (String q : AppDataStore.TRENDING_SEARCHES) trending.addView(chip(q));
         findViewById(R.id.tvClearHistory).setOnClickListener(v -> {
+            HapticManager.mediumTap(v);
             AppDataStore.clearSearchHistory(this);
             bindSuggestions();
         });
@@ -208,6 +245,7 @@ public class SearchActivity extends AppCompatActivity {
         Chip chip = new Chip(this);
         chip.setText(label);
         chip.setOnClickListener(v -> {
+            HapticManager.lightTap(v);
             search.setText(label);
             search.setSelection(label.length());
             AppDataStore.addSearchQuery(this, label);
@@ -225,5 +263,11 @@ public class SearchActivity extends AppCompatActivity {
         if (selected.equals("repair")) return product.contains("repair") || product.contains("service");
         if (selected.equals("home")) return product.contains("home") || product.contains("furniture");
         return product.equals(selected) || product.contains(selected) || selected.contains(product);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

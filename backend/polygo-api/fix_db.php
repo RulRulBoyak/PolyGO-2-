@@ -13,6 +13,7 @@ try {
         'password_hash' => "VARCHAR(255)",
         'role' => "VARCHAR(20) DEFAULT 'Student'",
         'profile_pic_url' => "VARCHAR(500)",
+        'fcm_token' => "VARCHAR(500)", // Added for Phase 2: Push Notifications
         'is_verified' => "BOOLEAN DEFAULT FALSE",
         'created_at' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
     ];

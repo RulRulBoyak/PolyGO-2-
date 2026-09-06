@@ -4,11 +4,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-
+        android:name=".PolyGoApplication"
         android:allowBackup="true"
-        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/logo_polygo"
@@ -18,25 +21,34 @@
         android:theme="@style/Theme.PolyGo">
         <activity
             android:name=".SplashActivity"
-            />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true" />
-        <activity
-            android:name=".HomeActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".RegisterActivity" />
         <activity android:name=".AccountActivity" />
         <activity android:name=".SearchActivity" />
         <activity android:name=".EditProductActivity" />
-        <activity android:name=".ProductDetailActivity" />
+        <activity android:name=".ProductDetailActivity"
+            android:exported="true">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="polygo.pks.edu.my" android:pathPrefix="/listing/" />
+            </intent-filter>
+        </activity>
         <activity android:name=".ChatActivity" />
         <activity android:name=".SavedItemsActivity" />
         <activity android:name=".MyListingsActivity" />
@@ -56,6 +68,18 @@
         <activity android:name=".ErrorStateActivity" />
         <activity android:name=".ImageGalleryActivity" android:theme="@style/Theme.PolyGo" />
         <activity android:name=".AddServiceActivity" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_GOOGLE_MAPS_API_KEY" />
+
+        <service
+            android:name=".network.PolyGoMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

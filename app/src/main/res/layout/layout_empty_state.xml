@@ -11,19 +11,35 @@
 
     <!-- Hero Illustration Container -->
     <FrameLayout
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="@drawable/bg_category_circle"
-        android:backgroundTint="@color/soft_blue">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/emptyIcon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center"
-            android:contentDescription="Empty State Graphic"
-            android:src="@android:drawable/ic_menu_search"
-            app:tint="@color/pks_blue" />
+        <!-- High-End Vector Animation (Phase 6) -->
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/emptyLottie"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_speed="0.8"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/bg_category_circle"
+            android:backgroundTint="@color/soft_blue">
+
+            <ImageView
+                android:id="@+id/emptyIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:contentDescription="Empty State Graphic"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="@color/pks_blue" />
+        </FrameLayout>
     </FrameLayout>
 
     <!-- Main Headline -->
@@ -35,7 +51,7 @@
         android:gravity="center"
         android:letterSpacing="-0.02"
         android:text="Nothing here yet"
-        android:textColor="@color/airbnb_ink"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:textStyle="bold" />
 
@@ -49,7 +65,7 @@
         android:gravity="center"
         android:lineSpacingExtra="4dp"
         android:text="When there is something to show, it will appear here."
-        android:textColor="@color/airbnb_muted"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="14.5sp" />
 
     <!-- Primary Action Button (Dynamically toggled via Java) -->

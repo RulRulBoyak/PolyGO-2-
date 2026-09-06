@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/NotificationManager.php';
 
 $input = input_json();
 $userId = (int)($input['user_id'] ?? 0);
@@ -21,6 +22,25 @@ if ($action === 'send') {
 
     $query = $pdo->prepare('INSERT INTO messages (thread_id, sender_id, text) VALUES (?, ?, ?)');
     if ($query->execute([$threadId, $userId, $text])) {
+
+        // Find recipient to send notification
+        $tQuery = $pdo->prepare('SELECT buyer_id, seller_id FROM threads WHERE id = ?');
+        $tQuery->execute([$threadId]);
+        $thread = $tQuery->fetch();
+        if ($thread) {
+            $recipientId = ($thread['buyer_id'] == $userId) ? $thread['seller_id'] : $thread['buyer_id'];
+
+            // Get sender name
+            $sQuery = $pdo->prepare('SELECT full_name FROM users WHERE id = ?');
+            $sQuery->execute([$userId]);
+            $senderName = $sQuery->fetchColumn();
+
+            NotificationManager::sendToUser($pdo, (int)$recipientId, "New message from " . $senderName, $text, [
+                'type' => 'chat',
+                'thread_id' => (string)$threadId
+            ]);
+        }
+
         respond(true, 'Message sent', ['thread_id' => $threadId]);
     } else {
         respond(false, 'Failed to send message');

@@ -2,6 +2,45 @@
     <string name="app_name">PolyGo+</string>
     <string name="logo_content_description">PolyGo+ Logo</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Exclusive to PKS</string>
+    <string name="onboarding_body_1">PolyGo+ is only for Politeknik Kuching Sarawak students and staff. Verified campus IDs keep the marketplace trusted.</string>
+    <string name="onboarding_title_2">Buy and sell on campus</string>
+    <string name="onboarding_body_2">Browse food, tech, books and more from people around you. No need to leave campus to complete a deal.</string>
+    <string name="onboarding_title_3">Real-time chat</string>
+    <string name="onboarding_body_3">Message sellers instantly, agree a price, and keep the conversation in one place.</string>
+    <string name="onboarding_title_4">Meet safely</string>
+    <string name="onboarding_body_4">Meet at PKS landmarks like Block A or the cafeteria. Mark the deal complete and leave a review.</string>
+
+    <!-- Home & Navigation -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="explore_campus">Explore Campus</string>
+    <string name="recent_listings">Recent Listings</string>
+    <string name="view_all">View All</string>
+
+    <!-- Verification -->
+    <string name="trust_safety">Trust &amp; Safety</string>
+    <string name="campus_verification">Campus Verification</string>
+    <string name="i_am_a">I am a...</string>
+    <string name="student">Student</string>
+    <string name="alumni">Alumni</string>
+    <string name="matrix_verification">Matrix Card Verification</string>
+    <string name="alumni_challenge">Alumni Challenge</string>
+    <string name="alumni_q1">What is the nickname of PKS?</string>
+    <string name="alumni_q2">Which year did you graduate?</string>
+    <string name="submit_review">Submit for Review</string>
+    <string name="verified_member">Verified Member</string>
+    <string name="review_in_progress">Review in Progress</string>
+
+    <!-- General -->
+    <string name="search_hint">Search campus...</string>
+    <string name="login_required">Login required to proceed</string>
+    <string name="save">Save</string>
+    <string name="chat">Chat</string>
+    <string name="make_offer">Make an Offer</string>
+
     <string name="privacy_policy_text">
         &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n
         Last updated: August 03, 2026\n\n

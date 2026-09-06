@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ChatMessageAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.HapticManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,7 +72,10 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        findViewById(R.id.btnSend).setOnClickListener(v -> sendMessage());
+        findViewById(R.id.btnSend).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            sendMessage();
+        });
         input.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEND) { sendMessage(); return true; }
             return false;

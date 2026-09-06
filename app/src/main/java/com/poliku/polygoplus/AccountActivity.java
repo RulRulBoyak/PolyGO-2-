@@ -12,6 +12,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.HapticManager;
 
 import org.json.JSONObject;
 
@@ -56,7 +57,7 @@ public class AccountActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnUpdateProfile).setOnClickListener(v -> {
-            v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            HapticManager.mediumTap(v);
             String first = value(R.id.etFirstName);
             String last = value(R.id.etLastName);
             String email = value(R.id.etEmail);
@@ -92,22 +93,27 @@ public class AccountActivity extends AppCompatActivity {
                 saveProfile(v, userId, fullName, email, mobile, selectedPhotoUri);
             }
         });
-        findViewById(R.id.btnDeleteAccount).setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(this)
+        findViewById(R.id.btnDeleteAccount).setOnClickListener(v -> {
+            HapticManager.heavyTap(v);
+            new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Delete account")
                 .setMessage("This removes your local PolyGo+ session and profile from this device.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (d, w) -> {
+                    HapticManager.error(this);
                     AppDataStore.deleteAccount(this);
                     Intent intent = new Intent(this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
-                }).show());
+                }).show();
+        });
     }
 
     private void saveProfile(View btn, String userId, String name, String email, String mobile, String photoUrl) {
         NetworkApi.updateProfile(userId, name, email, mobile, photoUrl, new NetworkApi.Callback() {
             @Override
             public void onSuccess(JSONObject response) {
+                HapticManager.success(AccountActivity.this);
                 AppDataStore.updateProfile(AccountActivity.this, name, email, mobile, photoUrl);
                 Toast.makeText(AccountActivity.this, "Profile saved", Toast.LENGTH_SHORT).show();
                 finish();
@@ -115,6 +121,7 @@ public class AccountActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
+                HapticManager.error(AccountActivity.this);
                 btn.setEnabled(true);
                 Toast.makeText(AccountActivity.this, "Save error: " + message, Toast.LENGTH_SHORT).show();
             }
