@@ -161,7 +161,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="18dp"
-            android:paddingTop="16dp"
+            android:paddingTop="0dp"
             android:paddingBottom="100dp">
 
             <!-- ================= SELLER DASHBOARD (PHASE 5) ================= -->
@@ -382,9 +382,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
                 android:layout_marginStart="6dp"
                 android:layout_marginBottom="8dp"
-                android:letterSpacing="0.05"
                 android:text="ACCOUNT &amp; SECURITY"
                 android:textColor="@color/airbnb_muted"
                 android:textSize="11.5sp"

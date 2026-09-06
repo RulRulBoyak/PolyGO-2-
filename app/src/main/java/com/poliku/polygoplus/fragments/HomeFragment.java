@@ -98,12 +98,6 @@ public class HomeFragment extends Fragment {
         else if (hour < 18) hourGreeting = getString(R.string.greeting_afternoon);
         else hourGreeting = getString(R.string.greeting_evening);
 
-        if (!loggedIn || name == null || name.trim().isEmpty() || "PolyGo member".equals(name)) {
-            binding.tvGreeting.setText(hourGreeting + "!");
-        } else {
-            binding.tvGreeting.setText(hourGreeting + ",\n" + firstName);
-        }
-
         String photo = AppDataStore.userProfilePic(requireContext());
         if (!photo.isEmpty()) {
             com.bumptech.glide.Glide.with(this)
