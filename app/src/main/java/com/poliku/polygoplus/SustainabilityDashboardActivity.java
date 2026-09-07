@@ -8,12 +8,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.Locale;
 
-public class SustainabilityDashboardActivity extends AppCompatActivity {
+public class SustainabilityDashboardActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,7 @@ public class SustainabilityDashboardActivity extends AppCompatActivity {
 
         findViewById(R.id.btnShareImpact).setOnClickListener(v -> {
             HapticManager.swell(this);
+            celebrate();
             Toast.makeText(this, "Sustainability certificate saved to gallery!", Toast.LENGTH_LONG).show();
         });
     }

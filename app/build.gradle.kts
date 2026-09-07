@@ -6,7 +6,10 @@ plugins {
     alias(libs.plugins.google.firebase.crashlytics)
     alias(libs.plugins.google.firebase.firebase.perf)
     alias(libs.plugins.google.firebase.appdistribution)
+    id("checkstyle")
 }
+
+apply(plugin = "com.google.dagger.hilt.android")
 
 android {
     namespace = "com.poliku.polygoplus"
@@ -96,10 +99,36 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
+    
+    // Retrofit & OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.konfetti)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.4")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.4")
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
+    implementation(libs.androidx.viewpager2)
+    
+    // Hilt
+    implementation(libs.hilt.android)
+    annotationProcessor(libs.hilt.compiler)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+checkstyle {
+    toolVersion = libs.versions.checkstyle.get()
+    configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+    setIgnoreFailures(false)
+    setShowViolations(true)
+}
+
+tasks.register<Checkstyle>("checkstyle") {
+    source("src/main/java")
+    include("**/*.java")
+    classpath = files()
 }

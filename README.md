@@ -1,79 +1,68 @@
-# 🎓 PolyGo+ | The Exclusive PKS Marketplace
+# PolyGo+ 🎓
 
-**PolyGo+** is a premium, student-led marketplace application designed specifically for the community at **Politeknik Kuching Sarawak (PKS)**. Built with a "Mobile-First" and "Trust-First" philosophy, it enables students and staff to buy, sell, and offer services within the safety of the campus ecosystem.
+PolyGo+ is a modern, student-centric marketplace designed exclusively for the **Politeknik Kuching Sarawak (PKS)** campus. It enables students and staff to buy, sell, and offer services (like printing, delivery, or repairs) safely within the campus ecosystem.
 
----
+## 🚀 Key Features
 
-## ✨ Key Features
-
-### 🚀 Futuristic User Experience
-*   **Integrated Search:** A streamlined, compact header that combines navigation, user identity, and campus-wide search.
-*   **Floating Navigation:** A modern, elevated pill-style bottom bar with an anchored "Add" Action Button.
-*   **Premium Haptics:** Specialized tactile feedback patterns (`Swell`, `Success`, `Error`) provide physical confirmation for every key interaction.
-*   **Adaptive Design:** Native support for both Phones and Tablets (sw600dp) with specialized "Navigation Rail" and "Split-View" layouts.
-
-### 🤖 AI-Powered Auto-Lister
-*   **Gemini 1.5 Integration:** Sell faster by simply taking a photo. Our AI automatically suggests professional Titles, fair RM Pricing, and attractive Descriptions.
-*   **Smart Categorization:** Context-aware suggestions based on campus demand.
-
-### 🛡️ Trust & Safety
-*   **Multi-Layered Verification:** Specialized flows for **Current Students** (Matrix Card Photo/ID) and **Alumni** (Campus Challenge Questions).
-*   **Biometric Security:** Secure sensitive transaction data and account settings behind Fingerprint or Face ID.
-*   **Safe Meetup Landmarks:** Integrated maps pointing to official campus safe zones like Block A, the Cafeteria, and the Student Centre.
+-   **Campus-Only Marketplace**: Restricted to verified PKS emails.
+-   **Service Portfolio**: Students can offer and browse technical services.
+-   **AI Discovery**: Integrated Google Gemini AI for smart listing suggestions and categorization.
+-   **Real-time Chat**: In-app messaging for safe deal negotiations.
+-   **Sustainability Dashboard**: Track your environmental impact by recycling second-hand goods on campus.
+-   **Push Notifications**: Stay updated on new messages and campus deals via Firebase.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Project Setup for Developers
 
-*   **Language:** Java (Android SDK 34+)
-*   **UI Framework:** XML with Material Design 3 (M3)
-*   **Asynchronous Logic:** LiveData & ViewModel with SavedStateHandle for process death resilience.
-*   **Networking:** Native HTTP with specialized `AiHelper` for Google Generative AI.
-*   **Storage:** **Encrypted SharedPreferences** using `androidx.security` for session and JWT protection.
-*   **AI Engine:** Google Gemini 1.5 Flash.
+### 1. Prerequisites
+-   **Android Studio** (Koala or newer recommended).
+-   **XAMPP** (Apache & MySQL) for the local backend.
+-   **Git** for version control.
 
----
+### 2. Backend Configuration (XAMPP)
+1.  Copy the `backend/polygo-api` folder to your `C:\xampp\htdocs\` directory.
+2.  Open **XAMPP Control Panel** and ensure Apache and MySQL are running.
+3.  **Database Import**: 
+    -   Access `http://localhost/phpmyadmin`.
+    -   Create a database named `polygo`.
+    -   Import the SQL files found in `backend/polygo-api/sql/`.
+4.  **Config**: Edit `C:\xampp\htdocs\polygo-api\config.php` to match your local database credentials (usually `root` with no password).
+5.  **Emulator Access**: The app is configured to connect to `http://10.0.2.2/polygo-api/` (the host machine's localhost from the emulator).
 
-## 🏗️ Getting Started (Developer Setup)
-
-To maintain security, sensitive API keys and configuration files are excluded from the repository. Follow these steps to get the project running on your local machine:
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/RulRulBoyak/PolyGO-2-.git
-```
-
-### 2. Configure Local Secrets
-Create a file named `local.properties` in the root directory (if it doesn't exist) and add your AI key:
-```properties
-# Add your Gemini Key from Google AI Studio
-GEMINI_API_KEY=YOUR_API_KEY_HERE
-```
-
-### 3. Add Firebase Configuration
-Obtain the `google-services.json` file from the project lead and place it in the `/app` folder.
-
-### 4. Build & Sync
-Open the project in **Android Studio (Quail 3 or newer recommended)** and click **Sync Project with Gradle Files**.
+### 3. API Keys & Security
+-   **Google Gemini AI**: 
+    -   Add your API key to `local.properties` at the root of the project:
+        ```properties
+        GEMINI_API_KEY=your_actual_key_here
+        ```
+-   **Firebase**: 
+    -   Place your `google-services.json` in the `app/` directory to enable Notifications and Analytics.
 
 ---
 
-## 📜 Localization
-The app is fully localized into two languages:
-*   **English (Default)**
-*   **Bahasa Melayu (Sarawak/PKS Contextualized)**
+## 🤝 Teamwork & Contribution Rules
+
+### Git Branching Strategy
+We follow a strict branching model to keep the code stable:
+-   `main`: Production-ready code only.
+-   `develop`: The integration branch for features.
+-   `feature/feature-name`: Individual work branches (e.g., `feature/login-validation`).
+-   `hotfix/issue-name`: Urgent bug fixes.
+
+**Commit Message Format**: 
+Always prefix your commit messages with the scope: 
+`feat(ui): add new sustainability card` or `fix(network): handle timeout errors`.
+
+### Coding Standards
+-   **Architecture**: Follow the MVVM (Model-View-ViewModel) pattern.
+-   **Transitions**: Use the fade animation (`R.anim.fade_in`, `R.anim.fade_out`) for activity navigation.
+-   **Dependency Injection**: Use **Hilt** (coming soon) for managing service instances.
+-   **Linting**: Run `./gradlew checkstyle` before pushing to ensure code consistency.
 
 ---
 
-## ⚖️ Legal & Privacy
-PolyGo+ is built with compliance in mind:
-*   **PDPA 2010:** Data minimization is practiced to protect PKS student privacy.
-*   **Accessibility:** Adheres to Android a11y guidelines with 48dp minimum touch targets and content descriptions.
+## 📞 Support
+For technical issues or backend questions, contact the lead developer or open an issue on the repository.
 
----
-
-## 👥 Contributors
-*   **Amirul** - Lead Developer & UI/UX Architect
-
----
-*Created for PKS. By Students, For Students.*
+*Built with ❤️ by the PolyGo+ Team at PKS.*

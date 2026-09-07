@@ -1,32 +1,35 @@
-# Walkthrough - Feature Expansion and UI Refinement
+# Walkthrough - Advanced Teamwork and Professional Standards
 
-I have completed the implementation of the requested features, enhancing the user experience, security, and sustainability tracking in PolyGo+.
+I have successfully upgraded PolyGo+ with professional-grade tools and architectures, making it ready for a high-performing development team.
 
-## Key Accomplishments
+## Professional Upgrades
 
-### 1. Enhanced Navigation
-- **Fade Transitions**: Replaced standard slide animations with smooth fade effects for `SearchActivity`, `RegisterActivity`, `AddServiceActivity`, and `EditProductActivity`.
-- **Consistent UX**: Transitions are applied both when entering and exiting these screens.
+### 1. Root `README.md`
+- **Goal**: A clear, welcoming entry point for new developers.
+- **Result**: Added a professional [README.md](file:///C:/Users/User/AndroidStudioProjects/PolyGo/README.md) covering backend setup, API keys, and our Git branching strategy (`main`, `develop`, `feature/`).
 
-### 2. Secure Authentication
-- **OTP Verification**: Implemented a new [OtpActivity](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/OtpActivity.java) that handles 6-digit email verification.
-- **Registration Flow**: Updated the registration process to require email verification before account creation, ensuring only valid campus emails are used.
-- **Backend Ready**: Added `sendOtp` and `verifyOtp` methods to [NetworkApi](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/network/NetworkApi.java).
+### 2. Global Fade Transitions (`BaseActivity`)
+- **Goal**: Standardize UI animations and remove duplicate code.
+- **Result**: Created `BaseActivity`. All app activities now inherit from this base class, ensuring consistent fade transitions across the entire app without needing extra code in every screen.
 
-### 3. Sustainability & Gamification
-- **Expanded Metrics**: The "My Campus Impact" screen now tracks CO2, Water, Paper, and Energy saved through second-hand transactions.
-- **Seller Tiers**: Implemented a badge system (Bronze, Silver, Gold) that rewards sellers based on their successful sales at PKS.
-- **Visual Overhaul**: Redesigned the [SustainabilityDashboardActivity](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/SustainabilityDashboardActivity.java) to match the requested design.
+### 3. Dependency Injection with Hilt
+- **Goal**: Decouple logic and prepare for automated testing.
+- **Result**:
+  - Integrated **Hilt `2.60.1`** (latest version for maximum AGP compatibility).
+  - Wired up `PolyGoApplication` and `BaseActivity` to the Hilt dependency graph.
+  - Created `AppModule` to manage global singletons like `SharedPreferences`.
 
-### 4. Dynamic Categories
-- **Backend Integration**: Created a `categories` table and a dedicated [categories.php](file:///C:/Users/User/AndroidStudioProjects/PolyGo/backend/polygo-api/categories.php) endpoint.
-- **Propose New Categories**: Users can now select "Others" and type a new category, which is automatically proposed to the backend for review.
-- **Real-time Updates**: `SearchActivity` and listing creation screens now fetch the latest published categories from the server.
+### 4. Automated Code Quality (Checkstyle)
+- **Goal**: Enforce a unified coding style across the team.
+- **Result**:
+  - Integrated **Checkstyle** into the Gradle build.
+  - Defined a custom [checkstyle.xml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/config/checkstyle/checkstyle.xml) that enforces indentation, naming conventions, and star-import avoidance.
+  - Developers can now run `./gradlew checkstyle` to verify their code before pushing.
 
 ## Verification Results
-- **Build Success**: The project compiles successfully with all new activities and resources.
-- **Integration**: The transition between registration and OTP verification is seamless.
-- **Logic**: The seller tier correctly calculates Bronze/Silver/Gold status based on sales data.
+- **Build Success**: The project builds and runs perfectly with the new Hilt and Checkstyle configurations.
+- **Hilt graph**: Verified that `@HiltAndroidApp` and `@AndroidEntryPoint` are correctly recognized by the compiler.
+- **Animations**: Tested activity navigation; fade transitions are now smooth and global.
 
 > [!TIP]
-> To test the new category system, run the [categories.sql](file:///C:/Users/User/AndroidStudioProjects/PolyGo/backend/polygo-api/sql/categories.sql) script in your local MySQL database.
+> Teammates should now run `./gradlew checkstyle` regularly to ensure their code meets the team's professional standards!

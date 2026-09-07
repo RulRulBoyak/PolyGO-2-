@@ -21,6 +21,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
@@ -30,7 +31,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditProductActivity extends AppCompatActivity {
+public class EditProductActivity extends BaseActivity {
 
     private EditProductViewModel viewModel;
     private TextInputEditText etName, etPrice, etDescription, etCustomCategory;
@@ -347,9 +348,10 @@ public class EditProductActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(JSONObject response) {
                     HapticManager.success(EditProductActivity.this);
+                    celebrate();
                     AppDataStore.addUserListing(EditProductActivity.this, title, category, price, desc, finalImageString, selectedLocation());
                     Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
-                    finish();
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(EditProductActivity.this::finish, 1500);
                 }
 
                 @Override
@@ -361,9 +363,5 @@ public class EditProductActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void finish() {
-        super.finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
+    // Common animations handled by BaseActivity
 }

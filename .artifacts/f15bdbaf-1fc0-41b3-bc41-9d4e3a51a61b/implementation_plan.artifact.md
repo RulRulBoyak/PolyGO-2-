@@ -1,72 +1,55 @@
-# Implementation Plan - Feature Expansion and UI Refinement
+# Implementation Plan - Advanced Teamwork Features (Hilt & Checkstyle)
 
-This plan covers the implementation of several requested features including navigation animations, push notifications, login verification, expansion of the sustainability dashboard, and dynamic category management.
+This plan details the integration of **Hilt** for Dependency Injection and **Checkstyle** for code quality enforcement, making the project truly professional and scalable for a team.
 
 ## User Review Required
 
-> [!IMPORTANT]
-> The implementation of dynamic categories requires changes to the backend database schema. I will provide the SQL script to be run on your local MySQL server.
-
-> [!NOTE]
-> For Push Notifications to work in development, you'll need a valid `google-services.json` file. I will ensure the code is ready to handle FCM tokens and messages.
+> [!CAUTION]
+> Integrating Hilt requires significant changes to the Gradle build system and the `PolyGoApplication` class. It will also involve refactoring `NetworkApi` and `AppDataStore` from static-heavy classes to Hilt-managed singletons.
 
 ## Proposed Changes
 
-### Navigation Animations
-Modify activity transitions to use fade effects instead of slides for a smoother experience.
+### 1. Build System Enhancements
+Update Gradle configuration to support Hilt and Checkstyle.
 
-#### [NEW] [fade_in.xml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/res/anim/fade_in.xml)
-#### [NEW] [fade_out.xml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/res/anim/fade_out.xml)
-#### [MODIFY] [SearchActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/SearchActivity.java)
-- Update `finish()` to use `fade_in` and `fade_out`.
-- Add `overridePendingTransition` when starting the activity from other screens (e.g., `HomeActivity`).
-
----
-
-### Authentication & Verification
-Implement an OTP/Email verification flow to enhance security.
-
-#### [NEW] [OtpActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/OtpActivity.java)
-- A dedicated screen for entering the verification code.
-#### [MODIFY] [RegisterActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/RegisterActivity.java)
-- Update registration flow to redirect to `OtpActivity` before final account creation.
-#### [MODIFY] [NetworkApi.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/network/NetworkApi.java)
-- Add endpoints for `sendOtp` and `verifyOtp`.
+#### [MODIFY] [libs.versions.toml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/gradle/libs.versions.toml)
+- Add Hilt versions and libraries.
+- Add Checkstyle version.
+#### [MODIFY] [build.gradle.kts](file:///C:/Users/User/AndroidStudioProjects/PolyGo/build.gradle.kts)
+- Add Hilt and Checkstyle plugins to the root project.
+#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/build.gradle.kts)
+- Apply Hilt plugin.
+- Add Hilt dependencies.
+- Configure Checkstyle task.
 
 ---
 
-### Sustainability Dashboard ("My Campus Impact")
-Expand the "My Campus Impact" screen with more metrics and a gamified seller tier system.
+### 2. Dependency Injection (Hilt)
+Transition the project to use Hilt for cleaner dependency management.
 
-#### [MODIFY] [SustainabilityDashboardActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/SustainabilityDashboardActivity.java)
-- Add calculations for "Paper Prevented" and "Energy Saved".
-- Implement logic to determine Seller Tier (Bronze, Silver, Gold) based on total sales.
-#### [MODIFY] [activity_sustainability_dashboard.xml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/res/layout/activity_sustainability_dashboard.xml)
-- Redesign the layout to match the provided photo, including the "Seller Tier" card and expanded metrics grid.
+#### [MODIFY] [PolyGoApplication.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/PolyGoApplication.java)
+- Annotate with `@HiltAndroidApp`.
+#### [NEW] [AppModule.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/di/AppModule.java)
+- Provide `Context`, `SharedPreferences`, and other global singletons.
+#### [NEW] [NetworkModule.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/di/NetworkModule.java)
+- Provide a Hilt-managed instance of the networking client.
+#### [MODIFY] [BaseActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/ui/BaseActivity.java)
+- Annotate with `@AndroidEntryPoint`.
 
 ---
 
-### Dynamic Categories
-Move category management to the backend to allow users to propose new categories.
+### 3. Code Quality (Checkstyle)
+Ensure all teammates follow the same coding standards.
 
-#### [NEW] [categories.sql](file:///C:/Users/User/AndroidStudioProjects/PolyGo/backend/polygo-api/sql/categories.sql)
-- SQL script to create the `categories` table and populate initial data.
-#### [NEW] [categories.php](file:///C:/Users/User/AndroidStudioProjects/PolyGo/backend/polygo-api/categories.php)
-- Backend endpoint to fetch and propose categories.
-#### [MODIFY] [NetworkApi.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/network/NetworkApi.java)
-- Add `getCategories` and `proposeCategory` methods.
-#### [MODIFY] [SearchActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/SearchActivity.java)
-- Fetch categories from `NetworkApi` instead of using a hardcoded array.
-#### [MODIFY] [AddServiceActivity.java](file:///C:/Users/User/AndroidStudioProjects/PolyGo/app/src/main/java/com/poliku/polygoplus/AddServiceActivity.java)
-- Update category selection to use dynamic data and add a "Propose New Category" option.
+#### [NEW] [checkstyle.xml](file:///C:/Users/User/AndroidStudioProjects/PolyGo/config/checkstyle/checkstyle.xml)
+- Define rules for indentation, bracket placement, and naming conventions.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run unit tests for `ExploreViewModel` and `NetworkApi` to ensure data fetching still works correctly.
+- Run `./gradlew checkstyle` to verify linting rules.
+- Run a full build to ensure Hilt code generation is successful.
 
 ### Manual Verification
-- **Navigation:** Verify that navigating back from `SearchActivity` performs a fade transition.
-- **Sustainability:** Open the "My Campus Impact" screen and verify that the new metrics and seller tier are displayed correctly.
-- **Categories:** Verify that the category list in Search and Add Service matches the backend database.
-- **Auth:** Test the registration flow and verify the OTP step.
+- Deploy the app and ensure all injected dependencies (like `NetworkApi`) are initialized correctly.
+- Verify that the app still starts and navigates correctly after the Hilt refactor.

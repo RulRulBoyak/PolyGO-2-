@@ -10,6 +10,9 @@ import com.google.android.material.color.DynamicColors;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
 
+import dagger.hilt.android.HiltAndroidApp;
+
+@HiltAndroidApp
 public class PolyGoApplication extends Application {
 
     public static final String CHANNEL_ID = "polygo_updates";

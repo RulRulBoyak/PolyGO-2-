@@ -24,10 +24,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.AuthViewModel;
 import com.google.android.material.textfield.TextInputLayout;
+import com.poliku.polygoplus.ui.BaseActivity;
+
 import android.text.Editable;
 import android.text.TextWatcher;
 
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends BaseActivity {
     private AuthViewModel viewModel;
     private TextInputEditText etName, etMatrix, etEmail, etPassword;
     private TextInputLayout tilName, tilMatrix, tilEmail, tilPassword;
@@ -74,24 +76,31 @@ public class RegisterActivity extends AppCompatActivity {
             String role = autoCompleteRole.getText().toString();
 
             btnRegister.setEnabled(false);
-            NetworkApi.sendOtp(email, new NetworkApi.Callback() {
+            viewModel.sendOtp(email, new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
                 @Override
-                public void onSuccess(org.json.JSONObject response) {
-                    HapticManager.success(RegisterActivity.this);
-                    Intent intent = new Intent(RegisterActivity.this, OtpActivity.class);
-                    intent.putExtra(OtpActivity.EXTRA_EMAIL, email);
-                    intent.putExtra(OtpActivity.EXTRA_NAME, name);
-                    intent.putExtra(OtpActivity.EXTRA_STUDENT_ID, studentId);
-                    intent.putExtra(OtpActivity.EXTRA_PASSWORD, password);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        HapticManager.success(RegisterActivity.this);
+                        Intent intent = new Intent(RegisterActivity.this, OtpActivity.class);
+                        intent.putExtra(OtpActivity.EXTRA_EMAIL, email);
+                        intent.putExtra(OtpActivity.EXTRA_NAME, name);
+                        intent.putExtra(OtpActivity.EXTRA_STUDENT_ID, studentId);
+                        intent.putExtra(OtpActivity.EXTRA_PASSWORD, password);
+                        startActivity(intent);
+                    } else {
+                        onError("Could not send code");
+                    }
                 }
 
                 @Override
-                public void onError(String message) {
+                public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
+                    onError(t.getMessage());
+                }
+
+                private void onError(String msg) {
                     HapticManager.error(RegisterActivity.this);
                     btnRegister.setEnabled(true);
-                    Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(RegisterActivity.this, msg, Toast.LENGTH_LONG).show();
                 }
             });
         });
@@ -108,6 +117,7 @@ public class RegisterActivity extends AppCompatActivity {
         TextWatcher watcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (count > 0) HapticManager.selectionTick(RegisterActivity.this);
                 viewModel.validateRegister(
                         etName.getText().toString(),
                         etMatrix.getText().toString(),
@@ -130,9 +140,5 @@ public class RegisterActivity extends AppCompatActivity {
         viewModel.isRegisterFormValid.observe(this, isValid -> btnRegister.setEnabled(isValid));
     }
 
-    @Override
-    public void finish() {
-        super.finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
+    // Common animations handled by BaseActivity
 }

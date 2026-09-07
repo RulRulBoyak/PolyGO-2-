@@ -89,4 +89,24 @@ public final class HapticManager {
             v.vibrate(300);
         }
     }
+
+    /**
+     * Light "Tick" for data entry or character-by-character validation.
+     * Inspired by Duolingo's delightful typing feedback.
+     */
+    public static void selectionTick(Context context) {
+        Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (v == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            v.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK));
+        }
+    }
+
+    /**
+     * Play a subtle "pop" sound for successful actions.
+     */
+    public static void popSound() {
+        android.media.ToneGenerator tg = new android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 100);
+        tg.startTone(android.media.ToneGenerator.TONE_PROP_BEEP);
+    }
 }

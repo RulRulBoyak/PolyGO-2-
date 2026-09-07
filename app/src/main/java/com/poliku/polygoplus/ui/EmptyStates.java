@@ -28,5 +28,28 @@ public final class EmptyStates {
             button.setText(actionLabel);
             button.setOnClickListener(action);
         }
+
+        // Duolingo-style "Bobbing" animation for the empty icon
+        if (icon != null) {
+            icon.animate()
+                .translationYBy(-20f)
+                .setDuration(1500)
+                .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        animateBobbing(icon, 20f);
+                    }
+                }).start();
+        }
+    }
+
+    private static void animateBobbing(final View view, final float amount) {
+        view.animate()
+            .translationYBy(amount)
+            .setDuration(1500)
+            .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction(() -> animateBobbing(view, -amount))
+            .start();
     }
 }

@@ -26,6 +26,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 
@@ -35,7 +36,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddServiceActivity extends AppCompatActivity {
+public class AddServiceActivity extends BaseActivity {
 
     private AddServiceViewModel viewModel;
     private TextInputLayout tilCustomCategory;
@@ -315,9 +316,11 @@ public class AddServiceActivity extends AppCompatActivity {
             NetworkApi.addListing(AppDataStore.userId(this), title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)", new NetworkApi.Callback() {
                 @Override
                 public void onSuccess(JSONObject response) {
+                    HapticManager.success(AddServiceActivity.this);
+                    celebrate();
                     AppDataStore.addUserListing(AddServiceActivity.this, title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)");
                     Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
-                    finish();
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(AddServiceActivity.this::finish, 1500);
                 }
 
                 @Override
@@ -329,9 +332,5 @@ public class AddServiceActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void finish() {
-        super.finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
+    // Common animations handled by BaseActivity
 }

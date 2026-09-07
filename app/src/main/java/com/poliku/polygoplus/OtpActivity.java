@@ -10,15 +10,24 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.api.PolyGoApi;
 
 import org.json.JSONObject;
 
-public class OtpActivity extends AppCompatActivity {
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class OtpActivity extends BaseActivity {
     public static final String EXTRA_EMAIL = "email";
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_STUDENT_ID = "student_id";
     public static final String EXTRA_PASSWORD = "password";
+
+    @Inject PolyGoApi api;
 
     private String email, name, studentId, password;
     private EditText etOtp;
@@ -49,51 +58,81 @@ public class OtpActivity extends AppCompatActivity {
         }
 
         HapticManager.mediumTap(etOtp);
-        NetworkApi.verifyOtp(email, otp, new NetworkApi.Callback() {
+        api.verifyOtp(new PolyGoApi.OtpRequest(email, otp)).enqueue(new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                completeRegistration();
+            public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    completeRegistration();
+                } else {
+                    onError("Invalid code");
+                }
             }
 
             @Override
-            public void onError(String message) {
-                Toast.makeText(OtpActivity.this, message, Toast.LENGTH_LONG).show();
+            public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
+                onError(t.getMessage());
+            }
+
+            private void onError(String msg) {
+                Toast.makeText(OtpActivity.this, msg, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void resend() {
         HapticManager.lightTap(etOtp);
-        NetworkApi.sendOtp(email, new NetworkApi.Callback() {
+        api.sendOtp(new PolyGoApi.OtpRequest(email)).enqueue(new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                Toast.makeText(OtpActivity.this, "Code resent to " + email, Toast.LENGTH_SHORT).show();
+            public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    Toast.makeText(OtpActivity.this, "Code resent to " + email, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(OtpActivity.this, "Failed to resend", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
-            public void onError(String message) {
-                Toast.makeText(OtpActivity.this, message, Toast.LENGTH_LONG).show();
+            public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
+                Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void completeRegistration() {
-        NetworkApi.register(name, studentId, email, password, new NetworkApi.Callback() {
+        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password)).enqueue(new retrofit2.Callback<PolyGoApi.LoginResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                HapticManager.success(OtpActivity.this);
-                // Store local login state
-                AppDataStore.saveRemoteSession(OtpActivity.this, response.optJSONObject("user"), response.optString("token"));
-                
-                Intent intent = new Intent(OtpActivity.this, HomeActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
+            public void onResponse(retrofit2.Call<PolyGoApi.LoginResponse> call, retrofit2.Response<PolyGoApi.LoginResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    HapticManager.success(OtpActivity.this);
+                    celebrate();
+                    
+                    PolyGoApi.LoginResponse body = response.body();
+                    try {
+                        JSONObject userJson = new JSONObject();
+                        userJson.put("id", body.user.id);
+                        userJson.put("full_name", body.user.name);
+                        userJson.put("student_id", body.user.studentId);
+                        userJson.put("email", body.user.email);
+                        userJson.put("mobile", body.user.mobile);
+                        userJson.put("role", body.user.role);
+                        
+                        AppDataStore.saveRemoteSession(OtpActivity.this, userJson, body.token);
+                    } catch (Exception ignored) {}
+                    
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        Intent intent = new Intent(OtpActivity.this, HomeActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    }, 2000);
+                } else {
+                    Toast.makeText(OtpActivity.this, "Registration failed", Toast.LENGTH_LONG).show();
+                }
             }
 
             @Override
-            public void onError(String message) {
-                Toast.makeText(OtpActivity.this, "Final registration failed: " + message, Toast.LENGTH_LONG).show();
+            public void onFailure(retrofit2.Call<PolyGoApi.LoginResponse> call, Throwable t) {
+                Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

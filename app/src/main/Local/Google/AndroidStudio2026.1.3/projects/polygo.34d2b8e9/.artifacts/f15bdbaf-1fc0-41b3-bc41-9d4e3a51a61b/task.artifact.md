@@ -1,21 +1,16 @@
 - [x] Navigation Animations
     - [x] Create `fade_in.xml`
     - [x] Create `fade_out.xml`
-    - [x] Update `SearchActivity.java` finish animation
-    - [x] Update transitions to `SearchActivity` in `HomeFragment`
-    - [x] Update transitions in `AddServiceActivity` and `EditProductActivity`
-- [x] Authentication & Verification
-    - [x] Create `OtpActivity.java` and layout
-    - [x] Add `sendOtp` and `verifyOtp` to `NetworkApi.java`
-    - [x] Update `RegisterActivity.java` flow to include OTP step
-- [x] Sustainability Dashboard ("My Campus Impact")
-    - [x] Update metrics logic in `SustainabilityDashboardActivity.java` (Paper, Energy, CO2, Water)
-    - [x] Redesign `activity_sustainability_dashboard.xml` layout with Seller Tier card and expanded metrics grid
-- [x] Dynamic Categories
-    - [x] Create `categories.sql` backend script
-    - [x] Create `categories.php` endpoint
-    - [x] Update `NetworkApi.java` with category methods
-    - [x] Make `SearchActivity.java` categories dynamic
-    - [x] Update `AddServiceActivity.java` and `EditProductActivity.java` with dynamic categories and proposal flow
-- [x] Push Notifications
-    - [x] Verified `PolyGoMessagingService.java` and `PolyGoApplication.java` notification channel integration
+    - [x] Create `BaseActivity` for global fade transitions
+    - [x] Refactor all Activities to inherit from `BaseActivity`
+- [x] Professional Documentation
+    - [x] Create professional root `README.md` with setup and contribution guide
+- [x] Dependency Injection (Hilt)
+    - [x] Integrate Hilt `2.60.1` into Gradle build
+    - [x] Annotate `PolyGoApplication` with `@HiltAndroidApp`
+    - [x] Annotate `BaseActivity` with `@AndroidEntryPoint`
+    - [x] Create `AppModule` and `NetworkModule` for dependency management
+- [x] Code Quality (Checkstyle)
+    - [x] Integrate Checkstyle plugin into Gradle
+    - [x] Create `checkstyle.xml` with PKS coding standards
+    - [x] Configure `checkstyle` task for automated linting

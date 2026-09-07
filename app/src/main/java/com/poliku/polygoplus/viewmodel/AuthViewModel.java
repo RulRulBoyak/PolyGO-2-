@@ -5,11 +5,25 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.poliku.polygoplus.api.PolyGoApi;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.lifecycle.HiltViewModel;
+
 /**
  * Principal Rule 3.3: Real-Time Input Validation
  * This ViewModel centralizes the validation logic for Login and Register flows.
  */
+@HiltViewModel
 public class AuthViewModel extends ViewModel {
+
+    private final PolyGoApi api;
+
+    @Inject
+    public AuthViewModel(PolyGoApi api) {
+        this.api = api;
+    }
 
     // Login Validation States
     private final MutableLiveData<String> _matrixError = new MutableLiveData<>();
@@ -76,5 +90,17 @@ public class AuthViewModel extends ViewModel {
         _passwordError.setValue(passwordValid ? null : "Password must be at least 6 characters");
 
         _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid && termsAccepted);
+    }
+
+    public void login(String studentId, String password, retrofit2.Callback<PolyGoApi.LoginResponse> callback) {
+        api.login(new PolyGoApi.LoginRequest(studentId, password)).enqueue(callback);
+    }
+
+    public void register(String name, String studentId, String email, String password, retrofit2.Callback<PolyGoApi.LoginResponse> callback) {
+        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password)).enqueue(callback);
+    }
+
+    public void sendOtp(String email, retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse> callback) {
+        api.sendOtp(new PolyGoApi.OtpRequest(email)).enqueue(callback);
     }
 }

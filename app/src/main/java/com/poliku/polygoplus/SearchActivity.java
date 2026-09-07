@@ -22,6 +22,7 @@ import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 import com.poliku.polygoplus.ui.HapticManager;
 
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends BaseActivity {
     public static final String EXTRA_CATEGORY = "category";
     private final List<AppDataStore.ProductRecord> all = new ArrayList<>();
     private ProductCardAdapter adapter;
@@ -90,6 +91,7 @@ public class SearchActivity extends AppCompatActivity {
         search.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             public void onTextChanged(CharSequence s, int st, int b, int c) {
+                if (c > 0) HapticManager.selectionTick(SearchActivity.this);
                 showSuggestions(s.toString().trim().isEmpty());
                 filter();
             }
@@ -286,11 +288,5 @@ public class SearchActivity extends AppCompatActivity {
         if (selected.equals("repair")) return product.contains("repair") || product.contains("service");
         if (selected.equals("home")) return product.contains("home") || product.contains("furniture");
         return product.equals(selected) || product.contains(selected) || selected.contains(product);
-    }
-
-    @Override
-    public void finish() {
-        super.finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }
