@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- 1. Fullscreen Image Pager -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/galleryPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never" />
+
+    <!-- 2. Floating UI Controls Layer -->
+    <!-- ConstraintLayout overlay ensures controls sit perfectly on top of the images -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <!-- Minimalist Glass Close Button -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/btnCloseGallery"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:background="#66000000"
+            android:clickable="true"
+            android:contentDescription="Close Gallery"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:src="@drawable/ic_close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="1dp"
+            app:tint="#FFFFFF" />
+
+        <!-- Elegant Page Counter Pill (Optional programmatic hook: tvGalleryCounter) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginTop="22dp"
+            app:cardBackgroundColor="#66000000"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="1dp">
+
+            <TextView
+                android:id="@+id/tvGalleryCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:letterSpacing="0.05"
+                android:paddingHorizontal="14dp"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="1 / 5" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Subtle Bottom Dot Indicators Container -->
+        <!-- (You can programmatically inject your dots here, or replace with TabLayout/CircleIndicator) -->
+        <LinearLayout
+            android:id="@+id/layoutGalleryIndicators"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <!-- Example Active Dot -->
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginHorizontal="4dp"
+                android:background="@drawable/bg_category_circle"
+                android:backgroundTint="#FFFFFF" />
+
+            <!-- Example Inactive Dot -->
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginHorizontal="4dp"
+                android:alpha="0.5"
+                android:background="@drawable/bg_category_circle"
+                android:backgroundTint="#FFFFFF" />
+
+            <!-- Example Inactive Dot -->
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginHorizontal="4dp"
+                android:alpha="0.5"
+                android:background="@drawable/bg_category_circle"
+                android:backgroundTint="#FFFFFF" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

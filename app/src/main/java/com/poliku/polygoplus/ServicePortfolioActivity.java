@@ -40,12 +40,19 @@ public class ServicePortfolioActivity extends AppCompatActivity {
 
     static class PortfolioItem {
         String name, title, desc;
-        PortfolioItem(String n, String t, String d) { name = n; title = t; desc = d; }
+        PortfolioItem(String n, String t, String d) {
+            name = n;
+            title = t;
+            desc = d;
+        }
     }
 
     private class PortfolioAdapter extends RecyclerView.Adapter<PortfolioAdapter.Holder> {
         private final List<PortfolioItem> items;
-        PortfolioAdapter(List<PortfolioItem> i) { items = i; }
+
+        PortfolioAdapter(List<PortfolioItem> i) {
+            items = i;
+        }
 
         @NonNull
         @Override
@@ -62,7 +69,10 @@ public class ServicePortfolioActivity extends AppCompatActivity {
             h.itemView.setOnClickListener(v -> HapticManager.swell(v.getContext()));
         }
 
-        @Override public int getItemCount() { return items.size(); }
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
 
         class Holder extends RecyclerView.ViewHolder {
             TextView name, title, desc;

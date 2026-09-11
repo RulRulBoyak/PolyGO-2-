@@ -6,6 +6,9 @@
     <color name="airbnb_muted">#717171</color>
     <color name="airbnb_border">#DDDDDD</color>
 
+    <!-- Favorite heart accent -->
+    <color name="favorite_coral">#FF6B6B</color>
+
     <!-- Primary PKS Palette -->
     <color name="pks_blue">#0D47A1</color>
     <color name="pks_blue_dark">#0A387E</color>
@@ -22,6 +25,30 @@
     <color name="soft_green">#E8F5E9</color>
     <color name="surface_variant_light">#F5F7FA</color>
 
+    <!-- Extended PolyGo Accent Palette -->
+    <color name="polygo_purple">#7C4DFF</color>
+    <color name="polygo_teal">#00897B</color>
+    <color name="polygo_orange">#FB8C00</color>
+    <color name="polygo_pink">#EC407A</color>
+    <color name="polygo_amber">#FFB300</color>
+    <color name="polygo_indigo">#3949AB</color>
+
+    <!-- Category Accent Colors (chips & badges) -->
+    <color name="cat_food">#EF6C00</color>
+    <color name="cat_drink">#0277BD</color>
+    <color name="cat_tech">#5E35B1</color>
+    <color name="cat_books">#6D4C41</color>
+    <color name="cat_repair">#2E7D32</color>
+    <color name="cat_fashion">#D81B60</color>
+    <color name="cat_home">#00695C</color>
+    <color name="cat_service">#F57C00</color>
+
+    <!-- Search Header Gradients -->
+    <color name="gradient_primary_start">#0D47A1</color>
+    <color name="gradient_primary_end">#1E88E5</color>
+    <color name="gradient_soft_start">#E3F2FD</color>
+    <color name="gradient_soft_end">#F8FBFF</color>
+
     <!-- UI Neutrals -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
@@ -31,4 +58,9 @@
     <!-- Transparent helpers -->
     <color name="glass_white">#99FFFFFF</color>
     <color name="glass_border">#33FFFFFF</color>
+
+    <!-- Bottom Navigation -->
+    <color name="nav_active_indicator">#331E88E5</color>
+    <color name="nav_card">#D9FFFFFF</color>
+    <color name="glass_stroke">#33FFFFFF</color>
 </resources>

@@ -45,7 +45,7 @@ public class CarouselAdapter extends RecyclerView.Adapter<CarouselAdapter.Holder
 
     @Override
     public void onBindViewHolder(@NonNull Holder holder, int position) {
-        String url = images.get(position);
+        String url = images.isEmpty() ? "" : images.get(position);
         Object source = (url == null || url.isEmpty()) ? fallbackRes : url;
 
         Glide.with(holder.itemView.getContext())

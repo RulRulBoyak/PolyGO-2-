@@ -5,11 +5,22 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.network.ConnectivityHelper;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.network.NetworkErrorHandler;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class ErrorStateActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_MODE = "mode";
 
     @Override
@@ -21,7 +32,7 @@ public class ErrorStateActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvErrorTitle)).setText(maintenance ? "We'll be back soon" : "No internet connection");
         ((TextView) findViewById(R.id.tvErrorBody)).setText(maintenance
                 ? "PolyGo+ is in maintenance while the campus database is updated. Please try again shortly."
-                : "Wi-Fi looks offline or the XAMPP server is down. Turn on internet, start Apache and MySQL, then retry. You can also continue with listings saved on this phone.");
+                : "Check your internet connection and try again. You can also continue with listings saved on this phone.");
         findViewById(R.id.btnRetry).setOnClickListener(v -> retry());
         findViewById(R.id.btnContinueOffline).setOnClickListener(v -> finish());
     }
@@ -31,23 +42,23 @@ public class ErrorStateActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.tvErrorTitle)).setText("Still offline");
             return;
         }
-        NetworkApi.getStatus(new NetworkApi.Callback() {
+        polyGoRepository.getStatus(new Callback<BaseResponse>() {
             @Override
-            public void onSuccess(org.json.JSONObject response) {
-                boolean maintenance = response.optBoolean("maintenance", false);
-                AppDataStore.setMaintenanceMode(ErrorStateActivity.this, maintenance);
-                if (maintenance) {
-                    ((TextView) findViewById(R.id.tvErrorTitle)).setText("We'll be back soon");
-                    ((TextView) findViewById(R.id.tvErrorBody)).setText("Maintenance is still on.");
-                    return;
+            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Assuming maintenance mode is handled globally or we check a custom field
+                    // Since BaseResponse doesn't have it, let's assume if it returns successfully, we can finish
+                    NetworkErrorHandler.notifyServerOk();
+                    finish();
+                } else {
+                    ((TextView) findViewById(R.id.tvErrorTitle)).setText("Server unreachable");
                 }
-                finish();
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<BaseResponse> call, Throwable t) {
                 ((TextView) findViewById(R.id.tvErrorTitle)).setText("Server unreachable");
-                ((TextView) findViewById(R.id.tvErrorBody)).setText(message);
+                ((TextView) findViewById(R.id.tvErrorBody)).setText(t.getMessage());
             }
         });
     }

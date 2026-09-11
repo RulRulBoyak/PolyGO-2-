@@ -10,6 +10,16 @@ if ($action === 'list') {
     respond(true, 'Categories loaded', ['categories' => $categories]);
 }
 
+if ($action === 'list_majors') {
+    $query = $pdo->query('SELECT id, name, faculty FROM majors WHERE is_published = 1 ORDER BY name ASC');
+    $majors = $query->fetchAll();
+    foreach ($majors as &$major) {
+        $major['id'] = (int)$major['id'];
+    }
+    unset($major);
+    respond(true, 'Majors loaded', ['majors' => $majors]);
+}
+
 if ($action === 'propose') {
     $userId = verify_jwt();
     $name = trim((string)($input['name'] ?? ''));

@@ -1,106 +1,61 @@
 package com.poliku.polygoplus.network;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.net.Uri;
-import android.provider.MediaStore;
+import android.os.Handler;
+import android.os.Looper;
 
-import com.google.ai.client.generativeai.GenerativeModel;
-import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-import com.google.ai.client.generativeai.type.Content;
-import com.google.ai.client.generativeai.type.GenerateContentResponse;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 
-import com.poliku.polygoplus.BuildConfig;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-import org.json.JSONObject;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
+/**
+ * Server-side AI proxy: the image is sent to ai_suggest.php which calls Gemini.
+ * The API key now lives in backend/secrets.php, never in the APK.
+ */
 public final class AiHelper {
-    // Loaded from local.properties via BuildConfig for security
-    private static final String API_KEY = BuildConfig.GEMINI_API_KEY;
 
-    public interface Callback {
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+
+    public interface AiCallback {
         void onResult(String title, String price, String description);
         void onError(String error);
     }
 
     private AiHelper() {}
 
-    public static void suggestListingDetails(Context context, Uri imageUri, Callback callback) {
-        // SAFETY CHECK: Prevent crash if API Key is missing
-        if (API_KEY == null || API_KEY.isEmpty()) {
-            callback.onError("AI Setup Required: Please add GEMINI_API_KEY to local.properties");
-            return;
-        }
+    private static void onMain(Runnable runnable) {
+        MAIN_HANDLER.post(runnable);
+    }
 
-        try {
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
-            
-            // Limit bitmap size for AI processing
-            Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 512, 512, true);
-
-            GenerativeModel gm = new GenerativeModel("gemini-1.5-flash", API_KEY);
-            GenerativeModelFutures model = GenerativeModelFutures.from(gm);
-
-            Content content = new Content.Builder()
-                    .addText("Analyze this image of an item being sold on a college campus. " +
-                            "Suggest a professional product Title, a fair Price in RM (Ringgit Malaysia), " +
-                            "and a short, attractive Description. Format your response strictly as JSON: " +
-                            "{\"title\": \"...\", \"price\": \"...\", \"description\": \"...\"}")
-                    .addImage(scaled)
-                    .build();
-
-            Executor executor = Executors.newSingleThreadExecutor();
-            ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
-            
-            // TIMEOUT: Prevent infinite spinning if network is slow
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                if (!response.isDone()) {
-                    response.cancel(true);
-                    callback.onError("AI Timeout: Campus Wi-Fi might be slow. Please try again.");
-                }
-            }, 15000); // 15 second limit
-
-            Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
-                @Override
-                public void onSuccess(GenerateContentResponse result) {
-                    try {
-                        String text = result.getText();
-                        // Strip markdown code blocks if present
-                        if (text.contains("```json")) {
-                            text = text.substring(text.indexOf("```json") + 7, text.lastIndexOf("```"));
-                        } else if (text.contains("```")) {
-                            text = text.substring(text.indexOf("```") + 3, text.lastIndexOf("```"));
-                        }
-                        
-                        JSONObject json = new JSONObject(text.trim());
-                        String title = json.optString("title", "Campus Item");
-                        String price = json.optString("price", "10.00").replaceAll("[^0-9.]", "");
-                        String desc = json.optString("description", "Good condition.");
-                        
-                        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> 
-                            callback.onResult(title, price, desc)
-                        );
-                    } catch (Exception e) {
-                        callback.onError("JSON Error: " + e.getMessage());
+    public static void suggestListingDetails(PolyGoRepository repo, Context context, Uri imageUri, AiCallback callback) {
+        repo.aiSuggest(context, imageUri, new Callback<PolyGoApi.AiSuggestResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.AiSuggestResponse> call, Response<PolyGoApi.AiSuggestResponse> response) {
+                PolyGoApi.AiSuggestResponse body = response.body();
+                if (response.isSuccessful() && body != null && body.isSuccess()) {
+                    onMain(() -> callback.onResult(
+                            body.title != null ? body.title : "Campus Item",
+                            body.price != null ? body.price : "",
+                            body.description != null ? body.description : ""));
+                } else {
+                    String msg = "AI suggestion failed";
+                    if (body != null && body.getMessage() != null) {
+                        msg = body.getMessage();
                     }
+                    final String errorMsg = msg;
+                    onMain(() -> callback.onError(errorMsg));
                 }
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> 
-                        callback.onError("AI failed: " + t.getMessage())
-                    );
-                }
-            }, executor);
-
-        } catch (Exception e) {
-            callback.onError("AI Setup Error: " + e.getMessage());
-        }
+            @Override
+            public void onFailure(Call<PolyGoApi.AiSuggestResponse> call, Throwable t) {
+                onMain(() -> callback.onError(t.getLocalizedMessage() != null
+                        ? "AI request failed: " + t.getLocalizedMessage() : "AI request failed"));
+            }
+        });
     }
 }

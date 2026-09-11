@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/NotificationManager.php';
+require_once __DIR__ . '/ImpactEngine.php';
 
 try {
     // SECURITY: Verify JWT and get actual User ID
@@ -56,8 +57,20 @@ try {
             respond(false, 'Missing update information');
         }
 
-        $query = $pdo->prepare('UPDATE transactions SET status = ? WHERE id = ?');
-        if ($query->execute([$status, $transactionId])) {
+        $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ?');
+        if ($query->execute([$status, $status, $transactionId])) {
+            if ($status === 'completed') {
+                $check = $pdo->prepare('SELECT impact_credited FROM transactions WHERE id = ?');
+                $check->execute([$transactionId]);
+                if ((int)$check->fetchColumn() === 1) {
+                    // First time this deal completed -> count its green impact.
+                    $already = $pdo->prepare('SELECT COUNT(*) FROM impact_entries WHERE transaction_id = ?');
+                    $already->execute([$transactionId]);
+                    if ((int)$already->fetchColumn() === 0) {
+                        ImpactEngine::creditTransaction($pdo, $transactionId);
+                    }
+                }
+            }
             respond(true, 'Transaction updated');
         } else {
             respond(false, 'Failed to update transaction');
@@ -97,5 +110,6 @@ try {
     }
 
 } catch (Exception $e) {
-    respond(false, 'Database error: ' . $e->getMessage());
+    error_log('[polygo-api] transactions error: ' . $e->getMessage());
+    respond(false, 'Transaction failed, please try again');
 }

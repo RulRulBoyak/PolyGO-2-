@@ -1,11 +1,17 @@
 package com.poliku.polygoplus;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -19,23 +25,34 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 import com.poliku.polygoplus.ui.HapticManager;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+@AndroidEntryPoint
 public class SearchActivity extends BaseActivity {
+    @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_CATEGORY = "category";
-    private final List<AppDataStore.ProductRecord> all = new ArrayList<>();
+    private final List<ListingEntity> all = new ArrayList<>();
     private ProductCardAdapter adapter;
     private EditText search;
     private Spinner category;
@@ -43,6 +60,7 @@ public class SearchActivity extends BaseActivity {
     private View empty;
     private View suggestions;
     private String currentSort = "newest";
+    private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +73,9 @@ public class SearchActivity extends BaseActivity {
         count = findViewById(R.id.tvResultCount);
         empty = findViewById(R.id.tvEmptySearch);
         suggestions = findViewById(R.id.searchSuggestions);
-        EmptyStates.bind(empty, android.R.drawable.ic_menu_search, "No results found",
+        EmptyStates.bind(empty, R.drawable.ic_search, "No results found",
                 "Try another keyword or browse a PKS category.", "Browse categories",
-                v -> startActivity(new android.content.Intent(this, CategoryBrowseActivity.class)));
+                v -> startActivity(new Intent(this, CategoryBrowseActivity.class)));
         
         findViewById(R.id.btnSort).setOnClickListener(v -> {
             HapticManager.lightTap(v);
@@ -80,8 +98,8 @@ public class SearchActivity extends BaseActivity {
         rv.setLayoutManager(new GridLayoutManager(this, 2));
         adapter = new ProductCardAdapter(new ArrayList<>(), new ProductCardAdapter.Listener() {
             @Override
-            public void onProduct(ProductCardAdapter adapter, AppDataStore.ProductRecord p, View sharedView) {
-                android.content.Intent i = new android.content.Intent(SearchActivity.this, ProductDetailActivity.class);
+            public void onProduct(ProductCardAdapter adapter, ListingEntity p, View sharedView) {
+                Intent i = new Intent(SearchActivity.this, ProductDetailActivity.class);
                 i.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, p.id);
                 startActivity(i);
             }
@@ -93,15 +111,28 @@ public class SearchActivity extends BaseActivity {
             public void onTextChanged(CharSequence s, int st, int b, int c) {
                 if (c > 0) HapticManager.selectionTick(SearchActivity.this);
                 showSuggestions(s.toString().trim().isEmpty());
+                findViewById(R.id.btnClearSearch).setVisibility(s.toString().isEmpty() ? View.GONE : View.VISIBLE);
                 filter();
             }
             public void afterTextChanged(Editable e) {}
         });
-        category.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+        findViewById(R.id.btnClearSearch).setOnClickListener(v -> {
+            search.setText("");
+            search.requestFocus();
+        });
+        search.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyboard(search);
+                showSuggestions(false);
+                return true;
+            }
+            return false;
+        });
+        category.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 filter();
             }
-            public void onNothingSelected(android.widget.AdapterView<?> p) {}
+            public void onNothingSelected(AdapterView<?> p) {}
         });
         reloadListings();
     }
@@ -116,43 +147,46 @@ public class SearchActivity extends BaseActivity {
         if (search != null) reloadListings();
     }
 
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        ioExecutor.shutdown();
+    }
+
     private void reloadListings() {
         String currentUserId = AppDataStore.userId(this);
         String q = search.getText().toString().trim();
         
         if (adapter != null && q.isEmpty()) {
-             all.clear();
-             all.addAll(AppDataStore.getListings(this));
-             filter();
+            all.clear();
+            all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(this)));
+            filter();
         }
 
-        NetworkApi.searchListings(q, currentSort, new NetworkApi.Callback() {
+        polyGoRepository.searchListings(q, currentSort, new Callback<PolyGoApi.ListingsResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                JSONArray list = response.optJSONArray("listings");
-                List<AppDataStore.ProductRecord> remote = new ArrayList<>();
-                if (list != null) {
-                    for (int i = 0; i < list.length(); i++) {
-                        JSONObject o = list.optJSONObject(i);
-                        if (o != null) {
-                            AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
-                            if (p != null) {
-                                boolean isOwner = p.ownerId.equals(currentUserId);
-                                remote.add(isOwner ? p.withOwnerStatus(true) : p);
-                            }
+            public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                PolyGoApi.ListingsResponse body = response.body();
+                List<ListingEntity> remote = new ArrayList<>();
+                if (body != null && body.listings != null) {
+                    for (PolyGoApi.Listing l : body.listings) {
+                        AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromListing(l, currentUserId);
+                        if (p != null) {
+                            remote.add(p.toEntity());
                         }
                     }
                 }
                 
                 if (q.isEmpty()) {
                     all.clear();
-                    all.addAll(AppDataStore.getListings(SearchActivity.this));
-                    for (AppDataStore.ProductRecord r : remote) {
-                        boolean exists = false;
-                        for (AppDataStore.ProductRecord l : all) {
-                            if (l.title.equals(r.title) && l.price.equals(r.price)) { exists = true; break; }
+                    all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(SearchActivity.this)));
+                    java.util.Set<String> seen = new java.util.HashSet<>();
+                    for (ListingEntity l : all) {
+                        if (l.id != null) seen.add(l.id);
+                    }
+                    for (ListingEntity r : remote) {
+                        if (r.id == null || r.id.isEmpty() || seen.add(r.id)) {
+                            all.add(r);
                         }
-                        if (!exists) all.add(r);
                     }
                 } else {
                     all.clear();
@@ -162,10 +196,10 @@ public class SearchActivity extends BaseActivity {
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
                 if (q.isEmpty()) {
                     all.clear();
-                    all.addAll(AppDataStore.getListings(SearchActivity.this));
+                    all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(SearchActivity.this)));
                     filter();
                 }
             }
@@ -173,16 +207,15 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void loadCategories() {
-        NetworkApi.getCategories(new NetworkApi.Callback() {
+        polyGoRepository.getCategories(new Callback<PolyGoApi.CategoryResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                JSONArray list = response.optJSONArray("categories");
+            public void onResponse(Call<PolyGoApi.CategoryResponse> call, Response<PolyGoApi.CategoryResponse> response) {
+                PolyGoApi.CategoryResponse body = response.body();
                 List<String> names = new ArrayList<>();
                 names.add("All categories");
-                if (list != null) {
-                    for (int i = 0; i < list.length(); i++) {
-                        JSONObject o = list.optJSONObject(i);
-                        if (o != null) names.add(o.optString("name"));
+                if (body != null && body.categories != null) {
+                    for (PolyGoApi.Category c : body.categories) {
+                        names.add(c.name);
                     }
                 }
                 
@@ -201,7 +234,7 @@ public class SearchActivity extends BaseActivity {
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable t) {
                 String[] fallback = {"All categories", "Food", "Drink", "Tech", "Electronics", "Fashion", "Books", "Repair", "Home", "Services"};
                 category.setAdapter(new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, fallback));
             }
@@ -213,18 +246,17 @@ public class SearchActivity extends BaseActivity {
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_sort, null);
         dialog.setContentView(view);
         
-        ChipGroup group = view.findViewById(R.id.sortChipGroup);
+        RadioGroup group = view.findViewById(R.id.radioGroupSort);
         for (int i = 0; i < group.getChildCount(); i++) {
-            Chip chip = (Chip) group.getChildAt(i);
-            if (currentSort.equals(chip.getTag())) chip.setChecked(true);
+            RadioButton rb = (RadioButton) group.getChildAt(i);
+            if (currentSort.equals(rb.getTag())) rb.setChecked(true);
         }
 
         view.findViewById(R.id.btnApplySort).setOnClickListener(v -> {
             HapticManager.mediumTap(v);
-            int id = group.getCheckedChipId();
+            int id = group.getCheckedRadioButtonId();
             if (id != View.NO_ID) {
-                Chip selected = group.findViewById(id);
-                currentSort = selected.getTag().toString();
+                currentSort = group.findViewById(id).getTag().toString();
                 reloadListings();
             }
             dialog.dismiss();
@@ -236,9 +268,10 @@ public class SearchActivity extends BaseActivity {
         if (search == null || category == null) return;
         String q = search.getText().toString().trim().toLowerCase(Locale.ROOT);
         String cat = category.getSelectedItem() == null ? "All categories" : category.getSelectedItem().toString();
-        List<AppDataStore.ProductRecord> filtered = new ArrayList<>();
-        for (AppDataStore.ProductRecord p : all) {
-            String searchable = (p.title + " " + p.seller + " " + p.description + " " + p.category + " " + p.distance).toLowerCase(Locale.ROOT);
+        List<ListingEntity> filtered = new ArrayList<>();
+        for (ListingEntity p : all) {
+            String searchable = nz(p.title) + " " + nz(p.seller) + " " + nz(p.description) + " " + nz(p.category) + " " + nz(p.distance);
+            searchable = searchable.toLowerCase(Locale.ROOT);
             boolean text = q.isEmpty() || searchable.contains(q);
             boolean categoryMatch = categoryMatches(p.category, cat);
             if (text && categoryMatch) filtered.add(p);
@@ -258,7 +291,12 @@ public class SearchActivity extends BaseActivity {
         recent.removeAllViews();
         for (String q : AppDataStore.getSearchHistory(this)) recent.addView(chip(q));
         trending.removeAllViews();
-        for (String q : AppDataStore.TRENDING_SEARCHES) trending.addView(chip(q));
+        ioExecutor.execute(() -> {
+            List<String> t = AppDataStore.computeTrending(this);
+            runOnUiThread(() -> {
+                for (String q : t) trending.addView(chip(q));
+            });
+        });
         findViewById(R.id.tvClearHistory).setOnClickListener(v -> {
             HapticManager.mediumTap(v);
             AppDataStore.clearSearchHistory(this);
@@ -275,9 +313,15 @@ public class SearchActivity extends BaseActivity {
             search.setSelection(label.length());
             AppDataStore.addSearchQuery(this, label);
             showSuggestions(false);
+            hideKeyboard(search);
             filter();
         });
         return chip;
+    }
+
+    private void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private boolean categoryMatches(String productCategory, String selectedCategory) {
@@ -287,6 +331,10 @@ public class SearchActivity extends BaseActivity {
         if (selected.equals("tech")) return product.contains("tech") || product.contains("electronic");
         if (selected.equals("repair")) return product.contains("repair") || product.contains("service");
         if (selected.equals("home")) return product.contains("home") || product.contains("furniture");
-        return product.equals(selected) || product.contains(selected) || selected.contains(product);
+        return product.contains(selected);
+    }
+
+    private String nz(String s) {
+        return s == null ? "" : s;
     }
 }

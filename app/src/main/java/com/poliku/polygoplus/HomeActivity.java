@@ -3,26 +3,46 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.android.material.navigationrail.NavigationRailView;
+import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.fragments.HomeFragment;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.os.Build;
+
 import com.poliku.polygoplus.fragments.ExploreFragment;
 import com.poliku.polygoplus.fragments.MessagesFragment;
 import com.poliku.polygoplus.fragments.ProfileFragment;
+import com.poliku.polygoplus.network.ConnectivityHelper;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.api.model.BaseResponse;
 
+import javax.inject.Inject;
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class HomeActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
+    private int previousTabIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +53,10 @@ public class HomeActivity extends AppCompatActivity {
         NavigationBarView navView = findViewById(R.id.bottomNavigationView);
         if (navView == null) navView = findViewById(R.id.navigationRail);
         
-        loadFragment(new HomeFragment());
-        if (navView != null) navView.setSelectedItemId(R.id.nav_home);
+        // Initial fragment load
+        if (savedInstanceState == null) {
+            loadFragment(new HomeFragment(), 0);
+        }
 
         View mainView = findViewById(R.id.home_main);
         if (mainView != null) {
@@ -44,18 +66,8 @@ public class HomeActivity extends AppCompatActivity {
                 return insets;
             });
         }
-
-//        View bottomBar = findViewById(R.id.bottomAppBarContainer);
-//        if (bottomBar != null) {
-//            ViewCompat.setOnApplyWindowInsetsListener(bottomBar, (v, insets) -> {
-//                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-//                // Ensure bottom nav is clear of gesture bar
-//                v.setPadding(0, 0, 0, systemBars.bottom);
-//                return insets;
-//            });
-//        }
         
-        if (navView instanceof com.google.android.material.navigationrail.NavigationRailView) {
+        if (navView instanceof NavigationRailView) {
             ViewCompat.setOnApplyWindowInsetsListener(navView, (v, insets) -> {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                 v.setPadding(0, systemBars.top, 0, systemBars.bottom); 
@@ -64,57 +76,77 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         if (navView != null) {
-            final NavigationBarView finalNavView = navView;
             navView.setOnItemSelectedListener(item -> {
                 Fragment fragment = null;
                 int id = item.getItemId();
+                int index = 0;
                 
                 if (id == R.id.nav_home) {
                     fragment = new HomeFragment();
+                    index = 0;
                 } else if (id == R.id.nav_explore) {
                     fragment = new ExploreFragment();
+                    index = 1;
                 } else if (id == R.id.nav_messages) {
                     fragment = new MessagesFragment();
+                    index = 2;
                 } else if (id == R.id.nav_profile) {
                     fragment = new ProfileFragment();
+                    index = 3;
                 }
 
-                if (fragment != null) {
-                    HapticManager.lightTap(finalNavView);
-                    loadFragment(fragment);
+                if (fragment != null && index != previousTabIndex) {
+                    HapticManager.lightTap(findViewById(R.id.bottomNavigationView));
+                    loadFragment(fragment, index);
+                    previousTabIndex = index;
                     return true;
                 }
-                return false;
+                return id == item.getItemId(); // Allow re-selection logic if needed
             });
         }
 
         View fab = findViewById(R.id.fabAddProduct);
-        if (fab == null && navView instanceof com.google.android.material.navigationrail.NavigationRailView) {
-            com.google.android.material.navigationrail.NavigationRailView rail = (com.google.android.material.navigationrail.NavigationRailView) navView;
-            View header = rail.getHeaderView();
-            if (header != null) fab = header.findViewById(R.id.fabAddProductRail);
-        }
-        
         if (fab != null) {
             fab.setOnClickListener(v -> {
                 HapticManager.lightTap(v);
                 showListingTypeChoice();
             });
         }
+
         checkCampusService();
         requestNotificationPermission();
         setupBackPress();
     }
 
+    private void loadFragment(Fragment fragment, int index) {
+        int animEnter, animExit;
+        if (index > previousTabIndex) {
+            animEnter = R.anim.slide_in_right;
+            animExit = R.anim.slide_out_left;
+        } else if (index < previousTabIndex) {
+            animEnter = R.anim.slide_in_left;
+            animExit = R.anim.slide_out_right;
+        } else {
+            animEnter = R.anim.fade_in;
+            animExit = R.anim.fade_out;
+        }
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(animEnter, animExit)
+                .replace(R.id.fragment_container, fragment)
+                .commit();
+    }
+
     private long backPressedTime;
     private void setupBackPress() {
-        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 if (backPressedTime + 2000 > System.currentTimeMillis()) {
                     finish();
                 } else {
-                    android.widget.Toast.makeText(HomeActivity.this, "Press back again to exit", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "Press back again to exit", Toast.LENGTH_SHORT).show();
                     HapticManager.lightTap(findViewById(R.id.home_main));
                 }
                 backPressedTime = System.currentTimeMillis();
@@ -125,29 +157,18 @@ public class HomeActivity extends AppCompatActivity {
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                    new androidx.appcompat.app.AlertDialog.Builder(this)
-                            .setTitle("Stay updated")
-                            .setMessage("Enable notifications to receive alerts about your deals, messages, and campus events.")
-                            .setPositiveButton("Allow", (d, w) -> {
-                                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
-                            })
-                            .setNegativeButton("Maybe later", null)
-                            .show();
-                } else {
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
-                }
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
             }
         }
     }
 
     private void showListingTypeChoice() {
-        if (!com.poliku.polygoplus.data.AppDataStore.isLoggedIn(this)) {
-            android.widget.Toast.makeText(this, "Login required to post listings", android.widget.Toast.LENGTH_SHORT).show();
+        if (!AppDataStore.isLoggedIn(this)) {
+            Toast.makeText(this, "Login required to post listings", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
-        com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
         dialog.setContentView(R.layout.layout_listing_type_choice);
         dialog.findViewById(R.id.choiceProduct).setOnClickListener(view -> {
             HapticManager.lightTap(view);
@@ -165,38 +186,11 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void checkCampusService() {
-        if (!com.poliku.polygoplus.network.ConnectivityHelper.isOnline(this)) {
-            Intent i = new Intent(this, ErrorStateActivity.class);
-            i.putExtra(ErrorStateActivity.EXTRA_MODE, "offline");
-            startActivity(i);
-            return;
-        }
-        com.poliku.polygoplus.network.NetworkApi.getStatus(new com.poliku.polygoplus.network.NetworkApi.Callback() {
-            @Override
-            public void onSuccess(org.json.JSONObject response) {
-                boolean maintenance = response.optBoolean("maintenance", false);
-                com.poliku.polygoplus.data.AppDataStore.setMaintenanceMode(HomeActivity.this, maintenance);
-                if (maintenance) {
-                    Intent i = new Intent(HomeActivity.this, ErrorStateActivity.class);
-                    i.putExtra(ErrorStateActivity.EXTRA_MODE, "maintenance");
-                    startActivity(i);
-                }
-            }
-
-            @Override
-            public void onError(String message) {
-                Intent i = new Intent(HomeActivity.this, ErrorStateActivity.class);
-                i.putExtra(ErrorStateActivity.EXTRA_MODE, "offline");
-                startActivity(i);
-            }
+        if (!ConnectivityHelper.isOnline(this)) return;
+        polyGoRepository.getStatus(new Callback<BaseResponse>() {
+            @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {}
+            @Override public void onFailure(Call<BaseResponse> call, Throwable t) {}
         });
-    }
-
-    private void loadFragment(Fragment fragment) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .commit();
     }
 
     @Override

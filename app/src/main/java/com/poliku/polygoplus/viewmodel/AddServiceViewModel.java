@@ -5,11 +5,16 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.lifecycle.HiltViewModel;
+
 /**
  * Principal Rule 3.3: Contextual Data Restoration
  * This ViewModel ensures no user input is lost during screen rotations
  * or process death for the "Add Service" screen.
  */
+@HiltViewModel
 public class AddServiceViewModel extends ViewModel {
 
     private final SavedStateHandle state;
@@ -17,6 +22,7 @@ public class AddServiceViewModel extends ViewModel {
     private final MutableLiveData<String> _imageUri = new MutableLiveData<>("");
     public final LiveData<String> imageUri = _imageUri;
 
+    @Inject
     public AddServiceViewModel(SavedStateHandle savedStateHandle) {
         this.state = savedStateHandle;
     }
@@ -25,27 +31,84 @@ public class AddServiceViewModel extends ViewModel {
         _imageUri.setValue(uri);
     }
 
-    public void setTitle(String val) { state.set("title", val); }
-    public String getTitle() { return state.get("title"); }
+    public void setTitle(String val) {
+        state.set("title", val);
+    }
 
-    public void setCategory(String val) { state.set("category", val); }
-    public String getCategory() { return state.get("category") != null ? state.get("category") : "Repair"; }
+    public String getTitle() {
+        return state.get("title");
+    }
 
-    public void setPrice(String val) { state.set("price", val); }
-    public String getPrice() { return state.get("price") != null ? state.get("price") : "0.00"; }
+    public void setCategory(String val) {
+        state.set("category", val);
+    }
 
-    public void setAvailability(String val) { state.set("availability", val); }
-    public String getAvailability() { return state.get("availability"); }
+    public String getCategory() {
+        return state.get("category") != null ? state.get("category") : "Repair";
+    }
 
-    public void setDeliveryTime(String val) { state.set("time", val); }
-    public String getDeliveryTime() { return state.get("time"); }
+    public void setPrice(String val) {
+        state.set("price", val);
+    }
 
-    public void setDescription(String val) { state.set("desc", val); }
-    public String getDescription() { return state.get("desc"); }
+    public String getPrice() {
+        return state.get("price") != null ? state.get("price") : "0.00";
+    }
 
-    public void setPriceTypeIndex(int index) { state.set("price_type", index); }
-    public int getPriceTypeIndex() { return state.get("price_type") != null ? state.get("price_type") : 0; }
+    public void setAvailability(String val) {
+        state.set("availability", val);
+    }
 
-    public void setFulfillmentIndex(int index) { state.set("fulfillment", index); }
-    public int getFulfillmentIndex() { return state.get("fulfillment") != null ? state.get("fulfillment") : 0; }
+    public String getAvailability() {
+        return state.get("availability");
+    }
+
+    public void setDeliveryTime(String val) {
+        state.set("time", val);
+    }
+
+    public String getDeliveryTime() {
+        return state.get("time");
+    }
+
+    public void setDescription(String val) {
+        state.set("desc", val);
+    }
+
+    public String getDescription() {
+        return state.get("desc");
+    }
+
+    public void setLocation(String val) {
+        state.set("location", val);
+    }
+
+    public String getLocation() {
+        String location = state.get("location");
+        return location == null || location.isEmpty() ? "Near campus" : location;
+    }
+
+    public void setCustomLocation(String val) {
+        state.set("custom_location", val);
+    }
+
+    public String getCustomLocation() {
+        return state.get("custom_location");
+    }
+
+    public void setPriceTypeIndex(int index) {
+        state.set("price_type", index);
+    }
+
+    public int getPriceTypeIndex() {
+        return state.get("price_type") != null ? state.get("price_type") : 0;
+    }
+
+    public void setFulfillmentIndex(int index) {
+        state.set("fulfillment", index);
+    }
+
+    public int getFulfillmentIndex() {
+        return state.get("fulfillment") != null ? state.get("fulfillment") : 0;
+    }
 }

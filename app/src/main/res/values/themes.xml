@@ -24,7 +24,7 @@
     </style>
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_polygo</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
         <item name="windowSplashScreenBackground">@color/white</item>
         <item name="postSplashScreenTheme">@style/Theme.PolyGo</item>
     </style>
@@ -73,6 +73,36 @@
         <item name="cardBackgroundColor">@color/white</item>
     </style>
 
+    <!-- Bottom Navigation Custom Style -->
+    <style name="Widget.PolyGo.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemIconSize">22dp</item>
+        <item name="itemPaddingTop">16dp</item>
+        <item name="itemPaddingBottom">12dp</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.PolyGo.BottomNavigation.ActiveIndicator</item>
+        <item name="itemRippleColor">@android:color/transparent</item>
+        <item name="itemIconTint">@color/nav_item_color</item>
+        <item name="itemTextColor">@color/nav_item_color</item>
+        <item name="itemTextAppearanceInactive">@style/TextAppearance.PolyGo.BottomNav</item>
+        <item name="itemTextAppearanceActive">@style/TextAppearance.PolyGo.BottomNav.Active</item>
+    </style>
+
+    <style name="TextAppearance.PolyGo.BottomNav" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="TextAppearance.PolyGo.BottomNav.Active" parent="TextAppearance.PolyGo.BottomNav">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.PolyGo.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/nav_active_indicator</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.NavActiveIndicator</item>
+    </style>
+
+    <style name="ShapeAppearance.PolyGo.NavActiveIndicator" parent="ShapeAppearance.Material3.Corner.Full" />
+
     <style name="ShapeAppearance.PolyGo.CardImage" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
@@ -81,6 +111,11 @@
     <style name="ShapeAppearance.PolyGo.ProductImage" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">0dp</item>
+    </style>
+
+    <style name="ShapeAppearance.PolyGo.Circle" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 
 </resources>

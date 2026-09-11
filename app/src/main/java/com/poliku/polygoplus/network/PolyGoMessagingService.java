@@ -1,11 +1,9 @@
 package com.poliku.polygoplus.network;
 
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,23 +14,52 @@ import com.google.firebase.messaging.RemoteMessage;
 import com.poliku.polygoplus.HomeActivity;
 import com.poliku.polygoplus.PolyGoApplication;
 import com.poliku.polygoplus.R;
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.data.PolyGoRepository;
 
-import org.json.JSONObject;
+import java.util.Map;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class PolyGoMessagingService extends FirebaseMessagingService {
+    @Inject PolyGoRepository polyGoRepository;
     private static final String TAG = "PolyGoMessaging";
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         Log.d(TAG, "From: " + remoteMessage.getFrom());
 
-        // Check if message contains a notification payload.
+        // Support both data-only (server) and notification (legacy) payloads.
+        String title = null;
+        String body = null;
+        String messageId = null;
+        Map<String, String> data = remoteMessage.getData();
+
         if (remoteMessage.getNotification() != null) {
-            String title = remoteMessage.getNotification().getTitle();
-            String body = remoteMessage.getNotification().getBody();
-            sendNotification(title, body, remoteMessage.getData());
+            title = remoteMessage.getNotification().getTitle();
+            body = remoteMessage.getNotification().getBody();
         }
+        if (data.containsKey("title") && data.containsKey("body")) {
+            title = data.get("title");
+            body = data.get("body");
+        }
+        messageId = data.get("message_id");
+
+        if (title == null || body == null) {
+            Log.d(TAG, "Notification missing title/body, ignoring.");
+            return;
+        }
+
+        // Persist in-app so it survives after the tray notification is cleared.
+        AppDataStore.addNotification(getApplicationContext(), title, body);
+        sendNotification(title, body, messageId, data);
     }
 
     @Override
@@ -42,14 +69,21 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
         // If user is logged in, sync this token to the server immediately
         String userId = AppDataStore.userId(getApplicationContext());
         if (!userId.equals("0")) {
-            NetworkApi.updateFcmToken(userId, token, new NetworkApi.Callback() {
-                @Override public void onSuccess(JSONObject response) { Log.d(TAG, "FCM Token synced to backend."); }
-                @Override public void onError(String message) { Log.e(TAG, "FCM Sync Error: " + message); }
+            polyGoRepository.updateFcmToken(userId, token, new Callback<BaseResponse>() {
+                @Override
+                public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                    Log.d(TAG, "FCM Token synced to backend.");
+                }
+
+                @Override
+                public void onFailure(Call<BaseResponse> call, Throwable t) {
+                    Log.e(TAG, "FCM Sync Error: " + t.getMessage());
+                }
             });
         }
     }
 
-    private void sendNotification(String title, String messageBody, java.util.Map<String, String> data) {
+    private void sendNotification(String title, String messageBody, String messageId, Map<String, String> data) {
         Intent intent = new Intent(this, HomeActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         
@@ -63,7 +97,8 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
 
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, PolyGoApplication.CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_nav_explore) // Replace with your app icon
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setColor(getResources().getColor(R.color.airbnb_coral, null))
                         .setContentTitle(title)
                         .setContentText(messageBody)
                         .setAutoCancel(true)
@@ -73,6 +108,10 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationManager.notify(0, notificationBuilder.build());
+        // Use message id as stable notification id: repeated id replaces the
+        // previous message instead of stacking duplicates.
+        int notificationId = messageId == null ? 0 : Math.abs(messageId.hashCode());
+
+        notificationManager.notify(notificationId, notificationBuilder.build());
     }
 }

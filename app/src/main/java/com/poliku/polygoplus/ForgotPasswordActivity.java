@@ -7,10 +7,19 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class ForgotPasswordActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,20 +31,36 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 Toast.makeText(this, "Enter your ID or email", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String temp = AppDataStore.requestPasswordReset(this, id);
-            NetworkApi.forgotPassword(id, new NetworkApi.Callback() {
-                @Override public void onSuccess(org.json.JSONObject response) { }
-                @Override public void onError(String message) { }
+            findViewById(R.id.btnSendReset).setEnabled(false);
+            polyGoRepository.forgotPassword(id, new Callback<PolyGoApi.ForgotPasswordResponse>() {
+                @Override public void onResponse(Call<PolyGoApi.ForgotPasswordResponse> call, Response<PolyGoApi.ForgotPasswordResponse> response) {
+                    PolyGoApi.ForgotPasswordResponse body = response.isSuccessful() ? response.body() : null;
+                    if (body != null && body.isSuccess()) {
+                        String temp = body.temporaryPassword;
+                        if (temp == null || temp.isEmpty()) {
+                            temp = "Use the temporary password sent to your email";
+                        }
+                        new AlertDialog.Builder(ForgotPasswordActivity.this)
+                                .setTitle("Reset issued")
+                                .setMessage("Use this temporary password to log in, then change it in Profile:\n\n" + temp)
+                                .setPositiveButton("OK", (d, w) -> {
+                                    findViewById(R.id.btnSendReset).setEnabled(true);
+                                    finish();
+                                })
+                                .setOnCancelListener(d -> findViewById(R.id.btnSendReset).setEnabled(true))
+                                .show();
+                    } else {
+                        findViewById(R.id.btnSendReset).setEnabled(true);
+                        Toast.makeText(ForgotPasswordActivity.this,
+                                body != null && body.getMessage() != null ? body.getMessage() : "Reset failed, please try again",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+                @Override public void onFailure(Call<PolyGoApi.ForgotPasswordResponse> call, Throwable t) {
+                    findViewById(R.id.btnSendReset).setEnabled(true);
+                    Toast.makeText(ForgotPasswordActivity.this, "Could not reach server, please try again", Toast.LENGTH_LONG).show();
+                }
             });
-            if (temp == null) {
-                Toast.makeText(this, "No matching campus account found", Toast.LENGTH_LONG).show();
-                return;
-            }
-            new AlertDialog.Builder(this)
-                    .setTitle("Temporary password")
-                    .setMessage("Use this password to log in, then change it in Settings:\n\n" + temp)
-                    .setPositiveButton("OK", (d, w) -> finish())
-                    .show();
         });
     }
 }

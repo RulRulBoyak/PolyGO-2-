@@ -2,4 +2,8 @@
 <full-backup-content>
     <!-- Exclude sensitive local store from legacy Auto Backup -->
     <exclude domain="sharedpref" path="polygo_local_store.xml"/>
+    <!-- Exclude chat/listings database (contains personal/sensitive data) -->
+    <exclude domain="database" path="polygo.db"/>
+    <exclude domain="database" path="polygo.db-wal"/>
+    <exclude domain="database" path="polygo.db-shm"/>
 </full-backup-content>

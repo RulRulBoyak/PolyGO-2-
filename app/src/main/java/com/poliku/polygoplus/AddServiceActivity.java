@@ -3,7 +3,12 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.transition.AutoTransition;
+import android.transition.TransitionManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
@@ -19,37 +24,62 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.poliku.polygoplus.network.AiHelper;
 import com.poliku.polygoplus.viewmodel.AddServiceViewModel;
+import com.poliku.polygoplus.worker.PublishListingWorker;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
+import com.poliku.polygoplus.ui.VerificationGate;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.UUID;
 
+@AndroidEntryPoint
 public class AddServiceActivity extends BaseActivity {
 
+    @Inject PolyGoRepository polyGoRepository;
     private AddServiceViewModel viewModel;
     private TextInputLayout tilCustomCategory;
-    private TextInputEditText etCustomCategory, etTitle, etPrice, etAvailability, etDescription, etTime;
-    private AutoCompleteTextView autoCategory;
-    private ChipGroup chipGroupPriceType, chipGroupFulfillment;
+    private TextInputEditText etCustomCategory, etTitle, etPrice, etAvailability, etDescription, etTime, etCustomLocation, etFreeSlots;
+    private AutoCompleteTextView autoCategory, autoCompleteLocation, autoCompleteMajor;
+    private ChipGroup chipGroupPriceType, chipGroupFulfillment, chipGroupFreeSlotsQuick;
+    private final List<PolyGoApi.Major> majors = new ArrayList<>();
+    private TextInputLayout tilCustomLocation;
     private PhotoPreviewAdapter photoAdapter;
-    private final List<android.net.Uri> selectedUris = new ArrayList<>();
+    private final List<Uri> selectedUris = new ArrayList<>();
+    private UUID publishWorkId;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMedia =
             registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(5), uris -> {
                 if (!uris.isEmpty()) {
-                    for (android.net.Uri uri : uris) {
+                    for (Uri uri : uris) {
                         if (!selectedUris.contains(uri)) selectedUris.add(uri);
                         try {
                             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -57,6 +87,8 @@ public class AddServiceActivity extends BaseActivity {
                     }
                     photoAdapter.updateData(selectedUris);
                     updateViewModelUris();
+                } else {
+                    Toast.makeText(this, R.string.no_photos_found, Toast.LENGTH_LONG).show();
                 }
             });
 
@@ -72,8 +104,16 @@ public class AddServiceActivity extends BaseActivity {
             return insets;
         });
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottomBar), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(0, 0, 0, v.getPaddingBottom() + Math.max(systemBars.bottom, ime.bottom));
+            return insets;
+        });
+
         setupUI();
         setupCategory();
+        setupLocationPicker();
         
         // Rule 3.3: Observe and restore state
         observeViewModel();
@@ -84,7 +124,7 @@ public class AddServiceActivity extends BaseActivity {
             if (uriString != null && !uriString.isEmpty()) {
                 String[] parts = uriString.split("\\|");
                 if (selectedUris.isEmpty()) {
-                    for (String p : parts) selectedUris.add(android.net.Uri.parse(p));
+                    for (String p : parts) selectedUris.add(Uri.parse(p));
                     photoAdapter.updateData(selectedUris);
                 }
             }
@@ -97,11 +137,12 @@ public class AddServiceActivity extends BaseActivity {
         etAvailability.setText(viewModel.getAvailability());
         etTime.setText(viewModel.getDeliveryTime());
         etDescription.setText(viewModel.getDescription());
+        restoreLocationUi(viewModel.getLocation(), viewModel.getCustomLocation());
     }
 
     private void updateViewModelUris() {
-        java.util.StringJoiner joiner = new java.util.StringJoiner("|");
-        for (android.net.Uri u : selectedUris) joiner.add(u.toString());
+        StringJoiner joiner = new StringJoiner("|");
+        for (Uri u : selectedUris) joiner.add(u.toString());
         viewModel.setImageUri(joiner.toString());
     }
 
@@ -114,10 +155,13 @@ public class AddServiceActivity extends BaseActivity {
         viewModel.setAvailability(etAvailability.getText().toString());
         viewModel.setDeliveryTime(etTime.getText().toString());
         viewModel.setDescription(etDescription.getText().toString());
+        viewModel.setLocation(autoCompleteLocation.getText() == null ? "" : autoCompleteLocation.getText().toString());
+        viewModel.setCustomLocation(etCustomLocation.getText() == null ? "" : etCustomLocation.getText().toString());
     }
 
     private void setupUI() {
-        findViewById(R.id.toolbar).setOnClickListener(v -> finish());
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
         
         etTitle = findViewById(R.id.etServiceTitle);
         etPrice = findViewById(R.id.etServicePrice);
@@ -127,15 +171,28 @@ public class AddServiceActivity extends BaseActivity {
         autoCategory = findViewById(R.id.autoCompleteServiceCategory);
         tilCustomCategory = findViewById(R.id.tilCustomServiceCategory);
         etCustomCategory = findViewById(R.id.etCustomServiceCategory);
+        autoCompleteLocation = findViewById(R.id.autoCompleteLocation);
+        tilCustomLocation = findViewById(R.id.tilCustomLocation);
+        etCustomLocation = findViewById(R.id.etCustomLocation);
         chipGroupPriceType = findViewById(R.id.chipGroupPriceType);
         chipGroupFulfillment = findViewById(R.id.chipGroupFulfillment);
+        etFreeSlots = findViewById(R.id.etFreeSlots);
+        autoCompleteMajor = findViewById(R.id.autoCompleteMajor);
+        chipGroupFreeSlotsQuick = findViewById(R.id.chipGroupFreeSlotsQuick);
+        chipGroupFreeSlotsQuick.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (!checkedIds.isEmpty()) {
+                Chip chip = group.findViewById(checkedIds.get(0));
+                etFreeSlots.setText(chip.getText());
+            }
+        });
+        loadMajors();
 
         photoAdapter = new PhotoPreviewAdapter(position -> {
             selectedUris.remove(position);
             photoAdapter.updateData(selectedUris);
             updateViewModelUris();
         });
-        androidx.recyclerview.widget.RecyclerView rv = findViewById(R.id.rvPortfolioPreviews);
+        RecyclerView rv = findViewById(R.id.rvPortfolioPreviews);
         rv.setAdapter(photoAdapter);
 
         findViewById(R.id.btnAddPortfolio).setOnClickListener(v -> {
@@ -151,23 +208,23 @@ public class AddServiceActivity extends BaseActivity {
             }
             HapticManager.swell(this);
             v.setEnabled(false);
-            ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_thinking);
+            ((MaterialButton) v).setText(R.string.ai_thinking);
 
-            com.poliku.polygoplus.network.AiHelper.suggestListingDetails(this, selectedUris.get(0), new com.poliku.polygoplus.network.AiHelper.Callback() {
+            AiHelper.suggestListingDetails(polyGoRepository, this, selectedUris.get(0), new AiHelper.AiCallback() {
                 @Override
                 public void onResult(String title, String price, String description) {
                     etTitle.setText(title);
                     etPrice.setText(price);
                     etDescription.setText(description);
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_service);
+                    ((MaterialButton) v).setText(R.string.ai_suggest_service);
                     HapticManager.success(AddServiceActivity.this);
                 }
 
                 @Override
                 public void onError(String error) {
                     v.setEnabled(true);
-                    ((com.google.android.material.button.MaterialButton) v).setText(R.string.ai_suggest_service);
+                    ((MaterialButton) v).setText(R.string.ai_suggest_service);
                     Toast.makeText(AddServiceActivity.this, error, Toast.LENGTH_LONG).show();
                 }
             });
@@ -182,22 +239,80 @@ public class AddServiceActivity extends BaseActivity {
             HapticManager.lightTap(v);
             AppDataStore.saveDraft(this, etTitle.getText().toString(), 
                     autoCategory.getText().toString(), etPrice.getText().toString(), 
-                    etDescription.getText().toString(), viewModel.imageUri.getValue(), "Campus Wide");
+                    etDescription.getText().toString(), viewModel.imageUri.getValue(), selectedLocation());
             Toast.makeText(this, "Service draft saved", Toast.LENGTH_SHORT).show();
             finish();
         });
     }
 
+    private void setupLocationPicker() {
+        List<String> sortedLandmarks = new ArrayList<>();
+        Collections.addAll(sortedLandmarks, AppDataStore.PKS_LANDMARKS);
+        Collections.sort(sortedLandmarks);
+
+        autoCompleteLocation.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, sortedLandmarks));
+        autoCompleteLocation.setOnItemClickListener((parent, view, position, id) -> {
+            String selected = sortedLandmarks.get(position);
+            toggleCustomLocation("Other".equalsIgnoreCase(selected));
+        });
+
+        ChipGroup chips = findViewById(R.id.chipGroupMeetup);
+        chips.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            View chip = group.findViewById(checkedIds.get(0));
+            if (chip instanceof Chip) {
+                autoCompleteLocation.setText(((Chip) chip).getText());
+                toggleCustomLocation(false);
+            }
+        });
+    }
+
+    private void toggleCustomLocation(boolean visible) {
+        ViewGroup parent = (ViewGroup) tilCustomLocation.getParent();
+        TransitionManager.beginDelayedTransition(parent, new AutoTransition());
+        applyCustomLocationVisibility(visible);
+        if (visible) {
+            etCustomLocation.requestFocus();
+        }
+    }
+
+    private void applyCustomLocationVisibility(boolean visible) {
+        tilCustomLocation.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (!visible) {
+            etCustomLocation.setText("");
+        }
+    }
+
+    private void restoreLocationUi(String base, String custom) {
+        if ("Other".equalsIgnoreCase(base)) {
+            applyCustomLocationVisibility(true);
+            etCustomLocation.setText(custom == null ? "" : custom);
+        } else if (base != null && !base.isEmpty()) {
+            autoCompleteLocation.setText(base, false);
+            applyCustomLocationVisibility(false);
+        } else {
+            applyCustomLocationVisibility(false);
+        }
+    }
+
+    private String selectedLocation() {
+        String base = autoCompleteLocation.getText() == null ? "" : autoCompleteLocation.getText().toString().trim();
+        if ("Other".equalsIgnoreCase(base)) {
+            String custom = etCustomLocation.getText() == null ? "" : etCustomLocation.getText().toString().trim();
+            return custom.isEmpty() ? "Other Campus Spot" : custom;
+        }
+        return base.isEmpty() ? "Near campus" : base;
+    }
+
     private void setupCategory() {
-        NetworkApi.getCategories(new NetworkApi.Callback() {
+        polyGoRepository.getCategories(new Callback<PolyGoApi.CategoryResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                JSONArray list = response.optJSONArray("categories");
+            public void onResponse(Call<PolyGoApi.CategoryResponse> call, Response<PolyGoApi.CategoryResponse> response) {
+                PolyGoApi.CategoryResponse body = response.body();
                 List<String> names = new ArrayList<>();
-                if (list != null) {
-                    for (int i = 0; i < list.length(); i++) {
-                        JSONObject o = list.optJSONObject(i);
-                        if (o != null) names.add(o.optString("name"));
+                if (body != null && body.categories != null) {
+                    for (PolyGoApi.Category c : body.categories) {
+                        names.add(c.name);
                     }
                 }
                 names.add("Others");
@@ -215,9 +330,31 @@ public class AddServiceActivity extends BaseActivity {
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable t) {
                 String[] fallback = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Others"};
                 autoCategory.setAdapter(new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, fallback));
+            }
+        });
+    }
+
+    private void loadMajors() {
+        polyGoRepository.getMajors(new Callback<PolyGoApi.MajorsResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.MajorsResponse> call, Response<PolyGoApi.MajorsResponse> response) {
+                PolyGoApi.MajorsResponse body = response.body();
+                if (body != null && body.majors != null && !body.majors.isEmpty()) {
+                    majors.clear();
+                    majors.addAll(body.majors);
+                    List<String> names = new ArrayList<>();
+                    for (PolyGoApi.Major m : majors) {
+                        names.add(m.name);
+                    }
+                    autoCompleteMajor.setAdapter(new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, names));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.MajorsResponse> call, Throwable t) {
             }
         });
     }
@@ -229,14 +366,15 @@ public class AddServiceActivity extends BaseActivity {
         String availability = etAvailability.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         String category = autoCategory.getText().toString();
+        String tags = etTime.getText() == null ? "" : etTime.getText().toString(); // Service specific tags
 
         if ("Others".equals(category)) {
             category = etCustomCategory.getText().toString().trim();
             // Propose new category to backend
             if (!category.isEmpty()) {
-                NetworkApi.proposeCategory(category, new NetworkApi.Callback() {
-                    @Override public void onSuccess(JSONObject response) {}
-                    @Override public void onError(String message) {}
+                polyGoRepository.proposeCategory(category, new Callback<BaseResponse>() {
+                    @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {}
+                    @Override public void onFailure(Call<BaseResponse> call, Throwable t) {}
                 });
             }
         }
@@ -246,90 +384,110 @@ public class AddServiceActivity extends BaseActivity {
             return;
         }
 
+        if (!VerificationGate.requireApproved(this)) {
+            return;
+        }
+
         findViewById(R.id.btnPublishService).setEnabled(false);
         Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
 
         final String finalCategory = category;
-        
-        new Thread(() -> {
-            List<String> serverUrls = new java.util.concurrent.CopyOnWriteArrayList<>();
-            java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(0);
-            
-            for (android.net.Uri rawUri : selectedUris) {
-                android.net.Uri compressed = com.poliku.polygoplus.network.ImageUtils.compressImage(this, rawUri);
-                
-                NetworkApi.uploadImage(this, compressed, new NetworkApi.Callback() {
-                    @Override
-                    public void onSuccess(JSONObject response) {
-                        serverUrls.add(response.optString("url"));
-                        checkCompletion();
-                    }
 
-                    @Override
-                    public void onError(String message) {
-                        checkCompletion();
-                    }
+        String finalPriceDisplay = buildPriceDisplay(price);
+        String finalDescription = description + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillmentType() + "\n📅 Availability: " + availability;
 
-                    private void checkCompletion() {
-                        if (count.incrementAndGet() == selectedUris.size()) {
-                            finalizeServicePublish(title, finalCategory, price, time, availability, description, serverUrls);
-                        }
-                    }
-                });
-            }
-        }).start();
-    }
-
-    private void finalizeServicePublish(String title, String category, String price, String time, String availability, String desc, List<String> urls) {
-        if (urls.isEmpty()) {
-            runOnUiThread(() -> {
-                findViewById(R.id.btnPublishService).setEnabled(true);
-                Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
-            });
+        String ownerId = AppDataStore.userId(this);
+        if (ownerId == null) {
+            findViewById(R.id.btnPublishService).setEnabled(true);
+            Toast.makeText(this, "Please sign in first", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String finalImageString = String.join("|", urls);
+        String[] imageUris = new String[selectedUris.size()];
+        for (int i = 0; i < selectedUris.size(); i++) {
+            imageUris[i] = selectedUris.get(i).toString();
+        }
 
-        runOnUiThread(() -> {
-            // Pricing logic
-            int checkedPriceId = chipGroupPriceType.getCheckedChipId();
-            String pricePrefix = "";
-            if (checkedPriceId != View.NO_ID) {
-                com.google.android.material.chip.Chip chip = findViewById(checkedPriceId);
-                String type = chip.getText().toString();
-                if (type.contains("Starts")) pricePrefix = "Starts at ";
-                else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
+        String freeSlots = etFreeSlots.getText() == null ? "" : etFreeSlots.getText().toString().trim();
+        int majorId = 0;
+        String selectedMajor = autoCompleteMajor.getText().toString().trim();
+        for (PolyGoApi.Major m : majors) {
+            if (m.name.equals(selectedMajor)) {
+                majorId = m.id;
+                break;
             }
+        }
 
-            // Fulfillment Type
-            int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
-            String fulfillment = "In-Person";
-            if (checkedFulfillId != View.NO_ID) {
-                com.google.android.material.chip.Chip chip = findViewById(checkedFulfillId);
-                fulfillment = chip.getText().toString();
-            }
+        Data.Builder dataBuilder = new Data.Builder()
+                .putString("owner_id", ownerId)
+                .putString("title", title)
+                .putString("category", finalCategory)
+                .putString("price", finalPriceDisplay)
+                .putString("description", finalDescription)
+                .putString("tags", tags)
+                .putString("location", selectedLocation())
+                .putString("free_slots", freeSlots)
+                .putStringArray("image_uris", imageUris);
+        if (majorId > 0) {
+            dataBuilder.putInt("major_id", majorId);
+        }
+        Data data = dataBuilder.build();
 
-            String finalPriceDisplay = pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
-            String finalDescription = desc + "\n\n⏱️ Delivery: " + time + "\n📍 Mode: " + fulfillment + "\n📅 Availability: " + availability;
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(PublishListingWorker.class)
+                .setInputData(data)
+                .build();
+        publishWorkId = request.getId();
+        WorkManager.getInstance(this).enqueue(request);
+        observePublishResult(title, finalCategory, finalPriceDisplay, finalDescription);
+    }
 
-            NetworkApi.addListing(AppDataStore.userId(this), title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)", new NetworkApi.Callback() {
-                @Override
-                public void onSuccess(JSONObject response) {
-                    HapticManager.success(AddServiceActivity.this);
-                    celebrate();
-                    AppDataStore.addUserListing(AddServiceActivity.this, title, category, finalPriceDisplay, finalDescription, finalImageString, "Campus Wide (Service)");
-                    Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
-                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(AddServiceActivity.this::finish, 1500);
-                }
+    private String buildPriceDisplay(String price) {
+        int checkedPriceId = chipGroupPriceType.getCheckedChipId();
+        String pricePrefix = "";
+        if (checkedPriceId != View.NO_ID) {
+            Chip chip = findViewById(checkedPriceId);
+            String type = chip.getText().toString();
+            if (type.contains("Starts")) pricePrefix = "Starts at ";
+            else if (type.contains("Hourly")) pricePrefix = "RM " + price + "/hr";
+        }
+        return pricePrefix.isEmpty() ? "RM " + price : (pricePrefix.contains("/") ? pricePrefix : pricePrefix + "RM " + price);
+    }
 
-                @Override
-                public void onError(String message) {
+    private String fulfillmentType() {
+        int checkedFulfillId = chipGroupFulfillment.getCheckedChipId();
+        String fulfillment = "In-Person";
+        if (checkedFulfillId != View.NO_ID) {
+            Chip chip = findViewById(checkedFulfillId);
+            fulfillment = chip.getText().toString();
+        }
+        return fulfillment;
+    }
+
+    private void observePublishResult(String title, String category, String price, String description) {
+        WorkManager workManager = WorkManager.getInstance(this);
+        if (publishWorkId != null) {
+            workManager.getWorkInfoByIdLiveData(publishWorkId).observe(this, workInfo -> {
+                if (workInfo == null) return;
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    String listingId = workInfo.getOutputData().getString("listing_id");
+                    String imageUrl = workInfo.getOutputData().getString("image_url");
+                    if (listingId != null && imageUrl != null) {
+                        HapticManager.success(AddServiceActivity.this);
+                        celebrate();
+                        AppDataStore.addUserListing(AddServiceActivity.this, listingId, title, category, price, description, imageUrl, selectedLocation());
+                        Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
+                        new Handler(Looper.getMainLooper()).postDelayed(AddServiceActivity.this::finish, 1500);
+                    } else {
+                        findViewById(R.id.btnPublishService).setEnabled(true);
+                        Toast.makeText(AddServiceActivity.this, "Post error", Toast.LENGTH_SHORT).show();
+                    }
+                } else if (workInfo.getState() == WorkInfo.State.FAILED || workInfo.getState() == WorkInfo.State.CANCELLED) {
                     findViewById(R.id.btnPublishService).setEnabled(true);
-                    Toast.makeText(AddServiceActivity.this, "Post error: " + message, Toast.LENGTH_SHORT).show();
+                    String error = workInfo.getOutputData().getString("error");
+                    Toast.makeText(AddServiceActivity.this, error != null ? error : "Upload failed", Toast.LENGTH_SHORT).show();
                 }
             });
-        });
+        }
     }
 
     // Common animations handled by BaseActivity

@@ -1,5 +1,5 @@
 [versions]
-agp = "9.3.1"
+agp = "9.4.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
@@ -15,13 +15,12 @@ shimmer = "0.5.0"
 firebaseBom = "34.18.0"
 googleServices = "4.5.0"
 playServicesMaps = "19.0.0"
-lottie = "6.4.1"
+lottie = "6.7.1"
 palette = "1.0.0"
 securityCrypto = "1.1.0"
 splashscreen = "1.2.0"
 biometric = "1.1.0"
 swiperefreshlayout = "1.1.0"
-generativeai = "0.9.0"
 barcodeScanning = "17.3.0"
 camera = "1.6.2"
 viewpager2 = "1.1.0"
@@ -32,6 +31,7 @@ firebaseAuth = "24.2.0"
 credentials = "1.6.0"
 credentialsPlayServicesAuth = "1.6.0"
 googleid = "1.2.0"
+kotlin = "2.2.20"
 firebaseFirestore = "26.6.0"
 firebaseAi = "17.16.0"
 firebaseStorage = "22.0.1"
@@ -43,10 +43,12 @@ googleFirebaseFirebasePerf = "2.0.2"
 googleFirebaseAppdistribution = "5.3.0"
 firebaseInappmessagingDisplay = "22.0.3"
 firebaseConfig = "23.1.0"
-playServicesAds = "25.4.0"
 konfetti = "2.0.4"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
+room = "2.6.1"
+androidxWork = "2.10.0"
+androidxHilt = "1.2.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -63,7 +65,10 @@ glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "gl
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+  firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+  firebase-appcheck = { group = "com.google.firebase", name = "firebase-appcheck" }
+  firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
+  firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
 androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
@@ -71,7 +76,6 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
-google-generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "barcodeScanning" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camera" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camera" }
@@ -90,15 +94,20 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf", version.ref = "firebasePerf" }
 firebase-inappmessaging-display = { group = "com.google.firebase", name = "firebase-inappmessaging-display", version.ref = "firebaseInappmessagingDisplay" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config", version.ref = "firebaseConfig" }
-play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-android-gradle-plugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime", version.ref = "androidxWork" }
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidxHilt" }
+hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidxHilt" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 konfetti = { group = "nl.dionsegijn", name = "konfetti-xml", version.ref = "konfetti" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -107,3 +116,4 @@ hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }
 google-firebase-firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "googleFirebaseFirebasePerf" }
 google-firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "googleFirebaseAppdistribution" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

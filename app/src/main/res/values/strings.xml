@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">PolyGo+</string>
     <string name="logo_content_description">PolyGo+ Logo</string>
+    <string name="content_description_add_product">Add Product</string>
+    <string name="content_description_chevron">Open</string>
+    <string name="ai_search_preview_description">Visual search preview</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title_1">Exclusive to PKS</string>
@@ -40,6 +43,14 @@
     <string name="ai_suggest_service">✨ AI: Suggest Service Details</string>
     <string name="ai_thinking">✨ AI is thinking...</string>
     <string name="ai_timeout">AI Timeout: Campus Wi-Fi might be slow. Please try again.</string>
+    <string name="ai_suggestions_applied">AI suggestions applied — please review them.</string>
+    <string name="ai_disclosure_label">AI-generated suggestions are a draft and may contain errors. Please review before publishing. Generative AI: Google Gemini.</string>
+    <string name="flag_ai_suggestion">Flag AI Suggestion</string>
+    <string name="flag_ai_suggestion_prompt">Report this AI-generated suggestion to the moderators? It will be used to improve content filtering and may include the suggestion text.</string>
+    <string name="flag_ai_suggestion_confirm">Report</string>
+    <string name="flag_ai_suggestion_reason">Reported as offensive or incorrect AI-generated suggestion</string>
+    <string name="ai_flag_reported">Reported. This helps us filter bad suggestions.</string>
+    <string name="ai_flag_failed">Could not submit the report. Check your connection and try again.</string>
 
     <!-- General -->
     <string name="search_hint">Search campus...</string>
@@ -47,52 +58,412 @@
     <string name="save">Save</string>
     <string name="chat">Chat</string>
     <string name="make_offer">Make an Offer</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Account & Data Privacy (PDPA) -->
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_warning">This permanently deletes your account and ALL associated data from our servers: profile, listings, chats, reviews, transactions and uploaded images. This cannot be undone.</string>
+    <string name="delete_account_confirm">Delete</string>
+    <string name="deleting_account">Deleting your account and data...</string>
+    <string name="delete_account_failed">Could not delete your account. Please check your connection and try again.</string>
+    <string name="download_my_data">Download My Data (JSON / CSV)</string>
+    <string name="export_format_title">Choose export format</string>
+    <string name="export_as_json">JSON (all data)</string>
+    <string name="export_as_csv">CSV (all data — tables)</string>
+    <string name="preparing_data_export">Preparing your data...</string>
+    <string name="export_failed">Could not download your data. Please try again.</string>
+    <string name="export_saved">Your data has been saved. Keep it safe — it contains personal information.</string>
+
+    <!-- Photos -->
+    <string name="no_photos_found">No photos selected or permission denied</string>
+    <string name="gallery_permission_denied">Photo access was denied. Allow access in Settings to pick photos.</string>
+    <string name="specify_pickup_point">Specify Pickup Point</string>
 
     <string name="i_agree_to_terms">I agree to PolyGo+\'s Campus Community Rules and Safety Standards.</string>
     <string name="pdpa_footer">PolyGo+ complies with the Personal Data Protection Act (PDPA) 2010. Your campus identity is only used for internal verification.</string>
     <string name="please_agree_to_terms">Please agree to the terms to proceed</string>
 
+<!-- Legal -->
+    <string name="privacy_title">Privacy Policy</string>
+    <string name="terms_title">Terms of Service</string>
+    <string name="privacy_title_ms">Dasar Privasi</string>
+    <string name="terms_title_ms">Terma Perkhidmatan</string>
+    <string name="lang_toggle_to_bm">BM</string>
+    <string name="lang_toggle_to_en">EN</string>
+
     <string name="privacy_policy_text">
         &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n
-        Last updated: August 03, 2026\n\n
-        PolyGo+ (\"we\", \"our\", or \"us\") is committed to protecting your privacy. This Privacy Policy explains how your personal information is collected, used, and disclosed by PolyGo+.\n\n
+        Last updated: September 11, 2026\n\n
+        PolyGo+ ("we", "our", or "us") is committed to protecting your privacy in line with Malaysia\'s Personal Data Protection Act (PDPA) 2010. This Privacy Policy explains how your personal information is collected, used, and disclosed by PolyGo+.\n\n
         &lt;b&gt;1. Information We Collect&lt;/b&gt;\n
         To facilitate a secure campus marketplace, we collect information you provide when you register, including:\n
-        - Name\n
+        - Name and Mobile Number\n
         - Campus Email Address\n
-        - Student Identification (for PKS verification)\n
-        - Profile information\n\n
+        - Student / Matrix ID (for PKS verification)\n
+        - Profile information\n
+        - Meetup landmark selections and precise meetup locations for verified safe-meetup features\n
+        - Search history (used only to improve the Trending algorithm)\n
+        - Photos you upload (listings and profile picture)\n\n
         &lt;b&gt;2. How We Use Your Information&lt;/b&gt;\n
         We use the information we collect to:\n
-        - Verify your status as a student/staff through PKS (Pusat Komputer dan Sistem) verification.\n
-        - Provide, operate, and maintain our marketplace.\n
+        - Verify your status as a student/staff through PKS verification.\n
+        - Provide, operate, and maintain our marketplace and chat.\n
         - Facilitate transactions between buyers and sellers.\n
+        - Power the AI "Suggest Details" feature using Google Gemini (only your photo and listing text are sent; you are never asked for sensitive personal data).\n
         - Send you technical notices, updates, and support messages.\n\n
-        &lt;b&gt;3. PKS Verification&lt;/b&gt;\n
-        As a campus-exclusive marketplace, we verify user identity through the institution\'s PKS system. This ensures all users are valid members of the campus community. We do not store your PKS credentials; we only receive a confirmation of your status.\n\n
+        &lt;b&gt;3. AI-Generated Content and Moderation&lt;/b&gt;\n
+        PolyGo+ uses a third-party generative AI service (Google Gemini) to suggest listing details. AI suggestions are a draft and always require your review before publishing. If an AI suggestion is offensive or incorrect, use the "Flag AI Suggestion" button inside the listing form to report it. You remain responsible for the final content you publish.\n\n
         &lt;b&gt;4. Sharing of Information&lt;/b&gt;\n
-        We do not share your personal information with third parties except:\n
-        - Between buyers and sellers to facilitate a transaction (e.g., contact information).\n
+        We do not sell your personal information. We share it only:\n
+        - Between buyers and sellers to facilitate a transaction.\n
+        - With Google Firebase (for push notifications).\n
+        - With Google Gemini (for the AI suggestion feature).\n
         - If required by law or to protect the rights of PolyGo+.\n\n
-        &lt;b&gt;5. Data Security&lt;/b&gt;\n
-        We use reasonable measures to help protect information about you from loss, theft, misuse, and unauthorized access.\n\n
-        &lt;b&gt;6. Contact Us&lt;/b&gt;\n
-        If you have any questions about this Privacy Policy, please contact us at support@poliku.com.
+        &lt;b&gt;5. Biometric Data (PDPA Amendment 2024)&lt;/b&gt;\n
+        Biometric data is sensitive personal data under Malaysia\'s Personal Data Protection (Amendment) Act 2024 (Act A1727). PolyGo+ does not collect, transmit, or store biometric data. The optional "Biometric Lock" feature uses your fingerprint or face only through the device\'s secure local authentication (Android BiometricPrompt backed by a hardware Keystore / StrongBox). No biometric templates ever leave your device, and no biometric data appears in "Download My Data" exports.\n\n
+        &lt;b&gt;6. Access, Correction, Portability and Deletion (PDPA Rights)&lt;/b&gt;\n
+        You may request access to, and correction of, your personal data. You may also download a copy of all your data via "Download My Data" in Account Settings (JSON or CSV export) and delete your account and all associated data at any time using "Delete Account". Deletion removes your profile, listings, chats, reviews, transactions and uploaded images from our servers.\n\n
+        &lt;b&gt;7. Data Security&lt;/b&gt;\n
+        We use reasonable measures (encrypted passwords, JWT-authenticated APIs) to help protect information about you from loss, theft, misuse, and unauthorized access.\n\n
+        &lt;b&gt;8. Data Protection Officer &amp; Contact&lt;/b&gt;\n
+        Our Data Protection Officer (DPO) oversees PDPA compliance. For any privacy inquiry, or to request deletion outside the app, contact us at: support@poliku.com.\n\n
+        PolyGo+ is designed for use by campus students and staff aged 18 and above.\n
+    </string>
+
+    <string name="privacy_policy_text_ms">
+        &lt;b&gt;Dasar Privasi untuk PolyGo+&lt;/b&gt;\n\n
+        Dikemas kini: 11 September 2026\n\n
+        PolyGo+ ("kami") komited melindungi privasi anda selaras dengan Akta Perlindungan Data Peribadi (PDPA) 2010. Dasar ini menerangkan cara maklumat peribadi anda dikumpul, digunakan dan didedahkan.\n\n
+        &lt;b&gt;1. Maklumat Yang Kami Kumpul&lt;/b&gt;\n
+        Untuk memudahkan pasaran kampus yang selamat, kami mengumpul maklumat berikut semasa pendaftaran:\n
+        - Nama dan Nombor Telefon\n
+        - Alamat E-mel Kampus\n
+        - ID Matrik / Pelajar (untuk pengesahan PKS)\n
+        - Maklumat profil\n
+        - Lokasi pertemuan yang dipilih untuk ciri pertemuan selamat\n
+        - Sejarah carian (digunakan hanya untuk algoritma Trending)\n
+        - Foto yang anda muat naik (iklan dan gambar profil)\n\n
+        &lt;b&gt;2. Cara Kami Menggunakan Maklumat Anda&lt;/b&gt;\n
+        Maklumat digunakan untuk:\n
+        - Mengesahkan status pelajar/staf melalui pengesahan PKS.\n
+        - Menyediakan, mengendali dan menyelenggara pasaran serta sembang.\n
+        - Memudahkan urus niaga antara pembeli dan penjual.\n
+        - Menjana ciri AI "Cadang Butiran" menggunakan Google Gemini (hanya foto dan teks iklan dihantar).\n
+        - Menghantar notis teknikal dan mesej sokongan.\n\n
+        &lt;b&gt;3. Kandungan Jana AI dan Moderasi&lt;/b&gt;\n
+        PolyGo+ menggunakan perkhidmatan AI generatif pihak ketiga (Google Gemini) untuk mencadangkan butiran iklan. Cadangan AI hanyalah draf dan mesti disemak oleh anda sebelum diterbitkan. Jika cadangan AI menyinggung atau tidak tepat, gunakan butang "Laporkan Cadangan AI" dalam borang iklan untuk melaporkannya.\n\n
+        &lt;b&gt;4. Perkongsian Maklumat&lt;/b&gt;\n
+        Kami tidak menjual maklumat peribadi anda. Kami berkongsi hanya:\n
+        - Antara pembeli dan penjual untuk memudahkan urus niaga.\n
+        - Dengan Google Firebase (untuk pemberitahuan push).\n
+        - Dengan Google Gemini (untuk ciri cadangan AI).\n
+        - Jika diperlukan oleh undang-undang atau untuk melindungi hak PolyGo+.\n\n
+        &lt;b&gt;5. Data Biometrik (Pindaan PDPA 2024)&lt;/b&gt;\n
+        Data biometrik ialah data peribadi sensitif di bawah Akta Perlindungan Data Peribadi (Pindaan) 2024 (Akta A1727). PolyGo+ tidak mengumpul, menghantar atau menyimpan data biometrik. Ciri "Kunci Biometrik" pilihan hanya menggunakan cap jari atau wajah anda melalui pengesahan setempat selamat peranti (Android BiometricPrompt yang disokong oleh Keystore / StrongBox perkakasan). Tiada templat biometrik meninggalkan peranti anda, dan tiada data biometrik muncul dalam eksport "Muat Turun Data Saya".\n\n
+        &lt;b&gt;6. Hak Akses, Pembetulan, Pemindahan dan Pemadaman Data (Hak PDPA)&lt;/b&gt;\n
+        Anda boleh meminta akses dan pembetulan data peribadi anda. Anda juga boleh memuat turun salinan semua data anda melalui "Muat Turun Data Saya" dalam Tetapan Akaun (eksport JSON atau CSV) dan memadam akaun serta semua data berkaitan pada bila-bila masa melalui "Padam Akaun". Pemadaman membuang profil, iklan, sembang, ulasan, urus niaga dan gambar yang dimuat naik daripada pelayan kami.\n\n
+        &lt;b&gt;7. Keselamatan Data&lt;/b&gt;\n
+        Kami menggunakan langkah yang munasabah (kata laluan disulitkan, API disahkan JWT) untuk melindungi maklumat anda daripada kehilangan, kecurian, penyalahgunaan dan akses tanpa kebenaran.\n\n
+        &lt;b&gt;8. Pegawai Perlindungan Data &amp; Hubungi&lt;/b&gt;\n
+        Pegawai Perlindungan Data (DPO) kami menyelia pematuhan PDPA. Untuk sebarang pertanyaan privasi, atau untuk meminta pemadaman di luar aplikasi, hubungi kami di: support@poliku.com.\n\n
+        PolyGo+ direka untuk pelajar dan staf kampus berumur 18 tahun ke atas.\n
     </string>
 
     <string name="terms_of_service_text">
         &lt;b&gt;Terms of Service for PolyGo+&lt;/b&gt;\n\n
-        Last updated: August 28, 2026\n\n
+        Last updated: September 11, 2026\n\n
         PolyGo+ is a campus-only marketplace for Politeknik Kuching Sarawak (PKS) students and staff.\n\n
         &lt;b&gt;1. Eligibility&lt;/b&gt;\n
-        You must have a valid PKS student or staff identity. Accounts may remain unverified until an admin approves your request.\n\n
+        You must have a valid PKS student or staff identity and be 18 years of age or older. Accounts may remain unverified until an admin approves your request.\n\n
         &lt;b&gt;2. Marketplace rules&lt;/b&gt;\n
         List only items you own. Prohibited goods, scams, and harassment are not allowed. Meet in public campus locations such as Block A or the cafeteria.\n\n
         &lt;b&gt;3. Transactions&lt;/b&gt;\n
         PolyGo+ helps you record offers, meetups and receipts. Payment is arranged between buyer and seller. Mark a deal complete only after the meetup succeeds.\n\n
-        &lt;b&gt;4. Community moderation&lt;/b&gt;\n
+        &lt;b&gt;4. AI-generated suggestions&lt;/b&gt;\n
+        The AI "Suggest Details" feature drafts listing text for you to review. You are responsible for the accuracy and appropriateness of what you publish. Use "Flag AI Suggestion" to report an offensive or incorrect suggestion.\n\n
+        &lt;b&gt;5. Community moderation&lt;/b&gt;\n
         Use Report listing or Report user if you see prohibited items or suspicious behaviour. We may remove content and suspend accounts.\n\n
-        &lt;b&gt;5. Contact&lt;/b&gt;\n
+        &lt;b&gt;6. Account deletion &amp; data requests (PDPA)&lt;/b&gt;\n
+        You may delete your account and all associated data at any time from Account Settings. For deletion outside the app, or for any privacy request, contact our Data Protection Officer at support@poliku.com.\n\n
+        &lt;b&gt;7. Contact&lt;/b&gt;\n
         Questions: support@poliku.com
     </string>
+
+    <string name="terms_of_service_text_ms">
+        &lt;b&gt;Terma Perkhidmatan untuk PolyGo+&lt;/b&gt;\n\n
+        Dikemas kini: 11 September 2026\n\n
+        PolyGo+ ialah pasaran khas kampus untuk pelajar dan staf Politeknik Kuching Sarawak (PKS).\n\n
+        &lt;b&gt;1. Kelayakan&lt;/b&gt;\n
+        Anda mesti mempunyai identiti pelajar atau staf PKS yang sah dan berumur 18 tahun ke atas. Akaun mungkin belum disahkan sehingga pentadbir meluluskan permintaan anda.\n\n
+        &lt;b&gt;2. Peraturan pasaran&lt;/b&gt;\n
+        Sila hanya iklankan barangan milik anda. Barangan larangan, penipuan dan gangguan tidak dibenarkan. Berjumpa di lokasi kampus awam seperti Blok A atau kafeteria.\n\n
+        &lt;b&gt;3. Urus niaga&lt;/b&gt;\n
+        PolyGo+ membantu anda merekod tawaran, pertemuan dan resit. Pembayaran diuruskan antara pembeli dan penjual. Tandakan urus niaga selesai hanya selepas pertemuan berjaya.\n\n
+        &lt;b&gt;4. Cadangan janaan AI&lt;/b&gt;\n
+        Ciri AI "Cadang Butiran" menyediakan draf teks iklan untuk anda semak. Anda bertanggungjawab terhadap ketepatan dan kesesuaian kandungan yang diterbitkan. Gunakan "Laporkan Cadangan AI" untuk melaporkan cadangan yang menyinggung atau tidak tepat.\n\n
+        &lt;b&gt;5. Moderasi komuniti&lt;/b&gt;\n
+        Gunakan Lapor iklan atau Lapor pengguna jika anda melihat barangan larangan atau tingkah laku mencurigakan. Kami mungkin membuang kandungan dan menggantung akaun.\n\n
+        &lt;b&gt;6. Pemadaman akaun dan permintaan data (PDPA)&lt;/b&gt;\n
+        Anda boleh memadam akaun dan semua data berkaitan pada bila-bila masa dari Tetapan Akaun. Untuk pemadaman di luar aplikasi, atau sebarang permintaan privasi, hubungi Pegawai Perlindungan Data kami di support@poliku.com.\n\n
+        &lt;b&gt;7. Hubungi&lt;/b&gt;\n
+        Pertanyaan: support@poliku.com
+    </string>
+
+    <!-- Profile -->
+    <string name="profile_account_settings">Account &amp; Settings</string>
+    <string name="profile_welcome_back">Your profile</string>
+    <string name="profile_user_name_placeholder">Mr. John Doe</string>
+    <string name="profile_student">★  Student</string>
+    <string name="profile_logout">Logout</string>
+    <string name="profile_seller_dashboard">SELLER DASHBOARD</string>
+    <string name="profile_view_details">View details</string>
+    <string name="profile_total_earnings">Total Earnings</string>
+    <string name="profile_rm_zero">RM 0.00</string>
+    <string name="profile_items_sold">Items Sold</string>
+    <string name="profile_zero">0</string>
+    <string name="profile_active_listings">Active Listings</string>
+    <string name="profile_campus_rating">Campus Rating</string>
+    <string name="profile_zero_rating">★ 0.0</string>
+    <string name="profile_trust_score">Seller Trust Score</string>
+    <string name="profile_zero_percent">0%</string>
+    <string name="profile_trust_score_info">Higher scores = Campus Pro badge.</string>
+    <string name="profile_account_security">ACCOUNT &amp; SECURITY</string>
+    <string name="profile_impact_icon">Impact Icon</string>
+    <string name="profile_my_campus_impact">My Campus Impact</string>
+    <string name="profile_top_15_percent">Top 15%</string>
+    <string name="profile_user_icon">User Icon</string>
+    <string name="profile_personal_details">Personal Details</string>
+    <string name="profile_chevron">Chevron</string>
+    <string name="profile_lock_icon">Lock Icon</string>
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_fingerprint_icon">Fingerprint Icon</string>
+    <string name="profile_biometric_lock">Biometric Lock</string>
+    <string name="profile_bell_icon">Bell Icon</string>
+    <string name="profile_push_notifications">Push Notifications</string>
+    <string name="profile_marketplace_orders">MARKETPLACE &amp; ORDERS</string>
+    <string name="profile_star_icon">Star</string>
+    <string name="profile_saved_items">Saved Items</string>
+    <string name="profile_edit_icon">Edit</string>
+    <string name="profile_my_listings">My Listings</string>
+    <string name="profile_agenda_icon">Agenda</string>
+    <string name="profile_transaction_history">Transaction History</string>
+    <string name="profile_shield_icon">Shield</string>
+    <string name="profile_campus_id_verification">Campus ID Verification</string>
+    <string name="profile_legal_about">LEGAL &amp; ABOUT</string>
+    <string name="profile_help_icon">Help</string>
+    <string name="profile_help_center_faqs">Help Center &amp; FAQs</string>
+    <string name="profile_info_icon">Info</string>
+    <string name="profile_privacy_policy">Privacy Policy</string>
+    <string name="profile_terms_of_service">Terms of Service</string>
+    <string name="profile_support_question">Have questions or need help with a transaction?</string>
+    <string name="profile_whatsapp_support">WhatsApp Campus Support</string>
+    <string name="profile_app_version">PolyGo+ v1.0 • Verified Campus Community</string>
+
+    <!-- Seller Profile -->
+    <string name="seller_profile_title">Profile</string>
+    <string name="seller_follow">Follow</string>
+    <string name="seller_following">Following</string>
+    <string name="seller_message">Message</string>
+    <string name="seller_green_impact">Green Impact</string>
+    <string name="seller_rating_label">Rating</string>
+    <string name="seller_active_listings">Active listings</string>
+    <string name="seller_campus_reviews">Campus Reviews</string>
+    <string name="seller_verified_pill">PKS Verified Seller</string>
+    <string name="seller_no_active">No active listings</string>
+    <string name="seller_no_products_desc">%1$s has no items for sale right now.</string>
+    <string name="seller_browse_campus">Browse campus</string>
+    <string name="seller_no_reviews">No reviews yet</string>
+    <string name="seller_no_reviews_desc">Buyers can leave a rating after a successful meetup.</string>
+
+    <!-- Editable Bio -->
+    <string name="profile_edit_bio">Edit bio</string>
+    <string name="profile_bio_hint">Tell buyers about yourself.</string>
+    <string name="bio_edit_title">Edit bio</string>
+    <string name="bio_edit_save">Save</string>
+    <string name="bio_edit_cancel">Cancel</string>
+
+    <!-- Product Detail -->
+    <string name="product_save">Save</string>
+    <string name="product_saved">Saved</string>
+
+    <!-- Chat -->
+    <string name="chat_safe_meetup">Safe Meetup</string>
+    <string name="chat_profile_picture">Profile picture</string>
+    <string name="chat_typing_status"> is typing…</string>
+
+    <!-- Account -->
+    <string name="account_bio_hint">About you</string>
+
+    <!-- Account Privacy -->
+    <string name="account_private_label">Private Account</string>
+    <string name="account_private_desc">Hide your profile and listings from other students.</string>
+    <string name="account_private_error">Couldn\'t update privacy setting</string>
+
+    <!-- Impact -->
+    <string name="impact_how_title">How is my Green Score calculated?</string>
+    <string name="impact_how_body">Each completed trade reuses one item instead of buying new, so ImpactEngine adds up the CO2, water, paper and energy you saved. Savings are per category (per item): Tech ≈ 45 kg CO2, Electronics ≈ 55, Fashion ≈ 14, Books ≈ 6, Food ≈ 3.\n\nTiers are based on total CO2 saved:\n• Bronze — start saving\n• Silver — 50 kg\n• Gold — 200 kg\n• Emerald — 500 kg\n\nYour campus rank compares your total impact with other students.</string>
+    <string name="impact_certificate_saved">Certificate saved to Pictures/PolyGo (%1$s)</string>
+    <string name="impact_certificate_failed">Could not save certificate</string>
+    <string name="impact_certificate_nothing">Your impact card is not ready yet</string>
+
+    <!-- Private Seller -->
+    <string name="seller_private_title">This account is private</string>
+    <string name="seller_private_desc">This student keeps their profile and listings hidden.</string>
+
+    <!-- Chat Meetup Tracker -->
+    <string name="chat_meetup_tracker_title">Meetup Tracker</string>
+    <string name="chat_meetup_landmark">Meeting at %1$s</string>
+    <string name="chat_meetup_status_accepted">Deal accepted • arrival tracking is live</string>
+    <string name="chat_meetup_status_pickup">Pickup phase • open the map to share arrival</string>
+    <string name="chat_meetup_open">Open</string>
+
+    <!-- Safe Meetup -->
+    <string name="safe_meetup_arrived">I\'ve arrived at %1$s. See you there! 📍</string>
+    <string name="safe_meetup_emergency">Safety Alert triggered by %1$s at %2$s</string>
+    <string name="safe_meetup_location_on">Live location sharing ON • shared only during this meetup</string>
+    <string name="safe_meetup_location_off">Location sharing is disabled. Start a deal to share your meeting point.</string>
+    <string name="safe_meetup_emergency_title">Emergency Alert</string>
+    <string name="safe_meetup_emergency_confirm">Send a safety alert to the other user and PKS Security?</string>
+    <string name="safe_meetup_emergency_sent">Alert sent. PKS Security has been notified.</string>
+    <string name="safe_meetup_emergency_send">Send Alert</string>
+
+    <!-- Blocking (UGC moderation) -->
+    <string name="back">Back</string>
+    <string name="add_photo">Add photo</string>
+    <string name="remove_photo">Remove photo</string>
+    <string name="close_scanner">Close scanner</string>
+    <string name="take_photo">Take a photo</string>
+    <string name="create_listing">Create a listing</string>
+    <string name="portfolio_image">Portfolio image</string>
+    <string name="category_icon">Category icon</string>
+    <string name="item_image">Item image</string>
+    <string name="profile_avatar">Profile photo</string>
+    <string name="sustainability_badge">Sustainability badge</string>
+    <string name="textbook_cover">Textbook cover</string>
+    <string name="notification_icon">Notification</string>
+    <string name="seller_avatar">Seller profile picture</string>
+    <string name="post_request">Post a request</string>
+    <string name="pulse_post_dialog_title">Post to Campus Pulse</string>
+    <string name="pulse_post_send">Post</string>
+    <string name="pulse_tag_label">Tag</string>
+    <string name="pulse_tag_required">Pick a tag</string>
+    <string name="pulse_title_hint">Title</string>
+    <string name="pulse_body_hint">What is happening around campus?</string>
+    <string name="pulse_validation">Title and message are required</string>
+    <string name="pulse_login_required">Log in to post to Campus Pulse</string>
+    <string name="pulse_posted">Posted to Campus Pulse!</string>
+    <string name="pulse_post_failed">Could not post. Please try again.</string>
+    <string name="pulse_load_failed">Could not refresh Campus Pulse</string>
+    <string name="pulse_empty">No pulse yet - be the first to post!</string>
+    <string name="pulse_time_just_now">Just now</string>
+    <string name="pulse_time_m">%1$dm ago</string>
+    <string name="pulse_time_h">%1$dh ago</string>
+    <string name="pulse_time_d">%1$dd ago</string>
+    <string name="pulse_time_w">%1$dw ago</string>
+    <string name="textbook_looking_up">Looking up ISBN: %1$s</string>
+    <string name="textbook_details_found">Book details found - review before publishing</string>
+    <string name="textbook_not_found_title">No book details found</string>
+    <string name="textbook_not_found">No book details found for ISBN %1$s. Search campus listings instead?</string>
+    <string name="textbook_search_listings">Search listings</string>
+    <string name="verification_uploading">Uploading Matrix Card...</string>
+    <string name="verification_submitted">Verification submitted for review</string>
+    <string name="verification_upload_failed">Could not upload your card. Please try again.</string>
+    <string name="verification_server_failed">Could not reach the server. Verification saved on this device only.</string>
+    <string name="help_data_safety_title">Data Safety &amp; Privacy</string>
+    <string name="help_data_safety_desc">How we collect, use and protect your data - and how to download or delete it.</string>
+    <string name="data_safety_title">Data Safety &amp; Privacy</string>
+    <string name="data_safety_title_ms">Keselamatan Data &amp; Privasi</string>
+    <string name="data_safety_text">&lt;b&gt;What data the app processes&lt;/b&gt;&lt;br/&gt;
+The app processes the information you enter or upload: your PKS account details (name, student ID, e-mail, contact number), the profile and listings you publish, chat messages, favourites, transactions, reviews and green-impact metrics. If you use AI search or AI listing suggestions, your image or prompt is sent to Google\'s Gemini API to generate a reply and is not permanently stored on our server.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;How it is used&lt;/b&gt;&lt;br/&gt;
+Your data is used to run the campus marketplace - matching buyers and sellers, organising deals, safety and moderation (reporting and blocking), and improving your experience. It is shared only with service providers needed to run the app (Firebase for sign-in and push notifications, Google Gemini for AI features) and is never sold.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Location&lt;/b&gt;&lt;br/&gt;
+Location is only shared while a Safe Meetup is active during an accepted deal, so both parties can meet safely. It is not collected during normal browsing.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Biometric data&lt;/b&gt;&lt;br/&gt;
+The optional Biometric Lock runs entirely on your device using Android\'s secure local authenticators (Keystore/StrongBox). Biometric data is never sent to, stored on, or exported from PolyGo+ servers, consistent with the sensitive-data protections of Malaysia\'s PDPA (Amendment) Act 2024 (Act A1727).&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Your PDPA rights&lt;/b&gt;&lt;br/&gt;
+You can download all your data (Account &amp;gt; Download My Data) as JSON or CSV and permanently delete your account and every record linked to it (Account &amp;gt; Delete Account). You can also make your profile private, block other users, and report content or users inside the app.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Retention &amp;amp; deletion&lt;/b&gt;&lt;br/&gt;
+Data is kept while your account is active and is removed when you delete your account. For questions or a formal request, contact our Data Protection Officer at support@poliku.com.</string>
+    <string name="data_safety_text_ms">&lt;b&gt;Data yang diproses oleh aplikasi&lt;/b&gt;&lt;br/&gt;
+Aplikasi memproses maklumat yang anda masukkan atau muat naik: butiran akaun PKS anda (nama, nombor pelajar, e-mel, nombor telefon), profil dan penyenaraian yang anda terbitkan, mesej sembang, kegemaran, urus niaga, ulasan dan metrik impak hijau. Jika anda menggunakan carian AI atau cadangan penyenaraian AI, imej atau soalan anda dihantar ke API Gemini Google untuk menjana jawapan dan tidak disimpan secara kekal di pelayan kami.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Bagaimana ia digunakan&lt;/b&gt;&lt;br/&gt;
+Data anda digunakan untuk menjalankan pasaran kampus - memadankan pembeli dan penjual, mengurus urus niaga, keselamatan dan moderasi (melapor dan menyekat), serta meningkatkan pengalaman anda. Data hanya dikongsi dengan pembekal perkhidmatan yang diperlukan untuk menjalankan aplikasi (Firebase untuk log masuk dan pemberitahuan, Google Gemini untuk ciri AI) dan tidak pernah dijual.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Lokasi&lt;/b&gt;&lt;br/&gt;
+Lokasi hanya dikongsi semasa Meetup Selamat aktif dalam urus niaga yang diterima, supaya kedua-dua pihak dapat bertemu dengan selamat. Ia tidak dikumpul semasa penerokaan biasa.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Data biometrik&lt;/b&gt;&lt;br/&gt;
+Kunci Biometrik pilihan berjalan sepenuhnya pada peranti anda menggunakan pengesah setempat selamat Android (Keystore/StrongBox). Data biometrik tidak pernah dihantar ke, disimpan di, atau dieksport daripada pelayan PolyGo+, selaras dengan perlindungan data sensitif di bawah Akta PDPA (Pindaan) 2024 (Akta A1727).&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Hak PDPA anda&lt;/b&gt;&lt;br/&gt;
+Anda boleh memuat turun semua data anda (Akaun &amp;gt; Muat Turun Data Saya) sebagai JSON atau CSV dan memadam akaun anda serta semua rekod berkaitan secara kekal (Akaun &amp;gt; Padam Akaun). Anda juga boleh menetapkan profil anda sebagai persendirian, menyekat pengguna lain, dan melaporkan kandungan atau pengguna dalam aplikasi.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Penyimpanan &amp;amp; pemadaman&lt;/b&gt;&lt;br/&gt;
+Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam akaun anda. Untuk pertanyaan atau permintaan rasmi, hubungi Pegawai Perlindungan Data kami di support@poliku.com.</string>
+    <string name="more_options">More options</string>
+    <string name="menu_block_user">Block User</string>
+    <string name="menu_unblock_user">Unblock User</string>
+    <string name="menu_report_user">Report User</string>
+    <string name="block_user_confirm_title">Block %1$s?</string>
+    <string name="block_user_confirm_message">You won\'t see each other\'s listings or messages anymore, and this user won\'t be able to contact you. You can unblock them anytime.</string>
+    <string name="unblock_user_confirm_title">Unblock %1$s?</string>
+    <string name="unblock_user_confirm_message">You will be able to see each other\'s listings and message each other again.</string>
+    <string name="user_blocked">User blocked</string>
+    <string name="user_unblocked">User unblocked</string>
+    <string name="blocked_chat_hint">You blocked this user. Unblock to message again.</string>
+    <string name="blocked_update_failed">Couldn\'t update the block list. Check your connection.</string>
+
+    <!-- Orders -->
+    <string name="order_accept_offer">Accept &amp; Schedule Meetup</string>
+
+    <!-- Offer Sheet -->
+    <string name="offer_sheet_title">Make an offer</string>
+    <string name="offer_sheet_subtitle">Send an offer to %1$s</string>
+    <string name="offer_sheet_amount_hint">Your offer amount</string>
+    <string name="offer_sheet_smart_chips">Smart offer suggestions</string>
+    <string name="offer_sheet_chip_current">Current Price</string>
+    <string name="offer_sheet_chip_minus5">-5%</string>
+    <string name="offer_sheet_chip_minus10">-10%</string>
+    <string name="offer_sheet_cancel">Cancel</string>
+    <string name="offer_sheet_send">Send Offer</string>
+    <string name="offer_sheet_error_amount">Enter a valid offer amount</string>
+    <string name="offer_sheet_sent">Offer sent successfully!</string>
+    <string name="offer_sheet_local_only">Offer sent (Local Only)</string>
+
+    <!-- Verified Buyer Reviews -->
+    <string name="seller_write_review">Write a review</string>
+    <string name="review_verified_buyer_title">Verified Buyer Only</string>
+    <string name="review_verified_buyer_message">Campus Rule: Reviews are only available to verified buyers. Complete a transaction with this seller first, then leave your rating after the meetup.</string>
+    <string name="review_saved_offline">Review saved (Offline Mode)</string>
+
+    <!-- Campus Hook -->
+    <string name="campus_details_title">Campus Details</string>
+    <string name="listing_department">Department / Major</string>
+    <string name="listing_free_slots">Free class slots</string>
+    <string name="listing_free_slots_hint">e.g. 2pm-4pm Block A</string>
+    <string name="free_slots_before_class">Before classes</string>
+    <string name="free_slots_lunch_break">Lunch break</string>
+    <string name="free_slots_after_class">After class</string>
+    <string name="explore_all_departments">All departments</string>
+
+    <!-- SafeMeetup Disclosure -->
+    <string name="safe_meetup_disclosure_title">Location Sharing for Safety</string>
+    <string name="safe_meetup_disclosure_message">When you use the Emergency SOS button, your location will be shared with campus security and the other person in this chat to ensure your safety during the meetup.</string>
+    <string name="safe_meetup_disclosure_understood">I understand</string>
+
+    <!-- Bug Report (Alpha/Beta) -->
+    <string name="bug_report_title">Report a Bug</string>
+    <string name="bug_report_subtitle">Found something broken? Tell us what happened so we can fix it for the beta.</string>
+    <string name="bug_report_description_hint">What went wrong? Steps to reproduce…</string>
+    <string name="bug_report_add_screenshot">Add screenshot</string>
+    <string name="bug_report_screenshot">Screenshot</string>
+    <string name="bug_report_submit">Send Report</string>
+    <string name="bug_report_success">Report sent. Thank you for helping improve PolyGo+.</string>
+    <string name="bug_report_failed">Could not submit the report. Check your connection and try again.</string>
+    <string name="bug_report_empty_desc">Please describe what happened</string>
+
+    <!-- Matrix Verification Gate -->
+    <string name="verification_required_title">Matrix Card Verification</string>
+    <string name="verification_posting_blocked">Verify your Matrix Card in Profile &gt; Verification before you can post items.</string>
+    <string name="verification_go_now">Verify now</string>
+
+    <!-- AI Proxy -->
+    <string name="ai_suggest_error">AI service unavailable. Enter your listing details manually.</string>
 </resources>

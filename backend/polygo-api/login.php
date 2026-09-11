@@ -7,11 +7,19 @@ try {
     $password = (string)($input['password'] ?? '');
 
     if (empty($studentId) || empty($password)) {
-        respond(false, 'Please enter both student ID and password');
+        respond(false, 'Please enter both student ID/Email and password');
     }
 
-    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, password_hash FROM users WHERE student_id = ? LIMIT 1');
-    $query->execute([$studentId]);
+    // Rate limit login attempts per IP and per identifier.
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    if (!rate_limit_check($pdo, 'login_ip:' . $ip, 10, 300) ||
+        !rate_limit_check($pdo, 'login_id:' . $studentId, 10, 300)) {
+        respond(false, 'Too many login attempts, please try again later');
+    }
+
+    // Support login via either Student ID (Matrix No) OR Email
+    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, password_hash FROM users WHERE student_id = ? OR email = ? LIMIT 1');
+    $query->execute([$studentId, $studentId]);
     $user = $query->fetch();
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
@@ -33,5 +41,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    respond(false, 'Database error: ' . $e->getMessage());
+    error_log('[polygo-api] login error: ' . $e->getMessage());
+    respond(false, 'Login failed, please try again');
 }

@@ -5,17 +5,30 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.google.android.material.snackbar.Snackbar;
+import com.poliku.polygoplus.AiDiscoveryActivity;
+import com.poliku.polygoplus.CampusPulseActivity;
+import com.poliku.polygoplus.ErrorStateActivity;
+import com.poliku.polygoplus.LoginActivity;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.SearchActivity;
 import com.poliku.polygoplus.AccountActivity;
 import com.poliku.polygoplus.ProductDetailActivity;
+import com.poliku.polygoplus.TextbookHubActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
+import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.util.Resource;
 import com.poliku.polygoplus.databinding.FragmentHomeBinding;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.HomeViewModel;
@@ -25,8 +38,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
@@ -63,26 +82,40 @@ public class HomeFragment extends Fragment {
     }
 
     private void observeViewModel() {
-        viewModel.products.observe(getViewLifecycleOwner(), list -> {
-            if (productAdapter != null) productAdapter.updateData(list);
-            if (binding != null) {
-                boolean isEmpty = list == null || list.isEmpty();
-                binding.recyclerViewProducts.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-            }
-        });
+        viewModel.productsResource.observe(getViewLifecycleOwner(), resource -> {
+            if (resource == null || binding == null) return;
 
-        viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
-            if (binding == null) return;
-            if (isLoading) {
-                if (!binding.swipeRefreshHome.isRefreshing()) {
-                    binding.shimmerMarket.shimmerView.setVisibility(View.VISIBLE);
-                    binding.shimmerMarket.shimmerView.startShimmer();
-                    binding.recyclerViewProducts.setVisibility(View.GONE);
-                }
-            } else {
-                binding.swipeRefreshHome.setRefreshing(false);
-                binding.shimmerMarket.shimmerView.stopShimmer();
-                binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
+            switch (resource.status) {
+                case LOADING:
+                    if (!binding.swipeRefreshHome.isRefreshing()) {
+                        binding.shimmerMarket.shimmerView.setVisibility(View.VISIBLE);
+                        binding.shimmerMarket.shimmerView.startShimmer();
+                        binding.recyclerViewProducts.setVisibility(View.GONE);
+                    }
+                    break;
+
+                case SUCCESS:
+                    binding.swipeRefreshHome.setRefreshing(false);
+                    binding.shimmerMarket.shimmerView.stopShimmer();
+                    binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
+
+                    List<ListingEntity> list = resource.data;
+                    if (productAdapter != null) productAdapter.updateData(list);
+                    boolean isEmpty = list == null || list.isEmpty();
+                    binding.recyclerViewProducts.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+                    break;
+
+                case ERROR:
+                    binding.swipeRefreshHome.setRefreshing(false);
+                    binding.shimmerMarket.shimmerView.stopShimmer();
+                    binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
+                    if (AppDataStore.getListings(requireContext()).isEmpty()) {
+                        startActivity(new Intent(requireContext(), ErrorStateActivity.class));
+                    } else {
+                        Snackbar.make(binding.getRoot(),
+                                "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
+                    }
+                    break;
             }
         });
     }
@@ -93,7 +126,7 @@ public class HomeFragment extends Fragment {
         String firstName = name.split(" ")[0];
         
         String hourGreeting;
-        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         if (hour < 12) hourGreeting = getString(R.string.greeting_morning);
         else if (hour < 18) hourGreeting = getString(R.string.greeting_afternoon);
         else hourGreeting = getString(R.string.greeting_evening);
@@ -106,7 +139,7 @@ public class HomeFragment extends Fragment {
 
         String photo = AppDataStore.userProfilePic(requireContext());
         if (!photo.isEmpty()) {
-            com.bumptech.glide.Glide.with(this)
+            Glide.with(this)
                     .load(photo)
                     .circleCrop()
                     .into(binding.ivProfilePic);
@@ -116,12 +149,12 @@ public class HomeFragment extends Fragment {
             HapticManager.lightTap(v);
             if (AppDataStore.isLoggedIn(requireContext())) {
                 Intent intent = new Intent(requireContext(), AccountActivity.class);
-                androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
+                ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                         requireActivity(), binding.ivProfilePic, "profile_pic_hero"
                 );
                 startActivity(intent, options.toBundle());
             } else {
-                startActivity(new Intent(requireContext(), com.poliku.polygoplus.LoginActivity.class));
+                startActivity(new Intent(requireContext(), LoginActivity.class));
             }
         });
     }
@@ -151,7 +184,7 @@ public class HomeFragment extends Fragment {
             Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
 
-            androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), sharedView, "product_image_hero"
             );
             startActivity(intent, options.toBundle());
@@ -164,7 +197,7 @@ public class HomeFragment extends Fragment {
         View.OnClickListener openSearch = v -> {
             HapticManager.lightTap(v);
             Intent intent = new Intent(requireContext(), SearchActivity.class);
-            androidx.core.app.ActivityOptionsCompat options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), binding.searchBarCard, "search_bar_hero"
             );
             startActivity(intent, options.toBundle());
@@ -172,11 +205,11 @@ public class HomeFragment extends Fragment {
         binding.searchBarCard.setOnClickListener(openSearch);
         binding.tvSearchVisual.setOnClickListener(v -> {
             HapticManager.swell(requireContext());
-            startActivity(new Intent(requireContext(), com.poliku.polygoplus.AiDiscoveryActivity.class));
+            startActivity(new Intent(requireContext(), AiDiscoveryActivity.class));
         });
         binding.btnTextbookHub.setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            startActivity(new Intent(requireContext(), com.poliku.polygoplus.TextbookHubActivity.class));
+            startActivity(new Intent(requireContext(), TextbookHubActivity.class));
         });
         binding.tvSeeAllProducts.setOnClickListener(v -> {
             HapticManager.lightTap(v);
@@ -220,12 +253,12 @@ public class HomeFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Event event = events.get(position);
-            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTitle)).setText(event.title);
-            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventSubtitle)).setText(event.subtitle);
-            ((android.widget.TextView) holder.itemView.findViewById(R.id.tvEventTag)).setText(event.tag);
+            ((TextView) holder.itemView.findViewById(R.id.tvEventTitle)).setText(event.title);
+            ((TextView) holder.itemView.findViewById(R.id.tvEventSubtitle)).setText(event.subtitle);
+            ((TextView) holder.itemView.findViewById(R.id.tvEventTag)).setText(event.tag);
             holder.itemView.setOnClickListener(v -> {
                 HapticManager.swell(v.getContext());
-                v.getContext().startActivity(new Intent(v.getContext(), com.poliku.polygoplus.CampusPulseActivity.class));
+                v.getContext().startActivity(new Intent(v.getContext(), CampusPulseActivity.class));
             });
         }
 

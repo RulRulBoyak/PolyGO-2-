@@ -1,5 +1,6 @@
 package com.poliku.polygoplus.data;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.poliku.polygoplus.ChatActivity;
 import com.poliku.polygoplus.R;
 
+import com.poliku.polygoplus.data.local.entity.ThreadEntity;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,30 +21,46 @@ import java.util.List;
 import java.util.Locale;
 
 public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.Holder> {
+    public interface Listener {
+        void onThreadClicked(ThreadEntity thread);
+    }
+
     public enum Filter { ALL, UNREAD, BUYING }
-    private final List<AppDataStore.ThreadRecord> all = new ArrayList<>();
-    private final List<AppDataStore.ThreadRecord> visible = new ArrayList<>();
+    private final List<ThreadEntity> all = new ArrayList<>();
+    private final List<ThreadEntity> visible = new ArrayList<>();
     private String query = "";
     private Filter filter = Filter.ALL;
+    private final Listener listener;
 
-    public void submit(List<AppDataStore.ThreadRecord> threads) {
+    public ConversationAdapter(Listener listener) {
+        this.listener = listener;
+    }
+
+    public void submit(List<ThreadEntity> threads) {
         all.clear(); all.addAll(threads);
-        all.sort(Comparator.comparingLong((AppDataStore.ThreadRecord t) -> t.lastMessageTime).reversed());
+        all.sort(Comparator.comparingLong((ThreadEntity t) -> t.lastMessageTime).reversed());
         applyFilter();
     }
 
-    public void setQuery(String value) { query = value == null ? "" : value.trim().toLowerCase(Locale.ROOT); applyFilter(); }
-    public void setFilter(Filter value) { filter = value == null ? Filter.ALL : value; applyFilter(); }
+    public void setQuery(String value) {
+        query = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        applyFilter();
+    }
+
+    public void setFilter(Filter value) {
+        filter = value == null ? Filter.ALL : value;
+        applyFilter();
+    }
 
     private void applyFilter() {
         visible.clear();
-        for (AppDataStore.ThreadRecord thread : all) {
+        for (ThreadEntity thread : all) {
             boolean textMatch = query.isEmpty()
                     || thread.name.toLowerCase(Locale.ROOT).contains(query)
-                    || thread.preview.toLowerCase(Locale.ROOT).contains(query);
+                    || (thread.lastMessage != null && thread.lastMessage.toLowerCase(Locale.ROOT).contains(query));
             boolean filterMatch = filter == Filter.ALL
                     || (filter == Filter.UNREAD && thread.unread)
-                    || (filter == Filter.BUYING && !thread.listingId.isEmpty());
+                    || (filter == Filter.BUYING && thread.listingId != null && !thread.listingId.isEmpty());
             if (textMatch && filterMatch) visible.add(thread);
         }
         notifyDataSetChanged();
@@ -53,18 +71,21 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     }
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
-        AppDataStore.ThreadRecord thread = visible.get(position);
+        ThreadEntity thread = visible.get(position);
         holder.avatar.setText(initials(thread.name));
         holder.sender.setText(thread.name);
-        holder.preview.setText(thread.preview.isEmpty() ? "No messages yet" : thread.preview);
+        holder.preview.setText(thread.lastMessage == null || thread.lastMessage.isEmpty() ? "No messages yet" : thread.lastMessage);
         holder.time.setText(formatTime(thread.lastMessageTime));
         holder.sender.setTextColor(thread.unread ? 0xFF222222 : 0xFF717171);
         holder.preview.setTextColor(thread.unread ? 0xFF222222 : 0xFF717171);
         holder.unread.setVisibility(thread.unread ? View.VISIBLE : View.GONE);
         holder.itemView.setOnClickListener(v -> {
-            AppDataStore.markThreadRead(v.getContext(), thread.id);
-            android.content.Intent intent = new android.content.Intent(v.getContext(), ChatActivity.class);
+            if (listener != null) {
+                listener.onThreadClicked(thread);
+            }
+            Intent intent = new Intent(v.getContext(), ChatActivity.class);
             intent.putExtra(ChatActivity.EXTRA_THREAD_ID, thread.id);
+            intent.putExtra(ChatActivity.EXTRA_OTHER_NAME, thread.name);
             v.getContext().startActivity(intent);
         });
     }
@@ -81,10 +102,21 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase(Locale.ROOT);
     }
 
-    @Override public int getItemCount() { return visible.size(); }
+    @Override
+    public int getItemCount() {
+        return visible.size();
+    }
 
     static class Holder extends RecyclerView.ViewHolder {
         final TextView avatar, sender, preview, time, unread;
-        Holder(View view) { super(view); avatar=view.findViewById(R.id.textViewAvatar); sender=view.findViewById(R.id.textViewSender); preview=view.findViewById(R.id.textViewPreview); time=view.findViewById(R.id.textViewTime); unread=view.findViewById(R.id.textViewUnread); }
+
+        Holder(View view) {
+            super(view);
+            avatar = view.findViewById(R.id.textViewAvatar);
+            sender = view.findViewById(R.id.textViewSender);
+            preview = view.findViewById(R.id.textViewPreview);
+            time = view.findViewById(R.id.textViewTime);
+            unread = view.findViewById(R.id.textViewUnread);
+        }
     }
 }

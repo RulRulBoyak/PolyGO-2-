@@ -18,16 +18,16 @@ import com.poliku.polygoplus.ui.HapticManager;
 
 public class OnboardingActivity extends AppCompatActivity {
     private static final String[] TITLES = {
-            "Exclusive to PKS",
-            "Buy and sell on campus",
-            "Real-time chat",
-            "Meet safely"
+        "Exclusive to PKS",
+        "Buy and sell on campus",
+        "Real-time chat",
+        "Meet safely"
     };
     private static final String[] BODIES = {
-            "PolyGo+ is only for Politeknik Kuching Sarawak students and staff. Verified campus IDs keep the marketplace trusted.",
-            "Browse food, tech, books and more from people around you. No need to leave campus to complete a deal.",
-            "Message sellers instantly, agree a price, and keep the conversation in one place.",
-            "Meet at PKS landmarks like Block A or the cafeteria. Mark the deal complete and leave a review."
+        "PolyGo+ is only for Politeknik Kuching Sarawak students and staff. Verified campus IDs keep the marketplace trusted.",
+        "Browse food, tech, books and more from people around you. No need to leave campus to complete a deal.",
+        "Message sellers instantly, agree a price, and keep the conversation in one place.",
+        "Meet at PKS landmarks like Block A or the cafeteria. Mark the deal complete and leave a review."
     };
     private static final String[] EMOJIS = { "🎓", "🛍️", "💬", "📍" };
 

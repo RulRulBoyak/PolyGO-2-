@@ -3,6 +3,10 @@
     <cloud-backup>
         <!-- Exclude sensitive local store from Google Drive backup -->
         <exclude domain="sharedpref" path="polygo_local_store.xml"/>
+        <!-- Exclude chat/listings database (contains personal/sensitive data) -->
+        <exclude domain="database" path="polygo.db"/>
+        <exclude domain="database" path="polygo.db-wal"/>
+        <exclude domain="database" path="polygo.db-shm"/>
     </cloud-backup>
     <device-transfer>
         <!-- Allow session transfer between devices during setup for convenience,

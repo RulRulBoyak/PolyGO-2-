@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fitsSystemWindows="true"
+    android:paddingHorizontal="32dp">
+
+    <!-- Center Content Group -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/layoutErrorActions"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside">
+
+        <!-- Modern Friendly Icon / Emoji Circle Container -->
+        <FrameLayout
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="28dp"
+            android:background="@drawable/bg_category_circle"
+            android:backgroundTint="@color/soft_blue">
+
+            <TextView
+                android:id="@+id/tvErrorEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="📡"
+                android:textSize="42sp" />
+        </FrameLayout>
+
+        <!-- Headline / Title -->
+        <TextView
+            android:id="@+id/tvErrorTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:letterSpacing="-0.02"
+            android:text="No internet connection"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="@color/airbnb_ink"
+            android:textStyle="bold" />
+
+        <!-- Descriptive Body Message -->
+        <TextView
+            android:id="@+id/tvErrorBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:paddingHorizontal="16dp"
+            android:text="Check your campus Wi-Fi or mobile data connection, then try again."
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/airbnb_muted" />
+
+    </LinearLayout>
+
+    <!-- Bottom Action Button Group -->
+    <LinearLayout
+        android:id="@+id/layoutErrorActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="36dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Primary Filled Retry Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetry"
+            style="@style/Widget.PolyGo.Button"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:letterSpacing="0.01"
+            android:text="Try Again"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/pks_blue"
+            app:cornerRadius="16dp"
+            app:elevation="0dp"
+            app:icon="@drawable/ic_refresh"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="18dp"
+            app:iconTint="@color/white" />
+
+        <!-- Secondary Subdued Fallback Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnContinueOffline"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="Continue with saved data"
+            android:textAllCaps="false"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="14sp"
+            app:rippleColor="#15000000" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,7 +23,7 @@
             android:id="@+id/ivLogo"
             android:layout_width="140dp"
             android:layout_height="140dp"
-            android:src="@drawable/logo_polygo" />
+            android:src="@mipmap/ic_launcher_foreground" />
 
         <TextView
             android:id="@+id/tvTitle"

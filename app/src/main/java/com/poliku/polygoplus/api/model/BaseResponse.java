@@ -9,6 +9,11 @@ public class BaseResponse {
     @SerializedName("message")
     private String message;
 
-    public boolean isSuccess() { return success; }
-    public String getMessage() { return message; }
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 }

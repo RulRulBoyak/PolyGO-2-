@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 
 $input = input_json();
-$userId = (int)($input['user_id'] ?? 0);
+$userId = verify_jwt();
 $targetType = trim((string)($input['target_type'] ?? 'listing'));
 $targetId = trim((string)($input['target_id'] ?? ''));
 $reason = trim((string)($input['reason'] ?? ''));

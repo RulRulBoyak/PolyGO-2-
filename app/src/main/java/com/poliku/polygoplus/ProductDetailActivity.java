@@ -1,33 +1,55 @@
 package com.poliku.polygoplus;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputType;
-import android.widget.EditText;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.imageview.ShapeableImageView;
 import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.CarouselAdapter;
 import com.poliku.polygoplus.ui.HapticManager;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@AndroidEntryPoint
 public class ProductDetailActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_LISTING_ID = "listing_id";
+    public static final String RESULT_EXTRA_LISTING_ID = "result_listing_id_changed";
     private AppDataStore.ProductRecord product;
-    private com.google.android.material.button.MaterialButton saveButton;
+    private MaterialButton saveButton;
+    private boolean favoriteChanged;
     private ViewPager2 carousel;
-    private android.widget.LinearLayout layoutIndicators;
+    private LinearLayout layoutIndicators;
+    private CollapsingToolbarLayout collapsingToolbar;
+    private String detailFreeSlots;
+    private String detailMajorName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +60,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         String id = getIntent().getStringExtra(EXTRA_LISTING_ID);
         
         // DEEP LINKING: Check if activity was started by a URL
-        android.net.Uri data = getIntent().getData();
+        Uri data = getIntent().getData();
         if (data != null && data.getPath() != null && data.getPath().startsWith("/listing/")) {
             id = data.getLastPathSegment();
         }
@@ -48,28 +70,45 @@ public class ProductDetailActivity extends AppCompatActivity {
             return;
         }
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        View btnBack = findViewById(R.id.btnBack);
+        if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
+
+        collapsingToolbar = findViewById(R.id.collapsingToolbar);
+        if (collapsingToolbar != null) {
+            // Expanded overlay title is invisible over the hero; only the collapsed bar shows the title
+            collapsingToolbar.setExpandedTitleTextColor(ColorStateList.valueOf(Color.TRANSPARENT));
+            collapsingToolbar.setCollapsedTitleTextColor(getColor(R.color.airbnb_ink));
+        }
+
         saveButton = findViewById(R.id.btnSave);
 
         fetchProduct(id);
     }
 
     private void fetchProduct(String id) {
-        NetworkApi.getListing(id, new NetworkApi.Callback() {
+        polyGoRepository.getListing(id, new Callback<PolyGoApi.ListingsResponse>() {
             @Override
-            public void onSuccess(org.json.JSONObject response) {
-                org.json.JSONObject data = response.optJSONObject("listing");
-                if (data == null) data = response; // Fallback if direct object
-                product = AppDataStore.ProductRecord.fromJson(data);
-                if (product != null) {
-                    renderProduct();
+            public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                PolyGoApi.ListingsResponse body = response.body();
+                if (body != null && body.listings != null && !body.listings.isEmpty()) {
+                    PolyGoApi.Listing l = body.listings.get(0);
+                    product = AppDataStore.ProductRecord.fromListing(l, AppDataStore.userId(ProductDetailActivity.this));
+                    detailFreeSlots = l.free_slots;
+                    detailMajorName = l.major_name;
+                    if (product != null) {
+                        renderProduct();
+                    } else {
+                        tryLocalFallback(id);
+                    }
                 } else {
                     tryLocalFallback(id);
                 }
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
                 tryLocalFallback(id);
             }
         });
@@ -111,9 +150,48 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
 
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);
+        if (collapsingToolbar != null) collapsingToolbar.setTitle(product.title);
         ((TextView) findViewById(R.id.productPrice)).setText("RM " + product.price);
-        ((TextView) findViewById(R.id.productMeta)).setText("★ " + product.rating + "  •  " + product.distance + "  •  " + product.category);
+        String meta = "★ " + product.rating;
+        if (product.reviewCount != null && !product.reviewCount.isEmpty() && !"0".equals(product.reviewCount)) {
+            meta += " (" + product.reviewCount + ")";
+        }
+        meta += "  •  " + product.distance + "  •  " + product.category;
+        ((TextView) findViewById(R.id.productMeta)).setText(meta);
         ((TextView) findViewById(R.id.productDescription)).setText(product.description);
+
+        StringBuilder suffix = new StringBuilder();
+        if (detailMajorName != null && !detailMajorName.isEmpty()) {
+            suffix.append("\nDepartment: ").append(detailMajorName);
+        }
+        if (detailFreeSlots != null && !detailFreeSlots.isEmpty()) {
+            suffix.append("\nFree slots: ").append(detailFreeSlots);
+        }
+        if (suffix.length() > 0) {
+            TextView descView = findViewById(R.id.productDescription);
+            descView.setText(descView.getText() + suffix.toString());
+        }
+
+        ((TextView) findViewById(R.id.tvReviewScore)).setText(product.rating);
+        boolean hasReviews = product.reviewCount != null && !product.reviewCount.isEmpty() && !"0".equals(product.reviewCount);
+        ((TextView) findViewById(R.id.tvReviewCount)).setText(hasReviews
+                ? "(" + product.reviewCount + " reviews)"
+                : "No reviews yet");
+        findViewById(R.id.cardReviews).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            Intent i = new Intent(this, SellerProfileActivity.class);
+            i.putExtra(SellerProfileActivity.EXTRA_SELLER_NAME, product.seller);
+            i.putExtra(SellerProfileActivity.EXTRA_SELLER_ID, product.ownerId);
+            i.putExtra(SellerProfileActivity.EXTRA_SCROLL_TO_REVIEWS, true);
+            startActivity(i);
+        });
+        View btnWriteReview = findViewById(R.id.btnWriteReview);
+        if (btnWriteReview != null) {
+            btnWriteReview.setOnClickListener(v -> {
+                HapticManager.lightTap(v);
+                showReviewGate(product.seller);
+            });
+        }
         ((TextView) findViewById(R.id.sellerName)).setText(product.seller);
         findViewById(R.id.sellerName).setOnClickListener(v -> {
             Intent i = new Intent(this, SellerProfileActivity.class);
@@ -129,7 +207,7 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(i);
         });
 
-        saveButton.setSelected(AppDataStore.isFavorite(this, product.id));
+        updateSaveButton(AppDataStore.isFavorite(this, product.id));
         saveButton.setOnClickListener(v -> {
             HapticManager.lightTap(v);
             toggleFavorite();
@@ -141,14 +219,58 @@ public class ProductDetailActivity extends AppCompatActivity {
             message.setEnabled(false);
             findViewById(R.id.btnMakeOffer).setEnabled(false);
             MaterialButton sold = findViewById(R.id.btnMarkSold);
-            sold.setVisibility(android.view.View.VISIBLE);
-            sold.setEnabled(product.available);
-            sold.setOnClickListener(v -> {
-                HapticManager.mediumTap(v);
-                AppDataStore.markSold(this, product.id);
-                Toast.makeText(this, "Listing marked as sold", Toast.LENGTH_SHORT).show();
-                finish();
-            });
+            sold.setVisibility(View.VISIBLE);
+            if (product.archived) {
+                sold.setText("Relist");
+                sold.setOnClickListener(v -> {
+                    HapticManager.mediumTap(v);
+                    v.setEnabled(false);
+                    polyGoRepository.relistListing(product.id, new Callback<BaseResponse>() {
+                        @Override
+                        public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                                AppDataStore.unarchiveListing(ProductDetailActivity.this, product.id);
+                                Toast.makeText(ProductDetailActivity.this, "Listing relisted", Toast.LENGTH_SHORT).show();
+                                finish();
+                            } else {
+                                v.setEnabled(true);
+                                Toast.makeText(ProductDetailActivity.this, "Could not relist listing", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<BaseResponse> call, Throwable t) {
+                            v.setEnabled(true);
+                            Toast.makeText(ProductDetailActivity.this, "Could not reach server", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                });
+            } else {
+                sold.setEnabled(product.available);
+                sold.setOnClickListener(v -> {
+                    HapticManager.mediumTap(v);
+                    v.setEnabled(false);
+                    polyGoRepository.markSold(product.id, new Callback<BaseResponse>() {
+                        @Override
+                        public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                                AppDataStore.markSold(ProductDetailActivity.this, product.id);
+                                Toast.makeText(ProductDetailActivity.this, "Listing marked as sold", Toast.LENGTH_SHORT).show();
+                                finish();
+                            } else {
+                                v.setEnabled(true);
+                                Toast.makeText(ProductDetailActivity.this, "Could not mark listing as sold", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<BaseResponse> call, Throwable t) {
+                            v.setEnabled(true);
+                            Toast.makeText(ProductDetailActivity.this, "Could not reach server", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                });
+            }
         }
 
         message.setOnClickListener(v -> {
@@ -179,9 +301,9 @@ public class ProductDetailActivity extends AppCompatActivity {
         layoutIndicators.removeAllViews();
         if (count <= 1) return;
         for (int i = 0; i < count; i++) {
-            android.widget.ImageView dot = new android.widget.ImageView(this);
+            ImageView dot = new ImageView(this);
             dot.setImageResource(R.drawable.dot_inactive);
-            android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(24, 24);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(24, 24);
             params.setMargins(8, 0, 8, 0);
             layoutIndicators.addView(dot, params);
         }
@@ -190,9 +312,15 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void updateIndicators(int position) {
         for (int i = 0; i < layoutIndicators.getChildCount(); i++) {
-            android.widget.ImageView dot = (android.widget.ImageView) layoutIndicators.getChildAt(i);
+            ImageView dot = (ImageView) layoutIndicators.getChildAt(i);
             dot.setImageResource(i == position ? R.drawable.dot_active : R.drawable.dot_inactive);
         }
+    }
+
+    private void updateSaveButton(boolean saved) {
+        saveButton.setSelected(saved);
+        saveButton.setText(saved ? R.string.product_saved : R.string.product_save);
+        saveButton.setIconResource(saved ? R.drawable.ic_star_filled : R.drawable.ic_star_outline);
     }
 
     private void toggleFavorite() {
@@ -201,32 +329,41 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
+        // Optimistic UI: flip state immediately, roll back only if the call fails.
+        AppDataStore.toggleFavorite(this, product.id);
+        boolean isFav = AppDataStore.isFavorite(this, product.id);
+        updateSaveButton(isFav);
+        favoriteChanged = true;
+
         String userId = AppDataStore.userId(this);
-        NetworkApi.toggleFavorite(userId, product.id, new NetworkApi.Callback() {
+        polyGoRepository.toggleFavorite(userId, product.id, new Callback<BaseResponse>() {
             @Override
-            public void onSuccess(org.json.JSONObject response) {
-                AppDataStore.toggleFavorite(ProductDetailActivity.this, product.id);
-                boolean isFav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
-                saveButton.setSelected(isFav);
-                
-                if (!isFav) {
-                    Snackbar.make(saveButton, "Removed from saved items", Snackbar.LENGTH_LONG)
-                            .setAction("UNDO", v -> toggleFavorite())
-                            .setActionTextColor(getResources().getColor(R.color.pks_blue_variant))
-                            .show();
+            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    boolean fav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
+                    updateSaveButton(fav);
+
+                    if (!fav) {
+                        Snackbar.make(saveButton, "Removed from saved items", Snackbar.LENGTH_LONG)
+                                .setAction("UNDO", v -> toggleFavorite())
+                                .setActionTextColor(getResources().getColor(R.color.pks_blue_variant))
+                                .show();
+                    } else {
+                        Toast.makeText(ProductDetailActivity.this, "Saved to your items", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(ProductDetailActivity.this, "Saved to your items", Toast.LENGTH_SHORT).show();
+                    onFailure(call, new Throwable("Toggle failed"));
                 }
             }
 
             @Override
-            public void onError(String message) {
-                // Local toggle if network fails
+            public void onFailure(Call<BaseResponse> call, Throwable t) {
+                // Roll back the optimistic toggle and keep the local state consistent.
                 AppDataStore.toggleFavorite(ProductDetailActivity.this, product.id);
-                boolean isFav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
-                saveButton.setSelected(isFav);
+                boolean fav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
+                updateSaveButton(fav);
 
-                if (!isFav) {
+                if (!fav) {
                     Snackbar.make(saveButton, "Removed (offline)", Snackbar.LENGTH_LONG)
                             .setAction("UNDO", v -> toggleFavorite())
                             .show();
@@ -238,41 +375,40 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void showOfferDialog() {
-        EditText input = new EditText(this);
-        input.setHint("Amount in RM");
-        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        input.setSingleLine(true);
+        OfferSheetDialogFragment.newInstance(product.id, product.ownerId, product.title, product.price, product.seller)
+                .show(getSupportFragmentManager(), "offer");
+    }
 
+    private void showReviewGate(String sellerName) {
+        if (!AppDataStore.isLoggedIn(this)) {
+            Toast.makeText(this, "Please log in to leave a review", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
+        AppDataStore.TransactionRecord tx = AppDataStore.getEligibleReviewTransaction(this, sellerName);
+        if (tx != null) {
+            Intent review = new Intent(this, ReviewActivity.class);
+            review.putExtra(ReviewActivity.EXTRA_SELLER, sellerName);
+            review.putExtra(ReviewActivity.EXTRA_TRANSACTION_ID, tx.id);
+            review.putExtra(ReviewActivity.EXTRA_LISTING_ID, tx.listingId);
+            startActivity(review);
+            return;
+        }
+        HapticManager.error(this);
         new AlertDialog.Builder(this)
-                .setTitle("Make an offer")
-                .setMessage("Send an offer to " + product.seller)
-                .setView(input)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Send offer", (d, w) -> {
-                    String amount = input.getText().toString().trim();
-                    if (amount.isEmpty()) {
-                        Toast.makeText(this, "Enter an offer amount", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+                .setTitle(R.string.review_verified_buyer_title)
+                .setMessage(R.string.review_verified_buyer_message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
 
-                    // Professional Real Transaction Flow
-                    String userId = AppDataStore.userId(this);
-                    NetworkApi.addTransaction(userId, product.id, product.ownerId, amount, new NetworkApi.Callback() {
-                        @Override
-                        public void onSuccess(org.json.JSONObject response) {
-                            HapticManager.success(ProductDetailActivity.this);
-                            // HYBRID RESILIENCE: Save locally for offline view, but it's officially on the server now
-                            AppDataStore.addTransaction(ProductDetailActivity.this, product.id, product.title, "RM " + amount);
-                            Toast.makeText(ProductDetailActivity.this, "Offer sent successfully!", Toast.LENGTH_LONG).show();
-                        }
-
-                        @Override
-                        public void onError(String message) {
-                            // Fallback to local only for demo stability if network fails
-                            AppDataStore.addTransaction(ProductDetailActivity.this, product.id, product.title, "RM " + amount);
-                            Toast.makeText(ProductDetailActivity.this, "Offer sent (Local Only)", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }).show();
+    @Override
+    public void finish() {
+        if (favoriteChanged && product != null) {
+            Intent result = new Intent();
+            result.putExtra(RESULT_EXTRA_LISTING_ID, product.id);
+            setResult(RESULT_OK, result);
+        }
+        super.finish();
     }
 }

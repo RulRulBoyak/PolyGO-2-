@@ -11,6 +11,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }

@@ -2,7 +2,6 @@ package com.poliku.polygoplus;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,12 +11,15 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        
+
         route();
     }
 
     private void route() {
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+        // Post on the decor view's handler: if this activity is destroyed the
+        // runnable is removed automatically (no activity leak).
+        getWindow().getDecorView().postDelayed(() -> {
+            if (isFinishing() || isDestroyed()) return;
             Intent intent;
             // Rule 3.3: Verify first-run status immediately on cold start
             if (!com.poliku.polygoplus.data.AppDataStore.hasSeenOnboarding(this)) {
@@ -26,7 +28,7 @@ public class SplashActivity extends AppCompatActivity {
                 intent = new Intent(SplashActivity.this, HomeActivity.class);
             }
             startActivity(intent);
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         }, 800);
     }

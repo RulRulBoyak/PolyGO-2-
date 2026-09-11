@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config.php';
 
 $input = input_json();
-$userId = (int)($input['user_id'] ?? 0);
+$userId = verify_jwt();
 $listingId = (int)($input['listing_id'] ?? 0);
 $action = $input['action'] ?? 'get';
 
@@ -22,7 +22,10 @@ if ($action === 'toggle') {
     }
 }
 
-$query = $pdo->prepare('SELECT l.*, u.full_name AS seller FROM listings l INNER JOIN favorites f ON f.listing_id = l.id INNER JOIN users u ON u.id = l.owner_id WHERE f.user_id = ?');
+$query = $pdo->prepare('SELECT l.*, u.full_name AS seller,
+    COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
+    COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
+    FROM listings l INNER JOIN favorites f ON f.listing_id = l.id INNER JOIN users u ON u.id = l.owner_id WHERE f.user_id = ?');
 $query->execute([$userId]);
 $items = [];
 foreach ($query->fetchAll() as $item) {

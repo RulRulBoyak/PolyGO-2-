@@ -144,7 +144,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Save for later"
-                    app:icon="@android:drawable/btn_star_big_off" />
+                    app:icon="@drawable/ic_star_outline" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnMarkSold"
@@ -185,7 +185,7 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="12dp"
                 android:text="Message Seller"
-                app:icon="@android:drawable/ic_dialog_email" />
+                app:icon="@drawable/ic_mail_outline" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMakeOffer"

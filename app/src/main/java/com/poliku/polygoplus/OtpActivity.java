@@ -9,7 +9,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.api.PolyGoApi;
@@ -26,10 +25,13 @@ public class OtpActivity extends BaseActivity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_STUDENT_ID = "student_id";
     public static final String EXTRA_PASSWORD = "password";
+    public static final String EXTRA_DEV_OTP = "dev_otp";
+    public static final String EXTRA_CONSENT_AGREED = "consent_agreed";
 
     @Inject PolyGoApi api;
 
     private String email, name, studentId, password;
+    private boolean consentAgreed = true;
     private EditText etOtp;
 
     @Override
@@ -41,13 +43,27 @@ public class OtpActivity extends BaseActivity {
         name = getIntent().getStringExtra(EXTRA_NAME);
         studentId = getIntent().getStringExtra(EXTRA_STUDENT_ID);
         password = getIntent().getStringExtra(EXTRA_PASSWORD);
+        consentAgreed = getIntent().getBooleanExtra(EXTRA_CONSENT_AGREED, true);
 
         etOtp = findViewById(R.id.etOtp);
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnVerify).setOnClickListener(v -> verify());
         findViewById(R.id.tvResend).setOnClickListener(v -> resend());
+        etOtp.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                verify();
+                return true;
+            }
+            return false;
+        });
 
         ((TextView) findViewById(R.id.tvOtpSubtitle)).setText("We've sent a 6-digit code to " + email);
+
+        String devOtp = getIntent().getStringExtra(EXTRA_DEV_OTP);
+        if (devOtp != null && !devOtp.isEmpty()) {
+            etOtp.setText(devOtp);
+            Toast.makeText(this, "Test code pre-filled", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void verify() {
@@ -81,10 +97,13 @@ public class OtpActivity extends BaseActivity {
 
     private void resend() {
         HapticManager.lightTap(etOtp);
-        api.sendOtp(new PolyGoApi.OtpRequest(email)).enqueue(new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
+        api.sendOtp(new PolyGoApi.OtpRequest(email)).enqueue(new retrofit2.Callback<PolyGoApi.OtpSendResponse>() {
             @Override
-            public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
+            public void onResponse(retrofit2.Call<PolyGoApi.OtpSendResponse> call, retrofit2.Response<PolyGoApi.OtpSendResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    if (response.body().otp != null && !response.body().otp.isEmpty()) {
+                        etOtp.setText(response.body().otp);
+                    }
                     Toast.makeText(OtpActivity.this, "Code resent to " + email, Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(OtpActivity.this, "Failed to resend", Toast.LENGTH_SHORT).show();
@@ -92,14 +111,14 @@ public class OtpActivity extends BaseActivity {
             }
 
             @Override
-            public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
+            public void onFailure(retrofit2.Call<PolyGoApi.OtpSendResponse> call, Throwable t) {
                 Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void completeRegistration() {
-        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password)).enqueue(new retrofit2.Callback<PolyGoApi.LoginResponse>() {
+        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password, consentAgreed)).enqueue(new retrofit2.Callback<PolyGoApi.LoginResponse>() {
             @Override
             public void onResponse(retrofit2.Call<PolyGoApi.LoginResponse> call, retrofit2.Response<PolyGoApi.LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
@@ -120,7 +139,7 @@ public class OtpActivity extends BaseActivity {
                     } catch (Exception ignored) {}
                     
                     new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                        Intent intent = new Intent(OtpActivity.this, HomeActivity.class);
+                        Intent intent = new Intent(OtpActivity.this, VerificationActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();

@@ -8,30 +8,40 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
+import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.network.AiHelper;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class AiDiscoveryActivity extends AppCompatActivity {
 
+    @Inject PolyGoRepository polyGoRepository;
     private ImageView ivPreview;
     private TextView tvLabel;
     private LinearProgressIndicator progress;
     private ProductCardAdapter adapter;
-    private List<AppDataStore.ProductRecord> results = new ArrayList<>();
+    private List<ListingEntity> results = new ArrayList<>();
 
-    private final ActivityResultLauncher<String> pickImage =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+    private final ActivityResultLauncher<PickVisualMediaRequest> pickImage =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) {
                     processImage(uri);
                 }
@@ -45,7 +55,8 @@ public class AiDiscoveryActivity extends AppCompatActivity {
         ivPreview = findViewById(R.id.ivSearchPreview);
         tvLabel = findViewById(R.id.tvSearchLabel);
         progress = findViewById(R.id.aiProgress);
-        findViewById(R.id.toolbar).setOnClickListener(v -> finish());
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
 
         RecyclerView rv = findViewById(R.id.rvAiResults);
         adapter = new ProductCardAdapter(results, (a, p, v) -> {
@@ -57,7 +68,9 @@ public class AiDiscoveryActivity extends AppCompatActivity {
 
         findViewById(R.id.btnCaptureSearch).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            pickImage.launch("image/*");
+            pickImage.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                    .build());
         });
     }
 
@@ -68,7 +81,7 @@ public class AiDiscoveryActivity extends AppCompatActivity {
         progress.setVisibility(View.VISIBLE);
         HapticManager.swell(this);
 
-        AiHelper.suggestListingDetails(this, uri, new AiHelper.Callback() {
+        AiHelper.suggestListingDetails(polyGoRepository, this, uri, new AiHelper.AiCallback() {
             @Override
             public void onResult(String title, String price, String description) {
                 progress.setVisibility(View.GONE);
@@ -90,8 +103,8 @@ public class AiDiscoveryActivity extends AppCompatActivity {
 
     private void mockResults(String keyword) {
         results.clear();
-        List<AppDataStore.ProductRecord> all = AppDataStore.getListings(this);
-        for (AppDataStore.ProductRecord p : all) {
+        List<ListingEntity> all = AppDataStore.listingsToEntities(AppDataStore.getListings(this));
+        for (ListingEntity p : all) {
             if (p.title.toLowerCase().contains(keyword.toLowerCase()) || results.size() < 4) {
                 results.add(p);
             }

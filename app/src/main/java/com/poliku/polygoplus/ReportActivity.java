@@ -9,10 +9,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class ReportActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_TARGET_TYPE = "target_type";
     public static final String EXTRA_TARGET_ID = "target_id";
     public static final String EXTRA_TARGET_NAME = "target_name";
@@ -40,9 +50,9 @@ public class ReportActivity extends AppCompatActivity {
             String reason = spinner.getSelectedItem().toString();
             String details = ((EditText) findViewById(R.id.etReportDetails)).getText().toString().trim();
             AppDataStore.addReport(this, listing ? "listing" : "user", id == null ? "" : id, name, reason, details);
-            NetworkApi.submitReport(AppDataStore.userId(this), listing ? "listing" : "user", id, reason, details, new NetworkApi.Callback() {
-                @Override public void onSuccess(org.json.JSONObject response) { }
-                @Override public void onError(String message) { }
+            polyGoRepository.submitReport(AppDataStore.userId(this), listing ? "listing" : "user", id, reason, details, new Callback<BaseResponse>() {
+                @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) { }
+                @Override public void onFailure(Call<BaseResponse> call, Throwable t) { }
             });
             Toast.makeText(this, "Report submitted. Thank you.", Toast.LENGTH_LONG).show();
             finish();

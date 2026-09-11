@@ -6,10 +6,13 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.api.model.BaseResponse;
+import com.poliku.polygoplus.data.PolyGoRepository;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import retrofit2.Callback;
 
 /**
  * Principal Rule 3.3: Real-Time Input Validation
@@ -18,11 +21,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
 
-    private final PolyGoApi api;
+    private final PolyGoRepository repository;
 
     @Inject
-    public AuthViewModel(PolyGoApi api) {
-        this.api = api;
+    public AuthViewModel(PolyGoRepository repository) {
+        this.repository = repository;
     }
 
     // Login Validation States
@@ -92,15 +95,15 @@ public class AuthViewModel extends ViewModel {
         _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid && termsAccepted);
     }
 
-    public void login(String studentId, String password, retrofit2.Callback<PolyGoApi.LoginResponse> callback) {
-        api.login(new PolyGoApi.LoginRequest(studentId, password)).enqueue(callback);
+    public void login(String studentId, String password, Callback<PolyGoApi.LoginResponse> callback) {
+        repository.login(studentId, password, callback);
     }
 
-    public void register(String name, String studentId, String email, String password, retrofit2.Callback<PolyGoApi.LoginResponse> callback) {
-        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password)).enqueue(callback);
+    public void register(String name, String studentId, String email, String password, Callback<PolyGoApi.LoginResponse> callback) {
+        repository.register(name, studentId, email, password, callback);
     }
 
-    public void sendOtp(String email, retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse> callback) {
-        api.sendOtp(new PolyGoApi.OtpRequest(email)).enqueue(callback);
+    public void sendOtp(String email, Callback<PolyGoApi.OtpSendResponse> callback) {
+        repository.sendOtp(email, callback);
     }
 }

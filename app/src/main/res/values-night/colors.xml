@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-mode overrides for the floating bottom navigation -->
+    <color name="nav_active_indicator">#381E88E5</color>
+    <color name="nav_card">#D91E1E1E</color>
+    <color name="glass_stroke">#24FFFFFF</color>
+</resources>

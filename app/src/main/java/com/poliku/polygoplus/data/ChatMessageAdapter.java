@@ -1,5 +1,6 @@
 package com.poliku.polygoplus.data;
 
+import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.R;
+import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.databinding.ItemChatMessageBinding;
 
 import org.json.JSONArray;
@@ -24,13 +26,37 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
     private final List<JSONObject> messages = new ArrayList<>();
     private final String currentUser;
 
-    public ChatMessageAdapter(String currentUser) { this.currentUser = currentUser == null ? "" : currentUser; }
+    public ChatMessageAdapter(String currentUser) {
+        this.currentUser = currentUser == null ? "" : currentUser;
+    }
 
     public void submit(JSONArray source) {
         messages.clear();
-        if (source != null) for (int i = 0; i < source.length(); i++) {
-            JSONObject message = source.optJSONObject(i);
-            if (message != null) messages.add(message);
+        if (source != null) {
+            for (int i = 0; i < source.length(); i++) {
+                JSONObject message = source.optJSONObject(i);
+                if (message != null) {
+                    messages.add(message);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void submitMessages(List<PolyGoApi.Message> source) {
+        messages.clear();
+        if (source != null) {
+            for (PolyGoApi.Message m : source) {
+                try {
+                    JSONObject o = new JSONObject();
+                    o.put("sender", m.sender);
+                    o.put("text", m.text);
+                    o.put("time", m.time);
+                    o.put("mine", m.mine);
+                    messages.add(o);
+                } catch (Exception ignored) {
+                }
+            }
         }
         notifyDataSetChanged();
     }
@@ -43,7 +69,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
         JSONObject message = messages.get(position);
         boolean mine = message.optBoolean("mine", currentUser.equals(message.optString("sender")));
         ItemChatMessageBinding binding = holder.binding;
-        android.content.Context context = binding.getRoot().getContext();
+        Context context = binding.getRoot().getContext();
 
         binding.messageBody.setText(message.optString("text"));
         binding.messageTime.setText(formatTime(message.optLong("time", 0)));
@@ -76,13 +102,17 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
         return DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(timestamp));
     }
 
-    @Override public int getItemCount() { return messages.size(); }
+    @Override
+    public int getItemCount() {
+        return messages.size();
+    }
 
     static class Holder extends RecyclerView.ViewHolder {
         final ItemChatMessageBinding binding;
-        Holder(ItemChatMessageBinding binding) { 
-            super(binding.getRoot()); 
-            this.binding = binding; 
+
+        Holder(ItemChatMessageBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }

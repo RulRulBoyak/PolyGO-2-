@@ -1,6 +1,7 @@
 package com.poliku.polygoplus;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -11,17 +12,24 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.google.android.material.card.MaterialCardView;
+import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.EmptyStates;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@AndroidEntryPoint
 public class TransactionsActivity extends AppCompatActivity {
+    @Inject PolyGoRepository polyGoRepository;
     private LinearLayout listContainer;
     private View emptyView;
 
@@ -33,7 +41,7 @@ public class TransactionsActivity extends AppCompatActivity {
         listContainer = findViewById(R.id.transactionList);
         emptyView = findViewById(R.id.emptyTransactions);
 
-        EmptyStates.bind(emptyView, android.R.drawable.ic_menu_agenda, "No transactions yet",
+        EmptyStates.bind(emptyView, R.drawable.ic_receipt_long, "No transactions yet",
                 "When you make an offer, the order will show here with meetup details.", "Browse listings",
                 v -> startActivity(new Intent(this, SearchActivity.class)));
 
@@ -42,21 +50,21 @@ public class TransactionsActivity extends AppCompatActivity {
 
     private void fetchTransactions() {
         String userId = AppDataStore.userId(this);
-        NetworkApi.getTransactions(userId, new NetworkApi.Callback() {
+        polyGoRepository.getTransactions(userId, new Callback<PolyGoApi.TransactionsResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                JSONArray arr = response.optJSONArray("transactions");
+            public void onResponse(Call<PolyGoApi.TransactionsResponse> call, Response<PolyGoApi.TransactionsResponse> response) {
+                PolyGoApi.TransactionsResponse body = response.body();
                 List<AppDataStore.TransactionRecord> items = new ArrayList<>();
-                if (arr != null) {
-                    for (int i = 0; i < arr.length(); i++) {
-                        items.add(AppDataStore.TransactionRecord.fromJson(arr.optJSONObject(i)));
+                if (body != null && body.transactions != null) {
+                    for (PolyGoApi.Transaction t : body.transactions) {
+                        items.add(AppDataStore.TransactionRecord.fromTransaction(t));
                     }
                 }
                 renderTransactions(items);
             }
 
             @Override
-            public void onError(String message) {
+            public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
                 // FALLBACK: Show local transactions if network fails
                 renderTransactions(AppDataStore.getTransactions(TransactionsActivity.this));
                 Toast.makeText(TransactionsActivity.this, "Viewing offline history", Toast.LENGTH_SHORT).show();
@@ -78,7 +86,7 @@ public class TransactionsActivity extends AppCompatActivity {
             ((TextView) view.findViewById(R.id.tvTransactionLocation)).setText(t.location);
             
             if ("Completed".equalsIgnoreCase(t.status)) {
-                status.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE8F5E9));
+                status.setBackgroundTintList(ColorStateList.valueOf(0xFFE8F5E9));
                 status.setTextColor(0xFF2E7D32);
             }
 

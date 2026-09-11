@@ -28,16 +28,24 @@ final class NotificationManager {
         if (!$accessToken) return false;
 
         $project_id = "polygo-143cf"; // Extracted from your JSON
+
+        // Data-only message: title/body travel in 'data' so the app can render
+        // its own notification (unique id, custom icon) instead of the system default.
+        $messageId = $data['message_id'] ?? bin2hex(random_bytes(6));
+        $data['message_id'] = $messageId;
+        $data['title'] = $title;
+        $data['body'] = $body;
+
         $url = "https://fcm.googleapis.com/v1/projects/$project_id/messages:send";
 
         $payload = [
             'message' => [
                 'token' => $targetToken,
-                'notification' => [
-                    'title' => $title,
-                    'body' => $body,
-                ],
-                'data' => $data
+                'data' => $data,
+                'android' => [
+                    'priority' => 'high',
+                    'collapse_key' => 'polygo_notifications'
+                ]
             ]
         ];
 
@@ -64,7 +72,13 @@ final class NotificationManager {
      * Generates an OAuth2 access token using the Service Account JSON.
      */
     private static function getAccessToken(): ?string {
-        $jsonKey = json_decode(file_get_contents(__DIR__ . '/service-account.json'), true);
+        $raw = @file_get_contents(__DIR__ . '/service-account.json');
+        $jsonKey = $raw ? json_decode($raw, true) : null;
+
+        if (!$jsonKey || !isset($jsonKey['client_email'], $jsonKey['private_key'])) {
+            error_log('NotificationManager: service-account.json missing or invalid');
+            return null;
+        }
 
         $header = base64url_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
         $now = time();

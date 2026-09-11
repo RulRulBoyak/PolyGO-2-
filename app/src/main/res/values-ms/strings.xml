@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">PolyGo+</string>
+    <string name="logo_content_description">Logo PolyGo+</string>
+    <string name="content_description_add_product">Tambah Iklan</string>
+    <string name="content_description_chevron">Buka</string>
+    <string name="ai_search_preview_description">Pratonton carian visual</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title_1">Eksklusif untuk PKS</string>
@@ -39,6 +43,14 @@
     <string name="ai_suggest_service">✨ AI: Cadang Butiran Perkhidmatan</string>
     <string name="ai_thinking">✨ AI sedang berfikir...</string>
     <string name="ai_timeout">Masa AI Tamat: Wi-Fi kampus mungkin lambat. Sila cuba lagi.</string>
+    <string name="ai_suggestions_applied">Cadangan AI digunakan — sila semak semula.</string>
+    <string name="ai_disclosure_label">Cadangan janaan AI hanyalah draf dan mungkin mengandungi kesilapan. Sila semak sebelum menerbitkan. AI Generatif: Google Gemini.</string>
+    <string name="flag_ai_suggestion">Laporkan Cadangan AI</string>
+    <string name="flag_ai_suggestion_prompt">Laporkan cadangan janaan AI ini kepada moderator? Ia akan digunakan untuk memperbaik penapisan kandungan dan mungkin termasuk teks cadangan.</string>
+    <string name="flag_ai_suggestion_confirm">Lapor</string>
+    <string name="flag_ai_suggestion_reason">Dilaporkan sebagai cadangan janaan AI yang menyinggung atau tidak tepat</string>
+    <string name="ai_flag_reported">Dilaporkan. Maklumat ini membantu penapisan.</string>
+    <string name="ai_flag_failed">Laporan tidak dapat dihantar. Sila semak sambungan anda dan cuba lagi.</string>
 
     <!-- General -->
     <string name="search_hint">Cari di kampus...</string>
@@ -46,8 +58,260 @@
     <string name="save">Simpan</string>
     <string name="chat">Sembang</string>
     <string name="make_offer">Buat Tawaran</string>
+    <string name="cancel">Batal</string>
+
+    <!-- Akaun & Privasi Data (PDPA) -->
+    <string name="delete_account_title">Padam akaun</string>
+    <string name="delete_account_warning">Tindakan ini memadam akaun anda dan SEMUA data berkaitan daripada pelayan kami: profil, iklan, sembang, ulasan, urus niaga dan gambar yang dimuat naik. Tindakan ini tidak boleh dibatalkan.</string>
+    <string name="delete_account_confirm">Padam</string>
+    <string name="deleting_account">Memadam akaun dan data anda...</string>
+    <string name="delete_account_failed">Akaun tidak dapat dipadam. Sila semak sambungan anda dan cuba lagi.</string>
+    <string name="download_my_data">Muat Turun Data Saya (JSON / CSV)</string>
+    <string name="export_format_title">Pilih format eksport</string>
+    <string name="export_as_json">JSON (semua data)</string>
+    <string name="export_as_csv">CSV (semua data — jadual)</string>
+    <string name="preparing_data_export">Menyediakan data anda...</string>
+    <string name="export_failed">Data tidak dapat dimuat turun. Sila cuba lagi.</string>
+    <string name="export_saved">Data anda telah disimpan. Simpan dengan selamat — ia mengandungi maklumat peribadi.</string>
+
+    <!-- Photos -->
+    <string name="no_photos_found">Tiada foto dijumpai pada peranti ini lagi. Tambah beberapa imej ke galeri anda dan cuba lagi.</string>
+    <string name="gallery_permission_denied">Akses foto dinafikan. Benarkan akses dalam Tetapan untuk memilih foto.</string>
+    <string name="specify_pickup_point">Nyatakan Titik Ambilan</string>
 
     <string name="i_agree_to_terms">Saya bersetuju dengan Peraturan Komuniti Kampus dan Standard Keselamatan PolyGo+.</string>
     <string name="pdpa_footer">PolyGo+ mematuhi Akta Perlindungan Data Peribadi (PDPA) 2010. Identiti kampus anda hanya digunakan untuk pengesahan dalaman.</string>
     <string name="please_agree_to_terms">Sila bersetuju dengan terma untuk meneruskan</string>
+
+    <!-- Profile -->
+    <string name="profile_account_settings">Akaun &amp; Tetapan</string>
+    <string name="profile_welcome_back">Profil anda</string>
+    <string name="profile_user_name_placeholder">Mr. John Doe</string>
+    <string name="profile_student">★  Pelajar</string>
+    <string name="profile_logout">Log Keluar</string>
+    <string name="profile_seller_dashboard">PAPAN PEMUKA PENJUAL</string>
+    <string name="profile_view_details">Lihat butiran</string>
+    <string name="profile_total_earnings">Jumlah Pendapatan</string>
+    <string name="profile_rm_zero">RM 0.00</string>
+    <string name="profile_items_sold">Barangan Terjual</string>
+    <string name="profile_zero">0</string>
+    <string name="profile_active_listings">Iklan Aktif</string>
+    <string name="profile_campus_rating">Penarafan Kampus</string>
+    <string name="profile_zero_rating">★ 0.0</string>
+    <string name="profile_trust_score">Skor Kepercayaan Penjual</string>
+    <string name="profile_zero_percent">0%</string>
+    <string name="profile_trust_score_info">Skor tinggi = lencana Campus Pro.</string>
+    <string name="profile_account_security">AKAUN &amp; KESELAMATAN</string>
+    <string name="profile_impact_icon">Ikon Impak</string>
+    <string name="profile_my_campus_impact">Impak Kampus Saya</string>
+    <string name="profile_top_15_percent">15% Teratas</string>
+    <string name="profile_user_icon">Ikon Pengguna</string>
+    <string name="profile_personal_details">Butiran Peribadi</string>
+    <string name="profile_chevron">Chevron</string>
+    <string name="profile_lock_icon">Ikon Kunci</string>
+    <string name="profile_change_password">Tukar Kata Laluan</string>
+    <string name="profile_fingerprint_icon">Ikon Cap Jari</string>
+    <string name="profile_biometric_lock">Kunci Biometrik</string>
+    <string name="profile_bell_icon">Ikon Loceng</string>
+    <string name="profile_push_notifications">Notifikasi Push</string>
+    <string name="profile_marketplace_orders">PASARAN &amp; PESANAN</string>
+    <string name="profile_star_icon">Bintang</string>
+    <string name="profile_saved_items">Barangan Disimpan</string>
+    <string name="profile_edit_icon">Edit</string>
+    <string name="profile_my_listings">Iklan Saya</string>
+    <string name="profile_agenda_icon">Agenda</string>
+    <string name="profile_transaction_history">Sejarah Transaksi</string>
+    <string name="profile_shield_icon">Perisai</string>
+    <string name="profile_campus_id_verification">Pengesahan ID Kampus</string>
+    <string name="profile_legal_about">UNDANG-UNDANG &amp; PERIHAL</string>
+    <string name="profile_help_icon">Bantuan</string>
+    <string name="profile_help_center_faqs">Pusat Bantuan &amp; FAQ</string>
+    <string name="profile_info_icon">Maklumat</string>
+    <string name="profile_privacy_policy">Dasar Privasi</string>
+    <string name="profile_terms_of_service">Syarat Perkhidmatan</string>
+    <string name="profile_support_question">Ada soalan atau perlukan bantuan urusan?</string>
+    <string name="profile_whatsapp_support">Sokongan WhatsApp Kampus</string>
+    <string name="profile_app_version">PolyGo+ v1.0 • Komuniti Kampus Sah</string>
+
+    <!-- Seller Profile -->
+    <string name="seller_profile_title">Profil</string>
+    <string name="seller_follow">Ikuti</string>
+    <string name="seller_following">Mengikuti</string>
+    <string name="seller_message">Mesej</string>
+    <string name="seller_green_impact">Impak Hijau</string>
+    <string name="seller_rating_label">Penilaian</string>
+    <string name="seller_active_listings">Senarai aktif</string>
+    <string name="seller_campus_reviews">Ulasan Kampus</string>
+    <string name="seller_verified_pill">Penjual Disahkan PKS</string>
+    <string name="seller_no_active">Tiada senarai aktif</string>
+    <string name="seller_no_products_desc">%1$s tiada barang untuk dijual buat masa ini.</string>
+    <string name="seller_browse_campus">Teroka kampus</string>
+    <string name="seller_no_reviews">Tiada ulasan lagi</string>
+    <string name="seller_no_reviews_desc">Pembeli boleh tinggalkan penilaian selepas pertemuan berjaya.</string>
+
+    <!-- Editable Bio -->
+    <string name="profile_edit_bio">Edit bio</string>
+    <string name="profile_bio_hint">Ceritakan tentang diri anda kepada pembeli.</string>
+    <string name="bio_edit_title">Edit bio</string>
+    <string name="bio_edit_save">Simpan</string>
+    <string name="bio_edit_cancel">Batal</string>
+
+    <!-- Product Detail -->
+    <string name="product_save">Simpan</string>
+    <string name="product_saved">Disimpan</string>
+
+    <!-- Chat -->
+    <string name="chat_safe_meetup">Meetup Selamat</string>
+    <string name="chat_profile_picture">Gambar profil</string>
+    <string name="chat_typing_status"> sedang menaip…</string>
+
+    <!-- Account -->
+    <string name="account_bio_hint">Perihal anda</string>
+
+    <!-- Account Privacy -->
+    <string name="account_private_label">Akaun Persendirian</string>
+    <string name="account_private_desc">Sembunyikan profil dan penyenaraian anda daripada pelajar lain.</string>
+    <string name="account_private_error">Tidak dapat mengemas kini tetapan privasi</string>
+
+    <!-- Impact -->
+    <string name="impact_how_title">Bagaimanakah Skor Hijau saya dikira?</string>
+    <string name="impact_how_body">Setiap urus niaga selesai menggunakan semula satu barangan dan bukannya membeli baharu. ImpactEngine menjumlahkan CO2, air, kertas dan tenaga yang anda jimat. Penjimatan mengikut kategori (seunit): Tech ≈ 45 kg CO2, Elektronik ≈ 55, Fesyen ≈ 14, Buku ≈ 6, Makanan ≈ 3.\n\nPengiraan tahap berdasarkan jumlah CO2 yang dijimat:\n• Gangsa — mula menjimat\n• Perak — 50 kg\n• Emas — 200 kg\n• Zamrud — 500 kg\n\nKedudukan kampus anda membandingkan jumlah impak anda dengan pelajar lain.</string>
+    <string name="impact_certificate_saved">Sijil disimpan ke Pictures/PolyGo (%1$s)</string>
+    <string name="impact_certificate_failed">Gagal menyimpan sijil</string>
+    <string name="impact_certificate_nothing">Kad impak anda belum sedia</string>
+
+    <!-- Private Seller -->
+    <string name="seller_private_title">Akaun ini persendirian</string>
+    <string name="seller_private_desc">Pelajar ini menyembunyikan profil dan penyenaraian mereka.</string>
+
+    <!-- Chat Meetup Tracker -->
+    <string name="chat_meetup_tracker_title">Penjejak Pertemuan</string>
+    <string name="chat_meetup_landmark">Bermesyuarat di %1$s</string>
+    <string name="chat_meetup_status_accepted">Urus niaga diterima • penjejakan ketibaan aktif</string>
+    <string name="chat_meetup_status_pickup">Fasa pickup • buka peta untuk kongsi ketibaan</string>
+    <string name="chat_meetup_open">Buka</string>
+
+    <!-- Safe Meetup -->
+    <string name="safe_meetup_arrived">Saya dah tiba di %1$s. Jumpa di sana! 📍</string>
+    <string name="safe_meetup_emergency">Amaran Keselamatan dicetus oleh %1$s di %2$s</string>
+    <string name="safe_meetup_location_on">Perkongsian lokasi AKTIF • hanya dikongsi semasa pertemuan ini</string>
+    <string name="safe_meetup_location_off">Perkongsian lokasi dilumpuhkan. Mulakan urus niaga untuk kongsi titik pertemuan.</string>
+    <string name="safe_meetup_emergency_title">Amaran Kecemasan</string>
+    <string name="safe_meetup_emergency_confirm">Hantar amaran keselamatan kepada pengguna lain dan Keselamatan PKS?</string>
+    <string name="safe_meetup_emergency_sent">Amaran dihantar. Keselamatan PKS telah dimaklumkan.</string>
+    <string name="safe_meetup_emergency_send">Hantar Amaran</string>
+
+    <!-- Blocking (moderasi UGC) -->
+    <string name="back">Kembali</string>
+    <string name="add_photo">Tambah gambar</string>
+    <string name="remove_photo">Buang gambar</string>
+    <string name="close_scanner">Tutup pengimbas</string>
+    <string name="take_photo">Ambil gambar</string>
+    <string name="create_listing">Buat penyenaraian</string>
+    <string name="portfolio_image">Imej portfolio</string>
+    <string name="category_icon">Ikon kategori</string>
+    <string name="item_image">Imej barangan</string>
+    <string name="profile_avatar">Foto profil</string>
+    <string name="sustainability_badge">Lencana kelestarian</string>
+    <string name="textbook_cover">Sampul buku teks</string>
+    <string name="notification_icon">Pemberitahuan</string>
+    <string name="seller_avatar">Gambar profil penjual</string>
+    <string name="post_request">Hantar permintaan</string>
+    <string name="pulse_post_dialog_title">Siarkan ke Campus Pulse</string>
+    <string name="pulse_post_send">Hantar</string>
+    <string name="pulse_tag_label">Tag</string>
+    <string name="pulse_tag_required">Pilih tag</string>
+    <string name="pulse_title_hint">Tajuk</string>
+    <string name="pulse_body_hint">Apa yang berlaku di sekeliling kampus?</string>
+    <string name="pulse_validation">Tajuk dan mesej diperlukan</string>
+    <string name="pulse_login_required">Log masuk untuk siar ke Campus Pulse</string>
+    <string name="pulse_posted">Disiarkan ke Campus Pulse!</string>
+    <string name="pulse_post_failed">Gagal menghantar. Cuba lagi.</string>
+    <string name="pulse_load_failed">Gagal memuatkan Campus Pulse</string>
+    <string name="pulse_empty">Tiada pulse lagi - jadi yang pertama untuk siar!</string>
+    <string name="pulse_time_just_now">Baru sahaja</string>
+    <string name="pulse_time_m">%1$dm lalu</string>
+    <string name="pulse_time_h">%1$dj lalu</string>
+    <string name="pulse_time_d">%1$dh lalu</string>
+    <string name="pulse_time_w">%1$dmg lalu</string>
+    <string name="textbook_looking_up">Mencari ISBN: %1$s</string>
+    <string name="textbook_details_found">Maklumat buku dijumpai - semak sebelum terbit</string>
+    <string name="textbook_not_found_title">Tiada maklumat buku dijumpai</string>
+    <string name="textbook_not_found">Tiada maklumat buku untuk ISBN %1$s. Cari penyenaraian kampus sebaliknya?</string>
+    <string name="textbook_search_listings">Cari penyenaraian</string>
+    <string name="verification_uploading">Memuat naik kad matrik...</string>
+    <string name="verification_submitted">Pengesahan dihantar untuk semakan</string>
+    <string name="verification_upload_failed">Gagal memuat naik kad anda. Cuba lagi.</string>
+    <string name="verification_server_failed">Gagal sampai ke pelayan. Pengesahan disimpan pada peranti ini sahaja.</string>
+    <string name="help_data_safety_title">Keselamatan Data &amp; Privasi</string>
+    <string name="help_data_safety_desc">Bagaimana kami mengumpul, menggunakan dan melindungi data anda - dan cara memuat turun atau memadamnya.</string>
+    <string name="more_options">Pilihan lain</string>
+    <string name="menu_block_user">Sekat Pengguna</string>
+    <string name="menu_unblock_user">Nyahsekat Pengguna</string>
+    <string name="menu_report_user">Lapor Pengguna</string>
+    <string name="block_user_confirm_title">Sekat %1$s?</string>
+    <string name="block_user_confirm_message">Anda tidak akan melihat penyenaraian atau mesej antara satu sama lain lagi, dan pengguna ini tidak dapat menghubungi anda. Anda boleh menyahsekat pada bila-bila masa.</string>
+    <string name="unblock_user_confirm_title">Nyahsekat %1$s?</string>
+    <string name="unblock_user_confirm_message">Anda akan dapat melihat penyenaraian masing-masing dan menghantar mesej semula.</string>
+    <string name="user_blocked">Pengguna disekat</string>
+    <string name="user_unblocked">Pengguna dinyahsekat</string>
+    <string name="blocked_chat_hint">Anda menyekat pengguna ini. Nyahsekat untuk menghantar mesej semula.</string>
+    <string name="blocked_update_failed">Tidak dapat mengemas kini senarai sekatan. Semak sambungan anda.</string>
+
+    <!-- Orders -->
+    <string name="order_accept_offer">Terima &amp; Jadual Pertemuan</string>
+
+    <!-- Offer Sheet -->
+    <string name="offer_sheet_title">Buat tawaran</string>
+    <string name="offer_sheet_subtitle">Hantar tawaran kepada %1$s</string>
+    <string name="offer_sheet_amount_hint">Jumlah tawaran anda</string>
+    <string name="offer_sheet_smart_chips">Cadangan tawaran pintar</string>
+    <string name="offer_sheet_chip_current">Harga Semasa</string>
+    <string name="offer_sheet_chip_minus5">-5%</string>
+    <string name="offer_sheet_chip_minus10">-10%</string>
+    <string name="offer_sheet_cancel">Batal</string>
+    <string name="offer_sheet_send">Hantar Tawaran</string>
+    <string name="offer_sheet_error_amount">Masukkan jumlah tawaran yang sah</string>
+    <string name="offer_sheet_sent">Tawaran dihantar berjaya!</string>
+    <string name="offer_sheet_local_only">Tawaran dihantar (Lokal Sahaja)</string>
+
+    <!-- Verified Buyer Reviews -->
+    <string name="seller_write_review">Tulis ulasan</string>
+    <string name="review_verified_buyer_title">Pembeli Disahkan Sahaja</string>
+    <string name="review_verified_buyer_message">Peraturan Kampus: Ulasan hanya untuk pembeli disahkan. Selesaikan urus niaga dengan penjual ini dahulu, kemudian beri penilaian selepas pertemuan.</string>
+    <string name="review_saved_offline">Ulasan disimpan (Mod Luar Talian)</string>
+
+    <!-- Campus Hook -->
+    <string name="campus_details_title">Butiran Kampus</string>
+    <string name="listing_department">Jabatan / Bidang</string>
+    <string name="listing_free_slots">Slot masa lapang kelas</string>
+    <string name="listing_free_slots_hint">contoh: 2pm-4pm Blok A</string>
+    <string name="free_slots_before_class">Sebelum kelas</string>
+    <string name="free_slots_lunch_break">Waktu rehat tengah hari</string>
+    <string name="free_slots_after_class">Selepas kelas</string>
+    <string name="explore_all_departments">Semua jabatan</string>
+
+    <!-- SafeMeetup Disclosure -->
+    <string name="safe_meetup_disclosure_title">Perkongsian Lokasi untuk Keselamatan</string>
+    <string name="safe_meetup_disclosure_message">Apabila anda menggunakan butang Kecemasan SOS, lokasi anda akan dikongsi dengan keselamatan kampus dan orang lain dalam chat ini untuk memastikan keselamatan anda semasa pertemuan.</string>
+    <string name="safe_meetup_disclosure_understood">Saya faham</string>
+
+    <!-- Bug Report (Alpha/Beta) -->
+    <string name="bug_report_title">Laporkan Pepijat</string>
+    <string name="bug_report_subtitle">Jumpa sesuatu yang rosak? Ceritakan apa yang berlaku supaya kami boleh betulkannya untuk beta.</string>
+    <string name="bug_report_description_hint">Apa yang salah? Langkah untuk meniru…</string>
+    <string name="bug_report_add_screenshot">Tambah skrin-rakam</string>
+    <string name="bug_report_screenshot">Skrin-rakam</string>
+    <string name="bug_report_submit">Hantar Laporan</string>
+    <string name="bug_report_success">Laporan dihantar. Terima kasih kerana membantu memperbaiki PolyGo+.</string>
+    <string name="bug_report_failed">Laporan tidak dapat dihantar. Semak sambungan anda dan cuba lagi.</string>
+    <string name="bug_report_empty_desc">Sila huraikan apa yang berlaku</string>
+
+    <!-- Matrix Verification Gate -->
+    <string name="verification_required_title">Pengesahan Kad Matrix</string>
+    <string name="verification_posting_blocked">Sila sahkan Kad Matrix anda dalam Profil &gt; Pengesahan sebelum anda boleh memaparkan item.</string>
+    <string name="verification_go_now">Sahkan sekarang</string>
+
+    <!-- AI Proxy -->
+    <string name="ai_suggest_error">Perkhidmatan AI tidak tersedia. Masukkan butiran penyenaraian anda secara manual.</string>
 </resources>

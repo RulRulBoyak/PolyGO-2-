@@ -17,3 +17,14 @@ backend/polygo-api/service-account.json
 local.properties
 app/google-services.json
 backend/polygo-api/service-account.json
+backend/polygo-api/secrets.php
+backend/polygo-api/uploads/
+backend/backup_polygo_pre_*.sql
+.env
+.env.*
+*.key
+*.pem
+secrets/
+credentials/
+keystore.properties
+*.jks

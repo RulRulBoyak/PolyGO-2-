@@ -4,37 +4,37 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.Toast;
 import android.text.TextUtils;
+
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.textfield.TextInputEditText;
+import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
 import com.poliku.polygoplus.ui.HapticManager;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Toast;
-import com.google.android.material.textfield.TextInputEditText;
-import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
-import com.poliku.polygoplus.ui.HapticManager;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.AuthViewModel;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.ui.BaseActivity;
 
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 import android.text.Editable;
 import android.text.TextWatcher;
 
+@AndroidEntryPoint
 public class RegisterActivity extends BaseActivity {
     private AuthViewModel viewModel;
     private TextInputEditText etName, etMatrix, etEmail, etPassword;
     private TextInputLayout tilName, tilMatrix, tilEmail, tilPassword;
-    private com.google.android.material.checkbox.MaterialCheckBox cbTerms;
-    private android.widget.Button btnRegister;
+    private MaterialCheckBox cbTerms;
+    private Button btnRegister;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,9 +76,9 @@ public class RegisterActivity extends BaseActivity {
             String role = autoCompleteRole.getText().toString();
 
             btnRegister.setEnabled(false);
-            viewModel.sendOtp(email, new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
+            viewModel.sendOtp(email, new Callback<PolyGoApi.OtpSendResponse>() {
                 @Override
-                public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
+                public void onResponse(Call<PolyGoApi.OtpSendResponse> call, Response<PolyGoApi.OtpSendResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         HapticManager.success(RegisterActivity.this);
                         Intent intent = new Intent(RegisterActivity.this, OtpActivity.class);
@@ -86,6 +86,8 @@ public class RegisterActivity extends BaseActivity {
                         intent.putExtra(OtpActivity.EXTRA_NAME, name);
                         intent.putExtra(OtpActivity.EXTRA_STUDENT_ID, studentId);
                         intent.putExtra(OtpActivity.EXTRA_PASSWORD, password);
+                        intent.putExtra(OtpActivity.EXTRA_DEV_OTP, response.body().otp);
+                        intent.putExtra(OtpActivity.EXTRA_CONSENT_AGREED, cbTerms.isChecked());
                         startActivity(intent);
                     } else {
                         onError("Could not send code");
@@ -93,7 +95,7 @@ public class RegisterActivity extends BaseActivity {
                 }
 
                 @Override
-                public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
+                public void onFailure(Call<PolyGoApi.OtpSendResponse> call, Throwable t) {
                     onError(t.getMessage());
                 }
 
@@ -111,7 +113,10 @@ public class RegisterActivity extends BaseActivity {
         });
     }
 
-    private String text(int id) { TextInputEditText input = findViewById(id); return input.getText() == null ? "" : input.getText().toString().trim(); }
+    private String text(int id) {
+        TextInputEditText input = findViewById(id);
+        return input.getText() == null ? "" : input.getText().toString().trim();
+    }
 
     private void setupValidation() {
         TextWatcher watcher = new TextWatcher() {

@@ -22,7 +22,7 @@ public final class PriceFormatter {
 
         try {
             double price = Double.parseDouble(cleaned);
-            return String.format(Locale.getDefault(), "RM %.2f", price);
+            return String.format(Locale.US, "RM %.2f", price);
         } catch (NumberFormatException e) {
             return "RM " + cleaned;
         }

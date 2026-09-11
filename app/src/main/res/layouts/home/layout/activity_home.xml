@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/home_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:fitsSystemWindows="false">
+
+    <!-- Primary Destination Fragment Container -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Floating Navigation Container: Glassmorphism Style -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomAppBarContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="28dp"
+        app:cardBackgroundColor="@color/nav_card"
+        app:cardCornerRadius="36dp"
+        app:cardElevation="12dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:strokeColor="@color/glass_stroke"
+        app:strokeWidth="1.2dp">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigationView"
+            style="@style/Widget.PolyGo.BottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            app:elevation="0dp"
+            app:itemBackground="@null"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Futuristic Floating Action Button with Enhanced Glow -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddProduct"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="48dp"
+        android:contentDescription="@string/content_description_add_product"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/airbnb_coral"
+        app:elevation="20dp"
+        app:fabSize="normal"
+        app:layout_anchor="@id/bottomAppBarContainer"
+        app:layout_anchorGravity="top|center_horizontal"
+        app:maxImageSize="30dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+        app:tint="@color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

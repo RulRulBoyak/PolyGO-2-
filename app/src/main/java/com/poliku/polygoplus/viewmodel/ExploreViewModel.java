@@ -6,35 +6,44 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.AppDataStore;
-import com.poliku.polygoplus.network.NetworkApi;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.util.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.lifecycle.HiltViewModel;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@HiltViewModel
 public class ExploreViewModel extends AndroidViewModel {
 
-    private final List<AppDataStore.ProductRecord> allItems = new ArrayList<>();
-    
-    private final MutableLiveData<List<AppDataStore.ProductRecord>> _filteredItems = new MutableLiveData<>();
-    public final LiveData<List<AppDataStore.ProductRecord>> filteredItems = _filteredItems;
+    private final PolyGoRepository repository;
+    private final List<ListingEntity> allItems = new ArrayList<>();
+    private final ExecutorService worker = Executors.newSingleThreadExecutor();
 
-    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
-    public final LiveData<Boolean> isLoading = _isLoading;
+    private final MutableLiveData<Resource<List<ListingEntity>>> _listingsResource = new MutableLiveData<>();
+    public final LiveData<Resource<List<ListingEntity>>> listingsResource = _listingsResource;
 
-    private final MutableLiveData<Boolean> _isMoreLoading = new MutableLiveData<>(false);
-    public final LiveData<Boolean> isMoreLoading = _isMoreLoading;
-
-    private int currentTab = 0; // 0 for Products, 1 for Services
-    private int offset = 0;
+    private volatile int currentTab = 0; // 0 for Products, 1 for Services
+    private volatile Integer selectedMajor = null;
+    private volatile int offset = 0;
     private final int limit = 20;
-    private boolean hasNextPage = true;
+    private volatile boolean hasNextPage = true;
 
-    public ExploreViewModel(@NonNull Application application) {
+    @Inject
+    public ExploreViewModel(@NonNull Application application, PolyGoRepository repository) {
         super(application);
+        this.repository = repository;
     }
 
     public void setTab(int tabIndex) {
@@ -42,81 +51,83 @@ public class ExploreViewModel extends AndroidViewModel {
         applyFilters();
     }
 
+    public void setMajor(Integer majorId) {
+        this.selectedMajor = majorId;
+        loadListings();
+    }
+
     public void loadListings() {
         offset = 0;
         hasNextPage = true;
-        _isLoading.setValue(true);
+        _listingsResource.setValue(Resource.loading(null));
         fetchData(true);
     }
 
     public void loadMore() {
-        if (_isMoreLoading.getValue() == Boolean.TRUE || !hasNextPage) return;
-        _isMoreLoading.setValue(true);
+        if (!hasNextPage) return;
         fetchData(false);
     }
 
     private void fetchData(boolean clear) {
-        NetworkApi.getListings(offset, limit, "newest", new NetworkApi.Callback() {
+        repository.getListings(offset, limit, "newest", selectedMajor, new Callback<PolyGoApi.ListingsResponse>() {
             @Override
-            public void onSuccess(JSONObject response) {
-                new Thread(() -> {
+            public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                worker.execute(() -> {
                     synchronized (allItems) {
                         if (clear) allItems.clear();
-                        
-                        JSONArray list = response.optJSONArray("listings");
-                        if (list != null) {
-                            for (int i = 0; i < list.length(); i++) {
-                                JSONObject o = list.optJSONObject(i);
-                                if (o != null) {
-                                    AppDataStore.ProductRecord p = AppDataStore.ProductRecord.fromJson(o);
-                                    if (p != null) allItems.add(p);
-                                }
+
+                        PolyGoApi.ListingsResponse body = response.body();
+                        if (body != null && body.listings != null) {
+                            String currentUserId = AppDataStore.userId(getApplication());
+                            for (PolyGoApi.Listing l : body.listings) {
+                                boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
+                                ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price,
+                                        l.rating, l.distance, l.image_url, l.category, l.description,
+                                        l.owner_id, l.available, isOwner);
+                                entity.reviewCount = l.review_count;
+                                allItems.add(entity);
                             }
+                            offset += limit;
+                            hasNextPage = body.has_next;
                         }
-                        offset += limit;
-                        hasNextPage = response.optBoolean("has_next", false);
                     }
                     applyFilters();
-                    _isLoading.postValue(false);
-                    _isMoreLoading.postValue(false);
-                }).start();
+                });
             }
 
             @Override
-            public void onError(String message) {
-                if (clear) {
-                    new Thread(() -> {
-                        synchronized (allItems) {
-                            allItems.clear();
-                            allItems.addAll(AppDataStore.getListings(getApplication()));
-                        }
-                        applyFilters();
-                        _isLoading.postValue(false);
-                    }).start();
-                } else {
-                    _isMoreLoading.postValue(false);
-                }
+            public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
+                _listingsResource.postValue(Resource.error(t.getMessage(), null));
             }
         });
     }
 
     private void applyFilters() {
-        new Thread(() -> {
-            List<AppDataStore.ProductRecord> filtered = new ArrayList<>();
+        worker.execute(() -> {
+            List<ListingEntity> filtered = new ArrayList<>();
             String[] serviceCats = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Services"};
-            
+
             synchronized (allItems) {
-                for (AppDataStore.ProductRecord item : allItems) {
+                for (ListingEntity item : allItems) {
                     boolean isService = false;
                     for (String cat : serviceCats) {
-                        if (cat.equalsIgnoreCase(item.category)) { isService = true; break; }
+                        if (cat.equalsIgnoreCase(item.category)) {
+                            isService = true;
+                            break;
+                        }
                     }
-                    
+
                     if (currentTab == 1 && isService) filtered.add(item);
                     else if (currentTab == 0 && !isService) filtered.add(item);
                 }
             }
-            _filteredItems.postValue(filtered);
-        }).start();
+            _listingsResource.postValue(Resource.success(filtered));
+        });
+    }
+
+    @Override
+    protected void onCleared() {
+        worker.shutdownNow();
+        super.onCleared();
     }
 }
