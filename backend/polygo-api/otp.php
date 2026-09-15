@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/Mailer.php';
 
 // Self-heal: ensure the OTP storage table exists even before the migration runs.
 try {
@@ -45,8 +46,19 @@ try {
             ON DUPLICATE KEY UPDATE code_hash = VALUES(code_hash), expires_at = VALUES(expires_at)');
         $store->execute([$email, password_hash($otp, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + 600)]);
 
-        error_log("[polygo-api] OTP for $email: $otp"); // simulator only; use a real email service in production
-        respond(true, 'OTP sent successfully', ['otp' => $otp]); // dev-only leak, remove before production
+        if (defined('APP_ENV') && APP_ENV === 'dev') {
+            // Log + echo only in the emulator workflow; never in production.
+            error_log("[polygo-api] OTP for $email: $otp");
+            if (defined('DEV_OTP_ECHO') && DEV_OTP_ECHO) {
+                respond(true, 'OTP sent successfully', ['otp' => $otp]);
+            }
+        }
+
+        $body = 'Your PolyGo+ verification code is: ' . $otp
+            . "\n\nIt expires in 10 minutes." . "\n\n"
+            . 'If you did not request this, you can safely ignore this email.';
+        Mailer::send($email, 'PolyGo+ verification code', $body);
+        respond(true, 'OTP sent successfully');
     }
 
     if ($action === 'verify') {

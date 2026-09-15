@@ -60,6 +60,7 @@ public class ExploreFragment extends Fragment {
     private View empty;
     private ExploreViewModel viewModel;
     private ActivityResultLauncher<Intent> detailLauncher;
+    @Nullable private View lastProductSharedElement;
 
     @Nullable
     @Override
@@ -85,6 +86,10 @@ public class ExploreFragment extends Fragment {
 
         list.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         adapter = new ProductCardAdapter(new ArrayList<>(), (a, product, sharedView) -> {
+            if (lastProductSharedElement != null) ViewCompat.setTransitionName(lastProductSharedElement, null);
+            ViewCompat.setTransitionName(sharedView, "product_image_hero");
+            lastProductSharedElement = sharedView;
+
             Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
 

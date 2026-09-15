@@ -25,6 +25,7 @@ import com.poliku.polygoplus.ui.HapticManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -103,11 +104,16 @@ public class AiDiscoveryActivity extends AppCompatActivity {
 
     private void mockResults(String keyword) {
         results.clear();
-        List<ListingEntity> all = AppDataStore.listingsToEntities(AppDataStore.getListings(this));
+        String needle = keyword.toLowerCase(Locale.ROOT);
+        List<ListingEntity> all = AppDataStore.listingsToEntities(AppDataStore.getActiveListings(this));
         for (ListingEntity p : all) {
-            if (p.title.toLowerCase().contains(keyword.toLowerCase()) || results.size() < 4) {
+            if (p.title.toLowerCase(Locale.ROOT).contains(needle)) {
                 results.add(p);
             }
+        }
+        for (ListingEntity p : all) {
+            if (results.size() >= 4) break;
+            if (!results.contains(p)) results.add(p);
         }
         adapter.updateData(results);
     }

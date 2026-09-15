@@ -139,14 +139,14 @@ $sql = 'SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.d
 
 $params = [];
 if (!empty($search)) {
-    $sql .= ' WHERE (l.title LIKE ? OR l.description LIKE ? OR l.category LIKE ? OR l.tags LIKE ?) AND l.archived_at IS NULL';
+    $sql .= ' WHERE (l.title LIKE ? OR l.description LIKE ? OR l.category LIKE ? OR l.tags LIKE ?) AND l.archived_at IS NULL AND l.is_available = 1';
     $like = '%' . addcslashes($search, '%_') . '%';
     $params = [$like, $like, $like, $like];
     if ($blockedClause !== '') {
         $sql .= ' AND (' . $blockedClause . ')';
     }
 } else {
-    $sql .= ' WHERE l.archived_at IS NULL';
+    $sql .= ' WHERE l.archived_at IS NULL AND l.is_available = 1';
     if ($blockedClause !== '') {
         $sql .= ' AND (' . $blockedClause . ')';
     }
@@ -173,14 +173,17 @@ foreach ($query->fetchAll() as $item) {
     $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
         ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
         : '';
+    if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
+        $item['thumb_url'] = $item['image_url'];
+    }
     $items[] = $item;
 }
 
 // Check for next page
-$countWhere = ' WHERE l.archived_at IS NULL';
+$countWhere = ' WHERE l.archived_at IS NULL AND l.is_available = 1';
 $countParams = [];
 if (!empty($search)) {
-    $countWhere = ' WHERE (l.title LIKE ? OR l.description LIKE ? OR l.category LIKE ? OR l.tags LIKE ?) AND l.archived_at IS NULL';
+    $countWhere = ' WHERE (l.title LIKE ? OR l.description LIKE ? OR l.category LIKE ? OR l.tags LIKE ?) AND l.archived_at IS NULL AND l.is_available = 1';
     $countParams = [$like, $like, $like, $like];
 }
 if ($blockedClause !== '') {

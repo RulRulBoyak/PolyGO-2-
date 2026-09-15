@@ -60,6 +60,7 @@ public class SearchActivity extends BaseActivity {
     private View empty;
     private View suggestions;
     private String currentSort = "newest";
+    private int reloadSeq;
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -134,7 +135,6 @@ public class SearchActivity extends BaseActivity {
             }
             public void onNothingSelected(AdapterView<?> p) {}
         });
-        reloadListings();
     }
 
     @Override protected void onPause() {
@@ -155,16 +155,18 @@ public class SearchActivity extends BaseActivity {
     private void reloadListings() {
         String currentUserId = AppDataStore.userId(this);
         String q = search.getText().toString().trim();
+        int seq = ++reloadSeq;
         
         if (adapter != null && q.isEmpty()) {
             all.clear();
-            all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(this)));
+            all.addAll(AppDataStore.listingsToEntities(AppDataStore.getActiveListings(this)));
             filter();
         }
-
+        
         polyGoRepository.searchListings(q, currentSort, new Callback<PolyGoApi.ListingsResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                if (seq != reloadSeq) return;
                 PolyGoApi.ListingsResponse body = response.body();
                 List<ListingEntity> remote = new ArrayList<>();
                 if (body != null && body.listings != null) {
@@ -177,31 +179,23 @@ public class SearchActivity extends BaseActivity {
                 }
                 
                 if (q.isEmpty()) {
-                    all.clear();
-                    all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(SearchActivity.this)));
-                    java.util.Set<String> seen = new java.util.HashSet<>();
-                    for (ListingEntity l : all) {
-                        if (l.id != null) seen.add(l.id);
+                    // Refresh the local cache from the authoritative server snapshot so
+                    // sold/removed listings no longer linger in any offline fallback.
+                    if (body != null && body.listings != null) {
+                        AppDataStore.updateListingsCache(SearchActivity.this, body.listings);
                     }
-                    for (ListingEntity r : remote) {
-                        if (r.id == null || r.id.isEmpty() || seen.add(r.id)) {
-                            all.add(r);
-                        }
-                    }
-                } else {
-                    all.clear();
-                    all.addAll(remote);
                 }
+                all.clear();
+                all.addAll(remote);
                 filter();
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
-                if (q.isEmpty()) {
-                    all.clear();
-                    all.addAll(AppDataStore.listingsToEntities(AppDataStore.getListings(SearchActivity.this)));
-                    filter();
-                }
+                if (seq != reloadSeq) return;
+                all.clear();
+                all.addAll(AppDataStore.listingsToEntities(AppDataStore.getActiveListings(SearchActivity.this)));
+                filter();
             }
         });
     }

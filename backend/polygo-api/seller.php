@@ -99,6 +99,9 @@ foreach ($listQuery->fetchAll() as $item) {
     $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
         ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
         : '';
+    if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
+        $item['thumb_url'] = $item['image_url'];
+    }
     if ($item['is_available']) $active++;
     else $sold++;
     $listings[] = $item;

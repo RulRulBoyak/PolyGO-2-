@@ -221,6 +221,8 @@
     <string name="profile_rm_zero">RM 0.00</string>
     <string name="profile_items_sold">Items Sold</string>
     <string name="profile_zero">0</string>
+    <string name="status_sold">Sold</string>
+    <string name="status_archived">Archived</string>
     <string name="profile_active_listings">Active Listings</string>
     <string name="profile_campus_rating">Campus Rating</string>
     <string name="profile_zero_rating">★ 0.0</string>
@@ -463,6 +465,21 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="verification_required_title">Matrix Card Verification</string>
     <string name="verification_posting_blocked">Verify your Matrix Card in Profile &gt; Verification before you can post items.</string>
     <string name="verification_go_now">Verify now</string>
+
+    <!-- Verification Gate Bottom Sheet -->
+    <string name="verify_gate_title">Verify Your Matrix Card</string>
+    <string name="verify_gate_subtitle">Post with trust - verified in under a minute.</string>
+    <string name="verify_gate_benefit_unlock">Unlock posting</string>
+    <string name="verify_gate_benefit_unlock_sub">Sell across the campus marketplace</string>
+    <string name="verify_gate_benefit_badge">Verified badge</string>
+    <string name="verify_gate_benefit_badge_sub">Stand out as a genuine PKS student</string>
+    <string name="verify_gate_benefit_safety">Trusted community</string>
+    <string name="verify_gate_benefit_safety_sub">Safe meetups with verified students only</string>
+    <string name="verify_gate_confirm">Verify now</string>
+    <string name="verify_gate_cancel">Not now</string>
+    <string name="verify_gate_pending_title">Verification in review</string>
+    <string name="verify_gate_pending_subtitle">Your Matrix Card is being reviewed. You\'ll be able to post as soon as it\'s approved.</string>
+    <string name="verify_gate_view_status">View status</string>
 
     <!-- AI Proxy -->
     <string name="ai_suggest_error">AI service unavailable. Enter your listing details manually.</string>

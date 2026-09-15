@@ -57,8 +57,10 @@ public class HomeViewModel extends AndroidViewModel {
                                     l.rating, l.distance, l.image_url, l.category, l.description, 
                                     l.owner_id, l.available, isOwner);
                             entity.reviewCount = l.review_count;
+                            entity.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
                             list.add(entity);
                         }
+                        AppDataStore.updateListingsCache(getApplication(), body.listings);
                     }
                     _productsResource.postValue(Resource.success(list));
                 }).start();

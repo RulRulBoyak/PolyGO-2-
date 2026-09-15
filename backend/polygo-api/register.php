@@ -6,7 +6,9 @@ $name = trim((string)($input['full_name'] ?? ''));
 $studentId = trim((string)($input['student_id'] ?? ''));
 $email = strtolower(trim((string)($input['email'] ?? '')));
 $password = (string)($input['password'] ?? '');
-$consentAgreed = (bool)($input['consent_agreed'] ?? false);
+// Strict boolean: only a literal JSON true counts as consent. The string
+// "false" previously cast to true, silently bypassing PDPA consent.
+$consentAgreed = ($input['consent_agreed'] ?? false) === true;
 
 if ($name === '' || $studentId === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
     respond(false, 'Please provide valid registration details');

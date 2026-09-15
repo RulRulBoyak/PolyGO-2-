@@ -23,7 +23,7 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="0dp"
             android:contentDescription="Item image"
             android:scaleType="centerCrop"
             android:src="@drawable/bg_product_electronics"
@@ -55,6 +55,24 @@
             app:layout_constraintEnd_toEndOf="@id/imageView"
             app:layout_constraintTop_toTopOf="@id/imageView"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.PolyGo.Circle" />
+
+        <TextView
+            android:id="@+id/textViewStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_status_badge"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="Sold"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/imageView"
+            app:layout_constraintTop_toTopOf="@id/imageView"
+            tools:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/productInfo"

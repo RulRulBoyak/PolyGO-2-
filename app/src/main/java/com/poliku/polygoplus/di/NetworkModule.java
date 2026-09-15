@@ -37,7 +37,9 @@ public final class NetworkModule {
     @Singleton
     public PolyGoApi providePolyGoApi(@ApplicationContext Context context) {
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(BuildConfig.DEBUG ? HttpLoggingInterceptor.Level.BODY : HttpLoggingInterceptor.Level.NONE);
+        logging.setLevel(BuildConfig.DEBUG ? HttpLoggingInterceptor.Level.BASIC : HttpLoggingInterceptor.Level.NONE);
+        // Never log the Bearer token, even for debugging.
+        logging.redactHeader("Authorization");
 
         Interceptor authInterceptor = chain -> {
             String token = AppDataStore.userToken(context);

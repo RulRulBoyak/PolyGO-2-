@@ -18,8 +18,8 @@
 ## Backend conventions
 - One endpoint = one `.php` file; actions dispatch on a JSON `action` field (e.g. `block.php`: block/unblock/list, `pulse.php`: list/post).
 - `config.php` provides `input_json()`, `respond($ok,$msg,$extra)` (JSON + exit), `verify_jwt()`, `verify_jwt_optional()` — reuse them; never echo raw JSON.
-- JWT secret: `backend/polygo-api/secrets.php` (gitignored) may `define('JWT_SECRET', …)`; otherwise a dev fallback is used.
-- `secrets.php` also holds (all gitignored): `GEMINI_API_KEY` (server-side AI proxy — never in the APK or `local.properties`), `ADMIN_PASSWORD` (Matrix-verification web approvals via `admin_verify.php`), and optional `APP_CHECK_ENFORCE` + `FIREBASE_PROJECT_NUMBER` (App Check).
+- JWT secret: `backend/polygo-api/secrets.php` (gitignored) may `define('JWT_SECRET', …)`. The dev fallback key is used ONLY when `APP_ENV === 'dev'` or the request host is localhost/10.0.2.2; otherwise config.php fails closed with a 500 (production must define `JWT_SECRET`). `secrets.php` also carries `APP_ENV` (`dev`/`prod`) and `DEV_OTP_ECHO` — OTP codes are echoed to the API client only when both are dev/true.
+- `secrets.php` also holds (all gitignored): `GEMINI_API_KEY` (server-side AI proxy — never in the APK or `local.properties`), `ADMIN_PASSWORD` (Matrix-verification web approvals via `admin_verify.php`), and optional `APP_CHECK_ENFORCE` + `FIREBASE_PROJECT_NUMBER` (App Check). Out-of-band email (OTPs, temp passwords) goes through `Mailer.php` (PHPMailer via `vendor/`, composer-installed in `backend/polygo-api/`); with no SMTP configured it falls back to the PHP error log — never to the API response.
 - Verification: `verify.php` handles photo upload/submit; `admin_verify.php` (web, guarded by `ADMIN_PASSWORD`) approve/rejects. `config.php::verify_jwt()` auto-rejects posts from unverified accounts; the app mirrors this with `ui/VerificationGate.java`.
 - Consent: `register.php` rejects signup unless `consent_agreed=true` and records `consent_agreed_at`; the Android client sends it from `RegisterActivity`'s terms checkbox. Do not remove the check.
 - Bug reporting: `report_bug.php` inserts into `bug_reports` (description + device/OS/app version, optional screenshot via `upload_image.php`).
@@ -68,6 +68,7 @@ This is a student development project.
 
 ## Backend workflow (XAMPP)
 - Backend runs from `C:\xampp\htdocs\polygo-api\` (Apache + MariaDB on port **3306**).
+- **Deploy parity check first:** run `git diff --no-index` (or `Compare-Object`) on `C:\Users\User\AndroidStudioProjects\PolyGo\backend\polygo-api\*.php` vs `C:\xampp\htdocs\polygo-api\*.php` before each deploy. The live folder has drifted from the repo before (e.g. `listings.php` sold-filter), silently shipping old behavior. Copy repo files over htdocs, then `php -l` each copied file. Keep a `.bak-*` of anything overwritten.
 - `php` is NOT on PATH. Always use the full path when linting PHP files: `& "C:\xampp\php\php.exe" -l <file>`.
 - To query the live database use: `& "C:\xampp\mysql\bin\mysql.exe" -u root -e "<query>" polygo`.
 - **Do NOT use shell input redirection** (`<`) with the PowerShell `mysql.exe` tool — the `<` character is treated as a reserved operator and the query will fail. Always pipe with `Get-Content <file> | & "C:\xampp\mysql\bin\mysql.exe" -u root polygo` or use `-e`.

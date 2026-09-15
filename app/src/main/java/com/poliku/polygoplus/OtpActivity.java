@@ -43,7 +43,7 @@ public class OtpActivity extends BaseActivity {
         name = getIntent().getStringExtra(EXTRA_NAME);
         studentId = getIntent().getStringExtra(EXTRA_STUDENT_ID);
         password = getIntent().getStringExtra(EXTRA_PASSWORD);
-        consentAgreed = getIntent().getBooleanExtra(EXTRA_CONSENT_AGREED, true);
+        consentAgreed = getIntent().getBooleanExtra(EXTRA_CONSENT_AGREED, false);
 
         etOtp = findViewById(R.id.etOtp);
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
@@ -59,10 +59,12 @@ public class OtpActivity extends BaseActivity {
 
         ((TextView) findViewById(R.id.tvOtpSubtitle)).setText("We've sent a 6-digit code to " + email);
 
-        String devOtp = getIntent().getStringExtra(EXTRA_DEV_OTP);
-        if (devOtp != null && !devOtp.isEmpty()) {
-            etOtp.setText(devOtp);
-            Toast.makeText(this, "Test code pre-filled", Toast.LENGTH_SHORT).show();
+        // Dev-only: the backend may echo the OTP back on debug builds; never auto-fill in release.
+        if (BuildConfig.DEBUG) {
+            String devOtp = getIntent().getStringExtra(EXTRA_DEV_OTP);
+            if (devOtp != null && !devOtp.isEmpty()) {
+                etOtp.setText(devOtp);
+            }
         }
     }
 
@@ -101,7 +103,7 @@ public class OtpActivity extends BaseActivity {
             @Override
             public void onResponse(retrofit2.Call<PolyGoApi.OtpSendResponse> call, retrofit2.Response<PolyGoApi.OtpSendResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    if (response.body().otp != null && !response.body().otp.isEmpty()) {
+                    if (BuildConfig.DEBUG && response.body().otp != null && !response.body().otp.isEmpty()) {
                         etOtp.setText(response.body().otp);
                     }
                     Toast.makeText(OtpActivity.this, "Code resent to " + email, Toast.LENGTH_SHORT).show();

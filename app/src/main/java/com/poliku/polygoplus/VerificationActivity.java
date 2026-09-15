@@ -61,6 +61,29 @@ public class VerificationActivity extends AppCompatActivity {
         initViews();
         setupListeners();
         render();
+        syncServerStatus();
+    }
+
+    private void syncServerStatus() {
+        // The admin page is the source of truth; refresh the cached status so a
+        // rejection/approval made in the browser shows up here on the next visit.
+        polyGoRepository.getVerificationStatus(new Callback<PolyGoApi.VerificationStatusResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.VerificationStatusResponse> call,
+                                   Response<PolyGoApi.VerificationStatusResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().verificationStatus != null) {
+                    AppDataStore.saveVerificationStatus(VerificationActivity.this,
+                            response.body().verificationStatus);
+                    render();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.VerificationStatusResponse> call, Throwable t) {
+                // Offline: keep the cached status; nothing to show the user.
+            }
+        });
     }
 
     private void initViews() {

@@ -21,15 +21,35 @@ if ($action === 'status') {
     respond(true, 'OK', ['verification_status' => 'unverified', 'verification_photo' => '']);
 }
 
-// ADMIN ACTIONS: require the admin token from secrets.php (ADMIN_PASSWORD).
-// These keep the Web admin page and manual SQL approvals working side by side.
+// ADMIN ACTIONS: prefer the per-session token from the web admin page, and
+// keep the ADMIN_PASSWORD header/field accepted for CLI/SQL tooling.
 if (in_array($action, ['admin_pending', 'approve', 'reject'], true)) {
     $adminToken = (string)($input['admin_token'] ?? '');
     $headerToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
     if ($adminToken === '' && $headerToken !== '') {
         $adminToken = $headerToken;
     }
-    if (!defined('ADMIN_PASSWORD') || ADMIN_PASSWORD === '' || !hash_equals(ADMIN_PASSWORD, $adminToken)) {
+
+    $authorized = false;
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        $secureCookie = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => $secureCookie,
+            'samesite' => 'Lax'
+        ]);
+        session_start();
+    }
+    if (!empty($_SESSION['admin_ok'])
+        && hash_equals((string)($_SESSION['admin_api_token'] ?? ''), $adminToken)) {
+        $authorized = true;
+    } elseif (defined('ADMIN_PASSWORD') && ADMIN_PASSWORD !== ''
+        && hash_equals(ADMIN_PASSWORD, $adminToken)) {
+        $authorized = true;
+    }
+    if (!$authorized) {
         respond(false, 'Unauthorized admin token');
     }
 

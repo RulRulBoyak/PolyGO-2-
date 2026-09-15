@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.View;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
@@ -21,7 +22,6 @@ import androidx.annotation.Nullable;
 import androidx.palette.graphics.Palette;
 
 import androidx.annotation.NonNull;
-import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,6 +32,7 @@ import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.Holder> {
     public interface Listener {
@@ -59,7 +60,7 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
 
     public void notifyStateChanged(String productId) {
         for (int i = 0; i < products.size(); i++) {
-            if (productId.equals(products.get(i).id)) {
+            if (Objects.equals(productId, products.get(i).id)) {
                 notifyItemChanged(i);
                 return;
             }
@@ -87,15 +88,15 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
 
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            return oldList.get(oldItemPosition).id.equals(newList.get(newItemPosition).id);
+            return Objects.equals(oldList.get(oldItemPosition).id, newList.get(newItemPosition).id);
         }
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
             ListingEntity oldItem = oldList.get(oldItemPosition);
             ListingEntity newItem = newList.get(newItemPosition);
-            return oldItem.title.equals(newItem.title) &&
-                   oldItem.price.equals(newItem.price) &&
+            return Objects.equals(oldItem.title, newItem.title) &&
+                   Objects.equals(oldItem.price, newItem.price) &&
                    oldItem.available == newItem.available;
         }
     }
@@ -116,32 +117,38 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
             ratingText += " (" + p.reviewCount + ")";
         }
         h.binding.textViewRating.setText(ratingText);
-        h.binding.textViewDistance.setText(p.archived ? "Archived" : p.distance);
+        h.binding.textViewDistance.setText(p.archived
+                ? h.itemView.getContext().getString(R.string.status_archived) : p.distance);
+        boolean inactive = !p.available || p.archived;
+        h.binding.textViewStatusBadge.setVisibility(inactive ? View.VISIBLE : View.GONE);
+        h.binding.textViewStatusBadge.setText(h.itemView.getContext().getString(
+                p.archived ? R.string.status_archived : R.string.status_sold));
 
         // Load Image using Glide (supports both LOCAL and WEB URLs).
         // Grid cards load the 200px thumbnail when a web upload exists, falling
         // back to the full image for older records that predate thumbnails.
-        Object imageSource = (p.imageUrl == null || p.imageUrl.isEmpty())
-                ? R.drawable.bg_product_home
-                : toThumbUrl(p.imageUrl);
+        String fullUrl = p.imageUrl == null ? "" : p.imageUrl;
+        String thumbUrl = toThumbUrl(fullUrl);
 
-        Glide.with(h.itemView.getContext())
-                .load(imageSource)
+        RequestBuilder<Drawable> requestBuilder = Glide.with(h.itemView.getContext())
+                .load(thumbUrl.isEmpty() ? R.drawable.bg_product_home : thumbUrl)
                 .placeholder(R.drawable.bg_product_home)
                 .error(R.drawable.bg_product_home)
-                .centerCrop()
+                .centerCrop();
+
+        if (!thumbUrl.isEmpty() && !thumbUrl.equals(fullUrl)) {
+            requestBuilder.error(
+                    Glide.with(h.itemView.getContext())
+                            .load(fullUrl)
+                            .placeholder(R.drawable.bg_product_home)
+                            .error(R.drawable.bg_product_home)
+                            .centerCrop());
+        }
+
+        requestBuilder
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        if (model instanceof String && !model.equals(p.imageUrl) && p.imageUrl != null && !p.imageUrl.isEmpty()) {
-                            Glide.with(h.itemView.getContext())
-                                    .load(p.imageUrl)
-                                    .placeholder(R.drawable.bg_product_home)
-                                    .error(R.drawable.bg_product_home)
-                                    .centerCrop()
-                                    .into(target);
-                            return true;
-                        }
                         return false;
                     }
 
@@ -161,9 +168,6 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
                     }
                 })
                 .into(h.binding.imageView);
-
-        // Rule 3.1: Visual Continuity (Shared Element Transition)
-        ViewCompat.setTransitionName(h.binding.imageView, "product_image_" + p.id);
 
         h.binding.cardView.setAlpha((!p.available || p.archived) ? 0.55f : 1f);
         h.binding.cardView.setOnClickListener(v -> {

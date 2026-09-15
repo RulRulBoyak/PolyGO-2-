@@ -108,7 +108,9 @@ public final class PolyGoRepository {
     }
 
     public void getMajors(Callback<PolyGoApi.MajorsResponse> callback) {
-        api.getMajors(new PolyGoApi.BaseRequest()).enqueue(callback);
+        PolyGoApi.BaseRequest req = new PolyGoApi.BaseRequest();
+        req.action = "list_majors";
+        api.getMajors(req).enqueue(callback);
     }
 
     public void proposeCategory(String name, Callback<BaseResponse> callback) {
@@ -241,7 +243,7 @@ public final class PolyGoRepository {
         api.getMessages(req).enqueue(callback);
     }
 
-    public void sendMessage(String userId, String threadId, String listingId, String receiverId, String text, Callback<BaseResponse> callback) {
+    public void sendMessage(String userId, String threadId, String listingId, String receiverId, String text, Callback<PolyGoApi.SendMessageResponse> callback) {
         PolyGoApi.MessageRequest req = new PolyGoApi.MessageRequest();
         req.user_id = userId;
         req.thread_id = threadId;
@@ -385,6 +387,10 @@ public final class PolyGoRepository {
 
     public void submitVerification(String photoUrl, Callback<BaseResponse> callback) {
         api.submitVerification(new PolyGoApi.VerificationRequest(photoUrl)).enqueue(callback);
+    }
+
+    public void getVerificationStatus(Callback<PolyGoApi.VerificationStatusResponse> callback) {
+        api.verificationStatus(new PolyGoApi.VerificationStatusRequest()).enqueue(callback);
     }
 
     public void markThreadRead(String threadId) {

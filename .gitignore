@@ -19,6 +19,7 @@ app/google-services.json
 backend/polygo-api/service-account.json
 backend/polygo-api/secrets.php
 backend/polygo-api/uploads/
+/backend/polygo-api/vendor/
 backend/backup_polygo_pre_*.sql
 .env
 .env.*

@@ -1,5 +1,6 @@
 package com.poliku.polygoplus.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,9 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,6 +56,8 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private ProductCardAdapter productAdapter;
     private HomeViewModel viewModel;
+    private ActivityResultLauncher<Intent> detailLauncher;
+    @Nullable private View lastProductSharedElement;
 
     @Nullable
     @Override
@@ -58,6 +65,19 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         return binding.getRoot();
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        detailLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == AppCompatActivity.RESULT_OK && result.getData() != null) {
+                String changedId = result.getData().getStringExtra(ProductDetailActivity.RESULT_EXTRA_LISTING_ID);
+                if (changedId != null) {
+                    viewModel.loadProducts(); // Refresh the list if an item state changed
+                }
+            }
+        });
     }
 
     @Override
@@ -79,6 +99,16 @@ public class HomeFragment extends Fragment {
         });
         
         viewModel.loadProducts();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Always try to load fresh data when returning to home, 
+        // ensuring newly added products or sold items are synced.
+        if (viewModel != null) {
+            viewModel.loadProducts();
+        }
     }
 
     private void observeViewModel() {
@@ -109,8 +139,12 @@ public class HomeFragment extends Fragment {
                     binding.swipeRefreshHome.setRefreshing(false);
                     binding.shimmerMarket.shimmerView.stopShimmer();
                     binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
-                    if (AppDataStore.getListings(requireContext()).isEmpty()) {
-                        startActivity(new Intent(requireContext(), ErrorStateActivity.class));
+                    
+                    Context context = getContext();
+                    if (context == null) return;
+                    
+                    if (AppDataStore.getListings(context).isEmpty()) {
+                        startActivity(new Intent(context, ErrorStateActivity.class));
                     } else {
                         Snackbar.make(binding.getRoot(),
                                 "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
@@ -121,9 +155,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupHeader() {
-        boolean loggedIn = AppDataStore.isLoggedIn(requireContext());
-        String name = AppDataStore.userName(requireContext());
-        String firstName = name.split(" ")[0];
+        Context context = getContext();
+        if (context == null) return;
+        boolean loggedIn = AppDataStore.isLoggedIn(context);
+        String name = AppDataStore.userName(context);
+        String firstName = !name.isEmpty() ? name.split(" ")[0] : "Member";
         
         String hourGreeting;
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
@@ -137,7 +173,7 @@ public class HomeFragment extends Fragment {
             binding.tvGreeting.setText(hourGreeting + ",\n" + firstName);
         }
 
-        String photo = AppDataStore.userProfilePic(requireContext());
+        String photo = AppDataStore.userProfilePic(context);
         if (!photo.isEmpty()) {
             Glide.with(this)
                     .load(photo)
@@ -147,14 +183,16 @@ public class HomeFragment extends Fragment {
 
         binding.ivProfilePic.setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            if (AppDataStore.isLoggedIn(requireContext())) {
-                Intent intent = new Intent(requireContext(), AccountActivity.class);
+            Context ctx = getContext();
+            if (ctx == null) return;
+            if (AppDataStore.isLoggedIn(ctx)) {
+                Intent intent = new Intent(ctx, AccountActivity.class);
                 ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                         requireActivity(), binding.ivProfilePic, "profile_pic_hero"
                 );
                 startActivity(intent, options.toBundle());
             } else {
-                startActivity(new Intent(requireContext(), LoginActivity.class));
+                startActivity(new Intent(ctx, LoginActivity.class));
             }
         });
     }
@@ -181,22 +219,34 @@ public class HomeFragment extends Fragment {
 
     private void setupProducts() {
         productAdapter = new ProductCardAdapter(new ArrayList<>(), (adapter, product, sharedView) -> {
-            Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
+            Context context = getContext();
+            if (context == null) return;
+            
+            if (lastProductSharedElement != null) ViewCompat.setTransitionName(lastProductSharedElement, null);
+            ViewCompat.setTransitionName(sharedView, "product_image_hero");
+            lastProductSharedElement = sharedView;
+
+            Intent intent = new Intent(context, ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
 
             ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), sharedView, "product_image_hero"
             );
-            startActivity(intent, options.toBundle());
+            detailLauncher.launch(intent, options);
         });
-        binding.recyclerViewProducts.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        Context context = getContext();
+        if (context != null) {
+            binding.recyclerViewProducts.setLayoutManager(new GridLayoutManager(context, 2));
+        }
         binding.recyclerViewProducts.setAdapter(productAdapter);
     }
 
     private void setupSearchActions() {
         View.OnClickListener openSearch = v -> {
+            Context context = getContext();
+            if (context == null) return;
             HapticManager.lightTap(v);
-            Intent intent = new Intent(requireContext(), SearchActivity.class);
+            Intent intent = new Intent(context, SearchActivity.class);
             ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(), binding.searchBarCard, "search_bar_hero"
             );
@@ -204,17 +254,23 @@ public class HomeFragment extends Fragment {
         };
         binding.searchBarCard.setOnClickListener(openSearch);
         binding.tvSearchVisual.setOnClickListener(v -> {
-            HapticManager.swell(requireContext());
-            startActivity(new Intent(requireContext(), AiDiscoveryActivity.class));
+            Context context = getContext();
+            if (context == null) return;
+            HapticManager.swell(context);
+            startActivity(new Intent(context, AiDiscoveryActivity.class));
         });
         binding.btnTextbookHub.setOnClickListener(v -> {
+            Context context = getContext();
+            if (context == null) return;
             HapticManager.lightTap(v);
-            startActivity(new Intent(requireContext(), TextbookHubActivity.class));
+            startActivity(new Intent(context, TextbookHubActivity.class));
         });
         binding.tvSeeAllProducts.setOnClickListener(v -> {
+            Context context = getContext();
+            if (context == null) return;
             HapticManager.lightTap(v);
             HapticManager.lightTap(v);
-            startActivity(new Intent(requireContext(), SearchActivity.class));
+            startActivity(new Intent(context, SearchActivity.class));
             requireActivity().overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
     }

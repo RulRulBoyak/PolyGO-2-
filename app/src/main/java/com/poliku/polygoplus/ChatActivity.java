@@ -1,12 +1,7 @@
 package com.poliku.polygoplus;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -40,7 +35,6 @@ import retrofit2.Response;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 @AndroidEntryPoint
 public class ChatActivity extends AppCompatActivity {
@@ -54,12 +48,7 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView messageList;
     private ChatMessageAdapter adapter;
     private EditText input;
-    private TextView tvTyping;
     private boolean sending;
-    private String lastAutoReply = "";
-    private final Handler typingHandler = new Handler(Looper.getMainLooper());
-    private Runnable hideTypingRunnable;
-    private Animator typingAnimator;
     private String lastMeetupLandmark = "PKS Library";
     private ActivityResultLauncher<Intent> safeMeetupLauncher;
     private boolean isBlocked;
@@ -98,7 +87,6 @@ public class ChatActivity extends AppCompatActivity {
         adapter = new ChatMessageAdapter(AppDataStore.userName(this));
         messageList.setAdapter(adapter);
         input = findViewById(R.id.etMessage);
-        tvTyping = findViewById(R.id.tvTypingStatus);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.chat_main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -207,36 +195,35 @@ public class ChatActivity extends AppCompatActivity {
         findViewById(R.id.btnSend).setEnabled(false);
         input.setText("");
 
-        if (threadId == null || threadId.trim().isEmpty()) {
-            threadId = AppDataStore.ensureThread(this, listingId, otherName);
-        }
-        
         String userId = AppDataStore.userId(this);
-        polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, text, new Callback<BaseResponse>() {
+        polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, text, new Callback<PolyGoApi.SendMessageResponse>() {
             @Override
-            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+            public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    // First message of a new conversation: capture the real server
+                    // thread id so later messages/loads target the same thread.
+                    String serverThreadId = response.body().threadId;
+                    if (serverThreadId != null && !serverThreadId.trim().isEmpty()) {
+                        threadId = serverThreadId;
+                        AppDataStore.rememberThread(ChatActivity.this, threadId, listingId, otherName);
+                    }
                     sending = false;
                     findViewById(R.id.btnSend).setEnabled(true);
                     loadMessages();
-
-                    // Rule 3.3: Interactive Demo - Simulate seller response
-                    showTypingAndReply(text);
                 } else {
                     onFailure(call, new Throwable("Send failed"));
                 }
             }
 
             @Override
-            public void onFailure(Call<BaseResponse> call, Throwable t) {
+            public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
                 Toast.makeText(ChatActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                
-                // Even on error, show local message and trigger reply for demo feel
-                AppDataStore.sendMessage(ChatActivity.this, threadId, text);
-                showLocalMessages();
-                showTypingAndReply(text);
+                if (threadId != null && !threadId.isEmpty()) {
+                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
+                    showLocalMessages();
+                }
             }
         });
     }
@@ -434,51 +421,6 @@ public class ChatActivity extends AppCompatActivity {
         AppDataStore.markThreadRead(this, threadId);
     }
 
-    private void showTypingAndReply(String userMessage) {
-        showTypingIndicator();
-
-        // Rule 3.1: Variability - Realistic typing delay (3-6 seconds)
-        long delay = 3000 + (long)(Math.random() * 3000);
-
-        if (hideTypingRunnable != null) typingHandler.removeCallbacks(hideTypingRunnable);
-        hideTypingRunnable = () -> {
-            hideTypingIndicator();
-            String reply = getAutoReply(userMessage);
-            lastAutoReply = reply;
-            if (threadId != null) {
-                AppDataStore.addReplyToThread(ChatActivity.this, threadId, otherName, reply);
-                showLocalMessages();
-            }
-        };
-        typingHandler.postDelayed(hideTypingRunnable, delay);
-    }
-
-    private void showTypingIndicator() {
-        if (tvTyping == null) return;
-        tvTyping.setText(otherName + getString(R.string.chat_typing_status));
-        tvTyping.setVisibility(View.VISIBLE);
-        tvTyping.setAlpha(1f);
-        if (typingAnimator != null) typingAnimator.cancel();
-        ObjectAnimator animator = ObjectAnimator.ofFloat(tvTyping, View.ALPHA, 1f, 0.3f);
-        animator.setDuration(550);
-        animator.setRepeatCount(ValueAnimator.INFINITE);
-        animator.setRepeatMode(ValueAnimator.REVERSE);
-        typingAnimator = animator;
-        typingAnimator.start();
-        scrollToBottom();
-    }
-
-    private void hideTypingIndicator() {
-        if (typingAnimator != null) {
-            typingAnimator.cancel();
-            typingAnimator = null;
-        }
-        if (tvTyping != null) {
-            tvTyping.setVisibility(View.GONE);
-            tvTyping.setAlpha(1f);
-        }
-    }
-
     private void scrollToBottom() {
         messageList.post(() -> {
             if (adapter != null && adapter.getItemCount() > 0) {
@@ -487,62 +429,11 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private String getAutoReply(String userMessage) {
-        String msg = userMessage == null ? "" : userMessage.toLowerCase(Locale.ROOT).trim();
-        String reply;
-
-        if (containsPhrase(msg, "available", "ada lagi", "still have", "in stock", "sold out", "habis")) {
-            String[] options = {
-                "Yes, it's still available! Are you a student or staff? I'm usually at the Library area.",
-                "It's still here! A few people messaged me but nobody confirmed yet. Want to see it tomorrow?",
-                "Available! I can bring it to Block A Cafeteria later if you're interested."
-            };
-            reply = options[(int) (Math.random() * options.length)];
-        } else if (containsPhrase(msg, "price", "berapa", "cheap", "discount", "kurang", "murah", "offer", "nego")) {
-            reply = "I can give a small student discount if you pick it up at the Student Centre. How about RM 5 less?";
-        } else if (containsPhrase(msg, "meet", "meetup", "where", "jumpa", "lokasi", "location", "library", "cafeteria", "block")) {
-            reply = "We can meet at the PKS Library or Block B between 1pm and 2pm tomorrow. Does that work for you?";
-        } else if (containsPhrase(msg, "condition", "rosak", "problem", "used", "quality", "original")) {
-            reply = "It's in great condition! Used it for one semester only. No major scratches or issues.";
-        } else if (containsPhrase(msg, "thank", "thanks", "terima kasih", "tq")) {
-            reply = "You're welcome! Let me know if you want to proceed with the deal. 🤝";
-        } else if (isGreeting(msg)) {
-            reply = "Walaikumussalam! Hi, I'm at the campus now. Are you interested in the item?";
-        } else {
-            reply = "Got it. I'm usually around the Main Hall or Cafeteria if you want to meetup and check the item.";
-        }
-
-        if (reply.equals(lastAutoReply)) {
-            reply = "Let me know if you want to set a time to meet up at PKS! I'm free after my lecture.";
-        }
-        return reply;
-    }
-
-    private boolean isGreeting(String msg) {
-        if (msg.contains("assalam") || msg.contains("salamualaikum")) return true;
-        return containsPhrase(msg, "hello", "hey", "hi", "pagi", "petang", "malam");
-    }
-
-    private boolean containsPhrase(String msg, String... phrases) {
-        for (String phrase : phrases) {
-            if (phrase.contains(" ")) {
-                if (msg.contains(phrase)) return true;
-            } else if (Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b").matcher(msg).find()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override protected void onStop() {
         super.onStop();
-        typingHandler.removeCallbacks(hideTypingRunnable);
-        hideTypingIndicator();
     }
 
     @Override protected void onDestroy() {
-        typingHandler.removeCallbacks(hideTypingRunnable);
-        if (typingAnimator != null) typingAnimator.cancel();
         super.onDestroy();
     }
 

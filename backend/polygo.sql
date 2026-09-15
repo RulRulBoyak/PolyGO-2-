@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     buyer_id BIGINT UNSIGNED NOT NULL,
     seller_id BIGINT UNSIGNED NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    status ENUM('offer_sent','accepted','pickup','completed','cancelled') NOT NULL DEFAULT 'offer_sent',
+    status ENUM('offer_sent','accepted','declined','pickup','completed','cancelled') NOT NULL DEFAULT 'offer_sent',
     impact_credited BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_transaction_listing FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE,

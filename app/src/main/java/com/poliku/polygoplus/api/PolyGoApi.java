@@ -71,7 +71,7 @@ public interface PolyGoApi {
     Call<MessagesResponse> getMessages(@Body MessageRequest request);
 
     @POST("messages.php")
-    Call<BaseResponse> sendMessage(@Body MessageRequest request);
+    Call<SendMessageResponse> sendMessage(@Body MessageRequest request);
 
     @POST("notifications.php")
     Call<NotificationsResponse> getNotifications(@Body NotificationRequest request);
@@ -120,6 +120,9 @@ public interface PolyGoApi {
 
     @POST("verify.php")
     Call<BaseResponse> submitVerification(@Body VerificationRequest request);
+
+    @POST("verify.php")
+    Call<VerificationStatusResponse> verificationStatus(@Body VerificationStatusRequest request);
 
     @POST("delete_account.php")
     Call<BaseResponse> deleteAccount(@Body BaseRequest request);
@@ -256,6 +259,11 @@ public interface PolyGoApi {
         public String user_id, thread_id, listing_id, receiver_id, text, action;
     }
 
+    class SendMessageResponse extends BaseResponse {
+        @SerializedName("thread_id")
+        public String threadId;
+    }
+
     class NotificationRequest {
         public String user_id, action;
     }
@@ -322,6 +330,21 @@ public interface PolyGoApi {
             this.action = "submit";
             this.verificationPhoto = photoUrl;
         }
+    }
+
+    class VerificationStatusRequest {
+        public String action;
+
+        public VerificationStatusRequest() {
+            this.action = "status";
+        }
+    }
+
+    class VerificationStatusResponse extends BaseResponse {
+        @SerializedName("verification_status")
+        public String verificationStatus;
+        @SerializedName("verification_photo")
+        public String verificationPhoto;
     }
 
     class SecurityLogRequest {

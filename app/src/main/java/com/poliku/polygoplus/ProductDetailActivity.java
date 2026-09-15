@@ -55,7 +55,9 @@ public class ProductDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_detail);
-        postponeEnterTransition();
+
+        carousel = findViewById(R.id.productCarousel);
+        ViewCompat.setTransitionName(carousel, "product_image_hero");
 
         String id = getIntent().getStringExtra(EXTRA_LISTING_ID);
         
@@ -124,12 +126,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void renderProduct() {
-        carousel = findViewById(R.id.productCarousel);
         layoutIndicators = findViewById(R.id.layoutIndicators);
-        
-        // Shared Element Transition target
-        ViewCompat.setTransitionName(carousel, "product_image_hero");
-
         List<String> images = product.imageList();
         CarouselAdapter adapter = new CarouselAdapter(product.imageRes != 0 ? product.imageRes : R.drawable.bg_product_home, position -> {
             Intent i = new Intent(this, ImageGalleryActivity.class);
@@ -231,6 +228,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                                 AppDataStore.unarchiveListing(ProductDetailActivity.this, product.id);
                                 Toast.makeText(ProductDetailActivity.this, "Listing relisted", Toast.LENGTH_SHORT).show();
+                                favoriteChanged = true; // Trigger refresh on Home
                                 finish();
                             } else {
                                 v.setEnabled(true);
@@ -256,6 +254,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                                 AppDataStore.markSold(ProductDetailActivity.this, product.id);
                                 Toast.makeText(ProductDetailActivity.this, "Listing marked as sold", Toast.LENGTH_SHORT).show();
+                                favoriteChanged = true; // Trigger refresh on Home
                                 finish();
                             } else {
                                 v.setEnabled(true);

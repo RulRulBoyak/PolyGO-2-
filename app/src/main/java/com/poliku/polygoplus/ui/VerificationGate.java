@@ -2,9 +2,12 @@ package com.poliku.polygoplus.ui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.view.View;
+import android.view.animation.AnimationUtils;
+import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
-
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.VerificationActivity;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -18,13 +21,38 @@ public final class VerificationGate {
         if ("approved".equals(AppDataStore.verificationStatus(activity))) {
             return true;
         }
-        new AlertDialog.Builder(activity)
-                .setTitle(R.string.verification_required_title)
-                .setMessage(R.string.verification_posting_blocked)
-                .setPositiveButton(R.string.verification_go_now, (dialog, which) ->
-                        activity.startActivity(new Intent(activity, VerificationActivity.class)))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        showGate(activity);
         return false;
+    }
+
+    private static void showGate(Activity activity) {
+        BottomSheetDialog dialog = new BottomSheetDialog(activity);
+        View sheet = activity.getLayoutInflater().inflate(R.layout.bottom_sheet_verification_gate, null);
+        dialog.setContentView(sheet);
+
+        boolean pending = "pending".equals(AppDataStore.verificationStatus(activity));
+
+        TextView title = sheet.findViewById(R.id.tvVerifyTitle);
+        TextView subtitle = sheet.findViewById(R.id.tvVerifySubtitle);
+        View benefits = sheet.findViewById(R.id.llVerifyBenefits);
+        MaterialButton btnVerify = sheet.findViewById(R.id.btnVerifyNow);
+
+        title.setText(pending ? R.string.verify_gate_pending_title : R.string.verify_gate_title);
+        subtitle.setText(pending ? R.string.verify_gate_pending_subtitle : R.string.verify_gate_subtitle);
+        benefits.setVisibility(pending ? View.GONE : View.VISIBLE);
+        btnVerify.setText(pending ? R.string.verify_gate_view_status : R.string.verify_gate_confirm);
+
+        btnVerify.setOnClickListener(v -> {
+            HapticManager.success(activity);
+            dialog.dismiss();
+            activity.startActivity(new Intent(activity, VerificationActivity.class));
+        });
+        sheet.findViewById(R.id.btnVerifyLater).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.setOnShowListener(d -> {
+            sheet.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.fade_in_up));
+            HapticManager.swell(activity);
+        });
+        dialog.show();
     }
 }

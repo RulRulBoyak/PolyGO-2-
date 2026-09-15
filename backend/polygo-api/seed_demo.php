@@ -69,7 +69,13 @@ try {
         ];
         foreach ($resetStatements as $sql) {
             $run = $pdo->prepare($sql);
-            $run->execute($ids);
+            // Fix: some statements use $ph twice (e.g. buyer_id OR seller_id)
+            $params = substr_count($sql, '?');
+            if ($params === count($ids) * 2) {
+                $run->execute(array_merge($ids, $ids));
+            } else {
+                $run->execute($ids);
+            }
         }
         $existing = [];
         seed_say("Reset old demo rows");

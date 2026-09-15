@@ -24,9 +24,20 @@ if ($action === 'send') {
         // Create new thread — refuse when either side has blocked the other.
         if ($receiverId <= 0) respond(false, 'Missing receiver');
         if (is_blocked($pdo, $userId, $receiverId)) respond(false, 'You cannot message this user');
-        $query = $pdo->prepare('INSERT INTO threads (listing_id, buyer_id, seller_id) VALUES (?, ?, ?)');
-        $query->execute([$listingId, $userId, $receiverId]);
-        $threadId = (int)$pdo->lastInsertId();
+        // Reuse an existing thread for the same listing pair (either direction)
+        // instead of silently creating a duplicate conversation per message.
+        $find = $pdo->prepare('SELECT id FROM threads WHERE listing_id = ?
+            AND ((buyer_id = ? AND seller_id = ?) OR (buyer_id = ? AND seller_id = ?))
+            ORDER BY id LIMIT 1');
+        $find->execute([$listingId, $userId, $receiverId, $receiverId, $userId]);
+        $existing = $find->fetchColumn();
+        if ($existing) {
+            $threadId = (int)$existing;
+        } else {
+            $query = $pdo->prepare('INSERT INTO threads (listing_id, buyer_id, seller_id) VALUES (?, ?, ?)');
+            $query->execute([$listingId, $userId, $receiverId]);
+            $threadId = (int)$pdo->lastInsertId();
+        }
     } else {
         // Existing thread — verify membership and block status.
         $tCheck = $pdo->prepare('SELECT buyer_id, seller_id FROM threads WHERE id = ?');
@@ -114,7 +125,7 @@ $query = $pdo->prepare('
       )
     ORDER BY lastMessageTime DESC
 ');
-$query->execute([$userId, $userId, $userId, $userId]);
+$query->execute([$userId, $userId, $userId, $userId, $userId]);
 $threads = [];
 foreach ($query->fetchAll() as $t) {
     $t['id'] = (int)$t['id'];

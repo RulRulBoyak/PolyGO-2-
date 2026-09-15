@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/Mailer.php';
 
 $input = input_json();
 $identifier = trim((string)($input['identifier'] ?? ''));
@@ -17,8 +18,10 @@ if (!rate_limit_check($pdo, 'forgot_ip:' . $ip, 5, 600) ||
 $query = $pdo->prepare('SELECT id, email, student_id FROM users WHERE student_id = ? OR email = ? LIMIT 1');
 $query->execute([$identifier, $identifier]);
 $user = $query->fetch();
+$generic = 'If your account exists, a temporary password has been sent to your email';
 if (!$user) {
-    respond(false, 'No matching campus account found');
+    // Same message as the success branch to prevent account enumeration.
+    respond(true, $generic);
 }
 
 // High-entropy temporary password (128 bits of randomness).
@@ -27,4 +30,8 @@ $hash = password_hash($temp, PASSWORD_DEFAULT);
 $update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
 $update->execute([$hash, $user['id']]);
 
-respond(true, 'Temporary password issued', ['temporary_password' => $temp]);
+$body = "Your PolyGo+ temporary password is: $temp\n\n"
+    . 'Please sign in and change it as soon as possible.';
+Mailer::send((string)$user['email'], 'PolyGo+ temporary password', $body);
+
+respond(true, $generic);

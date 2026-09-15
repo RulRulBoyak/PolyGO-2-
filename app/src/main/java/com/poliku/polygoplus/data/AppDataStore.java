@@ -134,6 +134,10 @@ public final class AppDataStore {
         );
     }
 
+    private static void saveArraySync(Context context, String key, JSONArray value) {
+        prefs(context).edit().putString(key, value.toString()).apply();
+    }
+
     public static boolean isLoggedIn(Context context) {
         return prefs(context).getBoolean("loggedIn", false);
     }
@@ -149,13 +153,32 @@ public final class AppDataStore {
 
     public static void saveRemoteSession(Context context, JSONObject user, String token) {
         if (user == null) return;
-        DISK_EXECUTOR.execute(() -> 
-            prefs(context).edit()
-                .putString(KEY_USER, user.toString())
-                .putString("user_token", token)
-                .putBoolean("loggedIn", true)
-                .apply()
-        );
+        DISK_EXECUTOR.execute(() -> {
+            try {
+                // Normalize key naming across login flows (login/register/OTP used
+                // full_name; google_login used name) so every getter reads the same shape.
+                JSONObject normalized = new JSONObject();
+                normalized.put("id", user.optString("id", "0"));
+                String name = user.optString("full_name", "");
+                if (name.isEmpty()) name = user.optString("name", "");
+                normalized.put("name", name);
+                String studentId = user.optString("student_id", "");
+                if (studentId.isEmpty()) studentId = user.optString("studentId", "");
+                normalized.put("student_id", studentId);
+                normalized.put("email", user.optString("email", ""));
+                normalized.put("mobile", user.optString("mobile", ""));
+                normalized.put("role", user.optString("role", "Student"));
+                normalized.put("profile_pic_url", user.optString("profile_pic_url", ""));
+                normalized.put("bio", user.optString("bio", ""));
+                normalized.put("is_private", user.optBoolean("is_private", false));
+                normalized.put("verified", user.optBoolean("verified", false));
+                prefs(context).edit()
+                    .putString(KEY_USER, normalized.toString())
+                    .putString("user_token", token)
+                    .putBoolean("loggedIn", true)
+                    .apply();
+            } catch (JSONException ignored) {}
+        });
     }
 
     public static String userToken(Context context) {
@@ -182,7 +205,10 @@ public final class AppDataStore {
 
     public static String userName(Context context) {
         try {
-            return new JSONObject(prefs(context).getString(KEY_USER, "{}")).optString("name", "PolyGo member");
+            JSONObject user = new JSONObject(prefs(context).getString(KEY_USER, "{}"));
+            String name = user.optString("name", "");
+            if (name.isEmpty()) name = user.optString("full_name", "PolyGo member");
+            return name;
         } catch (JSONException e) {
             return "PolyGo member";
         }
@@ -292,6 +318,15 @@ public final class AppDataStore {
         return Collections.unmodifiableList(result);
     }
 
+    @NonNull
+    public static List<ProductRecord> getActiveListings(Context context) {
+        List<ProductRecord> result = new ArrayList<>();
+        for (ProductRecord p : getListings(context)) {
+            if (p.available && !p.archived) result.add(p);
+        }
+        return Collections.unmodifiableList(result);
+    }
+
     public static List<ListingEntity> listingsToEntities(List<ProductRecord> records) {
         List<ListingEntity> result = new ArrayList<>();
         if (records != null) {
@@ -326,39 +361,33 @@ public final class AppDataStore {
     }
 
     public static boolean markSold(Context context, String id) {
-        Context app = context.getApplicationContext();
-        DISK_EXECUTOR.execute(() -> {
-            JSONArray list = array(app, KEY_LISTINGS);
-            for (int i = 0; i < list.length(); i++) {
-                try {
-                    JSONObject o = list.getJSONObject(i);
-                    if (id.equals(o.optString("id"))) {
-                        o.put("available", false);
-                        saveArray(app, KEY_LISTINGS, list);
-                        return;
-                    }
-                } catch (JSONException ignored) {}
-            }
-        });
-        return true;
+        JSONArray list = array(context, KEY_LISTINGS);
+        for (int i = 0; i < list.length(); i++) {
+            try {
+                JSONObject o = list.getJSONObject(i);
+                if (id.equals(o.optString("id"))) {
+                    o.put("available", false);
+                    saveArraySync(context, KEY_LISTINGS, list);
+                    return true;
+                }
+            } catch (JSONException ignored) {}
+        }
+        return false;
     }
 
     public static boolean unarchiveListing(Context context, String id) {
-        Context app = context.getApplicationContext();
-        DISK_EXECUTOR.execute(() -> {
-            JSONArray list = array(app, KEY_LISTINGS);
-            for (int i = 0; i < list.length(); i++) {
-                try {
-                    JSONObject o = list.getJSONObject(i);
-                    if (id.equals(o.optString("id"))) {
-                        o.put("available", true);
-                        saveArray(app, KEY_LISTINGS, list);
-                        return;
-                    }
-                } catch (JSONException ignored) {}
-            }
-        });
-        return true;
+        JSONArray list = array(context, KEY_LISTINGS);
+        for (int i = 0; i < list.length(); i++) {
+            try {
+                JSONObject o = list.getJSONObject(i);
+                if (id.equals(o.optString("id"))) {
+                    o.put("available", true);
+                    saveArraySync(context, KEY_LISTINGS, list);
+                    return true;
+                }
+            } catch (JSONException ignored) {}
+        }
+        return false;
     }
 
     public static boolean isFavorite(Context context, String id) {
@@ -430,6 +459,37 @@ public final class AppDataStore {
     public static ThreadRecord getThread(Context context, String id) {
         for (ThreadRecord t : getThreads(context)) if (Objects.equals(t.id, id)) return t;
         return null;
+    }
+
+    public static void rememberThread(Context context, String serverId, String listingId, String otherName) {
+        if (serverId == null || serverId.isEmpty()) return;
+        DISK_EXECUTOR.execute(() -> {
+            JSONArray threads = array(context, KEY_THREADS);
+            for (int i = 0; i < threads.length(); i++) {
+                try {
+                    JSONObject t = threads.getJSONObject(i);
+                    if (Objects.equals(serverId, t.optString("id"))) {
+                        t.put("listingId", listingId);
+                        t.put("name", otherName);
+                        saveArray(context, KEY_THREADS, threads);
+                        return;
+                    }
+                } catch (JSONException ignored) {
+                }
+            }
+            try {
+                JSONObject t = new JSONObject();
+                t.put("id", serverId);
+                t.put("listingId", listingId);
+                t.put("name", otherName);
+                t.put("unread", false);
+                t.put("messages", new JSONArray());
+                t.put("lastMessageTime", System.currentTimeMillis());
+                threads.put(t);
+                saveArray(context, KEY_THREADS, threads);
+            } catch (JSONException ignored) {
+            }
+        });
     }
 
     public static void markThreadRead(Context context, String id) {
@@ -829,6 +889,10 @@ public final class AppDataStore {
         return prefs(context).getString(KEY_VERIFICATION_STATUS, "unverified");
     }
 
+    public static void saveVerificationStatus(Context context, String status) {
+        prefs(context).edit().putString(KEY_VERIFICATION_STATUS, status).apply();
+    }
+
     public static void submitVerification(Context context) {
         DISK_EXECUTOR.execute(() -> prefs(context).edit().putString(KEY_VERIFICATION_STATUS, "pending").apply());
     }
@@ -892,6 +956,7 @@ public final class AppDataStore {
             ListingEntity e = new ListingEntity(id, title, seller, price, rating, distance, imageUri.isEmpty() ? "" : imageUri,
                     category, description, ownerId, available, owner);
             e.reviewCount = reviewCount;
+            e.archived = archived;
             return e;
         }
 
@@ -909,14 +974,16 @@ public final class AppDataStore {
 
         public JSONObject toJson() throws JSONException {
             JSONObject o = new JSONObject();
-            o.put("id", id); o.put("title", title); o.put("seller", seller); o.put("price", price); o.put("rating", rating); o.put("review_count", reviewCount); o.put("distance", distance); o.put("imageRes", imageRes); o.put("imageUri", imageUri); o.put("category", category); o.put("description", description); o.put("owner", owner); o.put("available", available); o.put("owner_id", ownerId);
+            o.put("id", id); o.put("title", title); o.put("seller", seller); o.put("price", price); o.put("rating", rating); o.put("review_count", reviewCount); o.put("distance", distance); o.put("imageRes", imageRes); o.put("imageUri", imageUri); o.put("category", category); o.put("description", description); o.put("owner", owner); o.put("available", available); o.put("owner_id", ownerId); o.put("archived", archived);
             return o;
         }
 
         public static ProductRecord fromJson(JSONObject o) {
             if (o == null) return null;
             String price = PriceFormatter.format(o.optString("price", "0")).replace("RM ", "");
-            return new ProductRecord(o.optString("id", "0"), o.optString("title", "Item"), o.optString("seller", "User"), price, o.optString("rating", "4.5"), o.optString("review_count", "0"), o.optString("distance", "Near"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri", ""), o.optString("category", "General"), o.optString("description", ""), o.optBoolean("owner", false), o.optBoolean("available", true), o.optString("owner_id", "0"));
+            ProductRecord rec = new ProductRecord(o.optString("id", "0"), o.optString("title", "Item"), o.optString("seller", "User"), price, o.optString("rating", "4.5"), o.optString("review_count", "0"), o.optString("distance", "Near"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri", ""), o.optString("category", "General"), o.optString("description", ""), o.optBoolean("owner", false), o.optBoolean("available", true), o.optString("owner_id", "0"));
+            rec.archived = o.optBoolean("archived", false);
+            return rec;
         }
 
         public static ProductRecord fromListing(PolyGoApi.Listing l, String currentUserId) {

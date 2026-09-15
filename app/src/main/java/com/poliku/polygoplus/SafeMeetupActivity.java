@@ -194,11 +194,11 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         }
         final String message = text;
 
-        polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, message, new Callback<BaseResponse>() {
-            @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+        polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, message, new Callback<PolyGoApi.SendMessageResponse>() {
+            @Override public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
                 Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_emergency_sent, Toast.LENGTH_LONG).show();
             }
-            @Override public void onFailure(Call<BaseResponse> call, Throwable t) {
+            @Override public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
                 AppDataStore.sendMessage(SafeMeetupActivity.this, threadId, message);
                 Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_emergency_sent, Toast.LENGTH_LONG).show();
             }

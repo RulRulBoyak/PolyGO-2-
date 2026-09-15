@@ -470,8 +470,9 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:hint="@string/listing_department"
+                app:boxBackgroundMode="outline"
                 app:boxCornerRadiusBottomEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusTopEnd="14dp"
@@ -481,6 +482,7 @@
 
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteMajor"
+                    style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
@@ -492,8 +494,9 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="14dp"
                 android:hint="@string/listing_free_slots"
+                app:boxBackgroundMode="outline"
                 app:boxCornerRadiusBottomEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusTopEnd="14dp"
@@ -505,9 +508,8 @@
                     android:id="@+id/etFreeSlots"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/listing_free_slots_hint"
                     android:inputType="textCapSentences"
-                    android:maxLines="2"
+                    android:maxLines="1"
                     android:textColor="@color/airbnb_ink"
                     android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -516,7 +518,7 @@
                 android:id="@+id/chipGroupFreeSlotsQuick"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip

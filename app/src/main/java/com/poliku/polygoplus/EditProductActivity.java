@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -23,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.widget.NestedScrollView;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
@@ -184,7 +186,7 @@ public class EditProductActivity extends BaseActivity {
 
         findViewById(R.id.btnFlagAiSuggestion).setOnClickListener(v -> {
             HapticManager.heavyTap(v);
-            new androidx.appcompat.app.AlertDialog.Builder(this)
+            new AlertDialog.Builder(this)
                 .setTitle(R.string.flag_ai_suggestion)
                 .setMessage(R.string.flag_ai_suggestion_prompt)
                 .setNegativeButton(R.string.cancel, null)
@@ -222,12 +224,67 @@ public class EditProductActivity extends BaseActivity {
         setupPublishAction();
         setupLocationPicker();
         setupDraftAction();
-        
+
+        wireFocusScroll();
+
         // Rule 3.3: Observe and restore state
         observeViewModel();
         
         loadDraftIfAny();
         applyPrefillExtras();
+    }
+
+    private void wireFocusScroll() {
+        NestedScrollView scroll = findViewById(R.id.formScroll);
+        if (scroll == null) return;
+        scrollFocusedInputIntoView(etName);
+        scrollFocusedInputIntoView(etPrice);
+        scrollFocusedInputIntoView(etDescription);
+        scrollFocusedInputIntoView(etTags);
+        scrollFocusedInputIntoView(etFreeSlots);
+        scrollFocusedInputIntoView(etCustomCategory);
+        scrollFocusedInputIntoView(etCustomLocation);
+        scrollFocusedInputIntoView(autoCompleteCategory);
+        scrollFocusedInputIntoView(autoCompleteLocation);
+        scrollFocusedInputIntoView(autoCompleteMajor);
+    }
+
+    private void scrollFocusedInputIntoView(final View child) {
+        child.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) return;
+            NestedScrollView scroll = findViewById(R.id.formScroll);
+            if (scroll == null || scroll.getChildCount() == 0) return;
+            View bar = findViewById(R.id.bottomBar);
+            int bottomClearance = bar != null ? bar.getHeight() : dp(80);
+            int third = (int) (scroll.getHeight() * 0.2f);
+            scroll.post(() -> {
+                int[] childLoc = new int[2];
+                int[] scrollLoc = new int[2];
+                child.getLocationInWindow(childLoc);
+                scroll.getLocationInWindow(scrollLoc);
+                int fieldTop = childTopWithinContent(childLoc, scrollLoc, scroll);
+                int fieldBottom = fieldTop + child.getHeight();
+                int visibleTop = scroll.getScrollY() + third;
+                int visibleBottom = scroll.getScrollY() + scroll.getHeight() - bottomClearance;
+                int target = scroll.getScrollY();
+                if (fieldBottom > visibleBottom) {
+                    target = target + (fieldBottom - visibleBottom);
+                } else if (fieldTop < visibleTop) {
+                    target = target - third;
+                }
+                int maxScroll = scroll.getChildAt(0).getHeight() - scroll.getHeight();
+                target = Math.max(0, Math.min(target, maxScroll));
+                scroll.smoothScrollTo(0, target);
+            });
+        });
+    }
+
+    private int childTopWithinContent(int[] childLoc, int[] scrollLoc, NestedScrollView scroll) {
+        return childLoc[1] - scrollLoc[1] + scroll.getScrollY();
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void applyPrefillExtras() {
@@ -464,12 +521,27 @@ public class EditProductActivity extends BaseActivity {
                     for (PolyGoApi.Major m : majors) {
                         names.add(m.name);
                     }
-                    autoCompleteMajor.setAdapter(new ArrayAdapter<>(EditProductActivity.this, android.R.layout.simple_list_item_1, names));
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(autoCompleteMajor.getContext(), android.R.layout.simple_list_item_1, names);
+                    autoCompleteMajor.setAdapter(adapter);
+                    autoCompleteMajor.setThreshold(0); // Show all options on click
+                    autoCompleteMajor.setOnClickListener(v -> autoCompleteMajor.showDropDown());
+                    autoCompleteMajor.setOnFocusChangeListener((v, hasFocus) -> {
+                        if (hasFocus) autoCompleteMajor.showDropDown();
+                    });
                 }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.MajorsResponse> call, Throwable t) {
+                String[] fallback = {"Accountancy", "Business Studies", "Civil Engineering", "Computer Science",
+                    "Electrical Engineering", "Graphic Design", "Hospitality & Tourism",
+                    "Information Technology", "Mechanical Engineering", "Software Engineering"};
+                autoCompleteMajor.setAdapter(new ArrayAdapter<>(autoCompleteMajor.getContext(), android.R.layout.simple_list_item_1, fallback));
+                autoCompleteMajor.setThreshold(0);
+                autoCompleteMajor.setOnClickListener(v -> autoCompleteMajor.showDropDown());
+                autoCompleteMajor.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus) autoCompleteMajor.showDropDown();
+                });
             }
         });
     }
@@ -510,6 +582,16 @@ public class EditProductActivity extends BaseActivity {
             }
             if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
                 Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            double parsedPrice;
+            try {
+                parsedPrice = Double.parseDouble(price.trim());
+            } catch (NumberFormatException e) {
+                parsedPrice = -1;
+            }
+            if (parsedPrice < 0) {
+                Toast.makeText(this, "Enter a valid price", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -565,11 +647,11 @@ public class EditProductActivity extends BaseActivity {
                     .build();
             publishWorkId = request.getId();
             WorkManager.getInstance(this).enqueue(request);
-            observePublishResult(v, title, finalCategory, price, description);
+            observePublishResult(v, ownerId, title, finalCategory, price, description);
         });
     }
 
-    private void observePublishResult(View btn, String title, String category, String price, String description) {
+    private void observePublishResult(View btn, String ownerId, String title, String category, String price, String description) {
         WorkManager workManager = WorkManager.getInstance(this);
         if (publishWorkId != null) {
             workManager.getWorkInfoByIdLiveData(publishWorkId).observe(this, workInfo -> {
@@ -581,6 +663,10 @@ public class EditProductActivity extends BaseActivity {
                         HapticManager.success(EditProductActivity.this);
                         celebrate();
                         AppDataStore.addUserListing(EditProductActivity.this, listingId, title, category, price, description, imageUrl, selectedLocation());
+                        
+                        // Sync with Room to ensure HomeFragment sees it
+                        polyGoRepository.refreshListings(ownerId);
+                        
                         Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
                         new Handler(Looper.getMainLooper()).postDelayed(EditProductActivity.this::finish, 1500);
                     } else {

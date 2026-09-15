@@ -95,6 +95,8 @@
     <string name="profile_rm_zero">RM 0.00</string>
     <string name="profile_items_sold">Barangan Terjual</string>
     <string name="profile_zero">0</string>
+    <string name="status_sold">Terjual</string>
+    <string name="status_archived">Diarkibkan</string>
     <string name="profile_active_listings">Iklan Aktif</string>
     <string name="profile_campus_rating">Penarafan Kampus</string>
     <string name="profile_zero_rating">★ 0.0</string>
@@ -311,6 +313,21 @@
     <string name="verification_required_title">Pengesahan Kad Matrix</string>
     <string name="verification_posting_blocked">Sila sahkan Kad Matrix anda dalam Profil &gt; Pengesahan sebelum anda boleh memaparkan item.</string>
     <string name="verification_go_now">Sahkan sekarang</string>
+
+    <!-- Verification Gate Bottom Sheet -->
+    <string name="verify_gate_title">Sahkan Kad Matrix Anda</string>
+    <string name="verify_gate_subtitle">Catat dengan amanah - pengesahan selesai dalam masa kurang seminit.</string>
+    <string name="verify_gate_benefit_unlock">Buka kunci catatan</string>
+    <string name="verify_gate_benefit_unlock_sub">Jual merentas pasaran kampus</string>
+    <string name="verify_gate_benefit_badge">Tanda disahkan</string>
+    <string name="verify_gate_benefit_badge_sub">Menonjol sebagai pelajar PKS sebenar</string>
+    <string name="verify_gate_benefit_safety">Komuniti dipercayai</string>
+    <string name="verify_gate_benefit_safety_sub">Pertemuan selamat bersama pelajar disahkan sahaja</string>
+    <string name="verify_gate_confirm">Sahkan sekarang</string>
+    <string name="verify_gate_cancel">Bukan sekarang</string>
+    <string name="verify_gate_pending_title">Pengesahan dalam semakan</string>
+    <string name="verify_gate_pending_subtitle">Kad Matrix anda sedang disemak. Anda boleh memaparkan sebaik sahaja ia diluluskan.</string>
+    <string name="verify_gate_view_status">Lihat status</string>
 
     <!-- AI Proxy -->
     <string name="ai_suggest_error">Perkhidmatan AI tidak tersedia. Masukkan butiran penyenaraian anda secara manual.</string>

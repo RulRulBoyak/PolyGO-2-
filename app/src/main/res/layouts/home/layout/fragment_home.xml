@@ -53,7 +53,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:layout_marginTop="52dp"
+                android:layout_marginTop="18dp"
                 android:contentInsetStart="0dp"
                 android:contentInsetEnd="0dp"
                 app:contentInsetEnd="0dp"
@@ -65,7 +65,6 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="-34dp"
                     android:layout_marginBottom="16dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
@@ -187,12 +186,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="12dp"
                         android:layout_gravity="center"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="12dp"
                         android:background="@android:color/transparent"
                         app:tabBackground="@drawable/selector_carousel_dot"
                         app:tabGravity="center"
                         app:tabIndicatorHeight="0dp"
                         app:tabMaxWidth="12dp"
+                        app:tabMinWidth="0dp"
+                        app:tabPaddingEnd="4dp"
+                        app:tabPaddingStart="4dp"
                         app:tabRippleColor="@null" />
                 </LinearLayout>
 
@@ -314,7 +316,6 @@
                     android:layout_marginHorizontal="14dp"
                     android:layout_marginTop="12dp"
                     android:clipToPadding="false"
-                    android:layoutAnimation="@anim/layout_cascade"
                     android:nestedScrollingEnabled="false"
                     android:visibility="gone"
                     app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"

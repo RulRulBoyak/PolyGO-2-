@@ -19,11 +19,25 @@ try {
 
     if ($action === 'add') {
         $listingId = (int)($input['listing_id'] ?? 0);
-        $sellerId = (int)($input['seller_id'] ?? 0);
         $amount = (float)($input['amount'] ?? 0);
 
-        if ($listingId <= 0 || $sellerId <= 0 || $amount <= 0) {
+        if ($listingId <= 0 || $amount <= 0) {
             respond(false, 'Invalid transaction details');
+        }
+
+        // Seller is derived from the listing, never trusted from the client.
+        $listing = $pdo->prepare('SELECT owner_id, is_available FROM listings WHERE id = ? LIMIT 1');
+        $listing->execute([$listingId]);
+        $row = $listing->fetch();
+        if (!$row) {
+            respond(false, 'Listing not found');
+        }
+        $sellerId = (int)$row['owner_id'];
+        if ($sellerId === (int)$userId) {
+            respond(false, 'You cannot make an offer on your own listing');
+        }
+        if ((int)$row['is_available'] !== 1) {
+            respond(false, 'This listing is no longer available');
         }
 
         $query = $pdo->prepare('INSERT INTO transactions (listing_id, buyer_id, seller_id, amount, status) VALUES (?, ?, ?, ?, "offer_sent")');
@@ -57,9 +71,36 @@ try {
             respond(false, 'Missing update information');
         }
 
-        $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ?');
-        if ($query->execute([$status, $status, $transactionId])) {
+        // Only participants (buyer or seller) may update, and only to known states.
+        // Sync with database enum: offer_sent, accepted, pickup, completed, cancelled
+        $allowed = ['offer_sent', 'accepted', 'pickup', 'completed', 'cancelled', 'declined'];
+        if (!in_array($status, $allowed, true)) {
+            respond(false, 'Invalid status: ' . $status);
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ? AND (buyer_id = ? OR seller_id = ?)');
+            $query->execute([$status, $status, $transactionId, $userId, $userId]);
+            if ($query->rowCount() === 0) {
+                $pdo->rollBack();
+                respond(false, 'Transaction not found or not authorized');
+            }
             if ($status === 'completed') {
+                // Mark listing as no longer available in the same unit of work.
+                // NOTE: an already-sold listing is a valid completion target, so
+                // we verify the listing exists via the JOIN (not affected rows,
+                // which are 0 when the flag is already 0).
+                $listingCheck = $pdo->prepare('SELECT l.id FROM listings l JOIN transactions t ON l.id = t.listing_id WHERE t.id = ?');
+                $listingCheck->execute([$transactionId]);
+                if ($listingCheck->fetch() === false) {
+                    $pdo->rollBack();
+                    respond(false, 'Listing for this transaction no longer exists');
+                }
+                $listingUpdate = $pdo->prepare('UPDATE listings l JOIN transactions t ON l.id = t.listing_id SET l.is_available = 0 WHERE t.id = ?');
+                $listingUpdate->execute([$transactionId]);
+
                 $check = $pdo->prepare('SELECT impact_credited FROM transactions WHERE id = ?');
                 $check->execute([$transactionId]);
                 if ((int)$check->fetchColumn() === 1) {
@@ -71,8 +112,13 @@ try {
                     }
                 }
             }
+            $pdo->commit();
             respond(true, 'Transaction updated');
-        } else {
+        } catch (Throwable $t) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('[polygo-api] transactions update error: ' . $t->getMessage());
             respond(false, 'Failed to update transaction');
         }
     }

@@ -22,9 +22,24 @@ if (is_file($secretsFile)) {
     require_once $secretsFile;
 }
 if (!defined('JWT_SECRET')) {
-    define('JWT_SECRET', 'polygo_dev_fallback_change_me_before_production');
+    // The fallback secret is ONLY acceptable in the local/dev workflow. In
+    // production we fail closed: an undeclared JWT_SECRET is a server config
+    // error, not a reason to silently sign tokens with a known key.
+    $devFallback = defined('APP_ENV') ? (APP_ENV === 'dev') : is_dev_request();
+    if ($devFallback) {
+        define('JWT_SECRET', 'polygo_dev_fallback_change_me_before_production');
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server configuration error']);
+        exit;
+    }
 }
 define('TOKEN_EXPIRY', 604800); // 7 days in seconds
+
+function is_dev_request(): bool {
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    return $host === 'localhost' || $host === '127.0.0.1' || $host === '10.0.2.2';
+}
 
 $host = '127.0.0.1';
 $port = 3306;
