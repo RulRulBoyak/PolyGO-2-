@@ -52,6 +52,7 @@ public class CarouselAdapter extends RecyclerView.Adapter<CarouselAdapter.Holder
                 .load(source)
                 .placeholder(R.drawable.bg_product_home)
                 .error(R.drawable.bg_product_home)
+                .thumbnail(0.3f)
                 .into((ImageView) holder.itemView);
                 
         holder.itemView.setOnClickListener(v -> listener.onClick(position));

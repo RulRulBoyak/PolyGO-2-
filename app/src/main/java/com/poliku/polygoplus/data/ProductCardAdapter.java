@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.snackbar.Snackbar;
 import com.poliku.polygoplus.databinding.ItemProductCardBinding;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.RelativeTimeFormatter;
 
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import java.util.ArrayList;
@@ -42,10 +43,16 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
 
     private final List<ListingEntity> products = new ArrayList<>();
     private final Listener listener;
+    private int itemWidthDp;
 
     public ProductCardAdapter(List<ListingEntity> data, Listener listener) {
         if (data != null) products.addAll(data);
         this.listener = listener;
+    }
+
+    /** Fixed item width in dp for horizontal rails; 0 keeps the default match-parent width. */
+    public void setItemWidthDp(int itemWidthDp) {
+        this.itemWidthDp = itemWidthDp;
     }
 
     public void updateData(List<ListingEntity> newData) {
@@ -104,7 +111,13 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
     @NonNull
     @Override
     public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new Holder(ItemProductCardBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        Holder holder = new Holder(ItemProductCardBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+        if (itemWidthDp > 0) {
+            ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
+            lp.width = Math.round(itemWidthDp * parent.getResources().getDisplayMetrics().density);
+            holder.itemView.setLayoutParams(lp);
+        }
+        return holder;
     }
 
     @Override
@@ -119,6 +132,24 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
         h.binding.textViewRating.setText(ratingText);
         h.binding.textViewDistance.setText(p.archived
                 ? h.itemView.getContext().getString(R.string.status_archived) : p.distance);
+        String postedTime = RelativeTimeFormatter.format(h.itemView.getContext(), p.postedAt);
+        if (postedTime.isEmpty()) {
+            h.binding.textViewPostedTime.setVisibility(View.GONE);
+            h.binding.textViewMetaSep.setVisibility(View.GONE);
+        } else {
+            h.binding.textViewPostedTime.setText(postedTime);
+            h.binding.textViewPostedTime.setVisibility(View.VISIBLE);
+            h.binding.textViewMetaSep.setVisibility(View.VISIBLE);
+        }
+        int photoCount = photoCount(p.imageUrl);
+        if (photoCount > 1) {
+            h.binding.photoCountBadge.setText(String.valueOf(photoCount));
+            h.binding.photoCountBadge.setContentDescription(
+                    h.itemView.getContext().getString(R.string.product_photos_desc, photoCount));
+            h.binding.photoCountBadge.setVisibility(View.VISIBLE);
+        } else {
+            h.binding.photoCountBadge.setVisibility(View.GONE);
+        }
         boolean inactive = !p.available || p.archived;
         h.binding.textViewStatusBadge.setVisibility(inactive ? View.VISIBLE : View.GONE);
         h.binding.textViewStatusBadge.setText(h.itemView.getContext().getString(
@@ -134,6 +165,7 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
                 .load(thumbUrl.isEmpty() ? R.drawable.bg_product_home : thumbUrl)
                 .placeholder(R.drawable.bg_product_home)
                 .error(R.drawable.bg_product_home)
+                .override(400, 400)
                 .centerCrop();
 
         if (!thumbUrl.isEmpty() && !thumbUrl.equals(fullUrl)) {
@@ -142,6 +174,7 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
                             .load(fullUrl)
                             .placeholder(R.drawable.bg_product_home)
                             .error(R.drawable.bg_product_home)
+                            .override(400, 400)
                             .centerCrop());
         }
 
@@ -178,7 +211,7 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
         h.binding.buttonFavorite.setOnClickListener(v -> {
             HapticManager.lightTap(v);
             if (!AppDataStore.isLoggedIn(v.getContext())) {
-                Toast.makeText(v.getContext(), "Login required to save favorites", Toast.LENGTH_SHORT).show();
+                Toast.makeText(v.getContext(), R.string.toast_login_required_save_favorites, Toast.LENGTH_SHORT).show();
                 v.getContext().startActivity(new Intent(v.getContext(), LoginActivity.class));
                 return;
             }
@@ -194,8 +227,8 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
             
             // Rule 3.3: Contextual Undo & Snackbar
             if (!becomingFavorite) {
-                Snackbar snackbar = Snackbar.make(v, "Item removed from favorites", Snackbar.LENGTH_LONG);
-                snackbar.setAction("UNDO", view -> {
+                Snackbar snackbar = Snackbar.make(v, R.string.snack_item_removed_from_favorites, Snackbar.LENGTH_LONG);
+                snackbar.setAction(v.getContext().getString(R.string.action_undo), view -> {
                     HapticManager.lightTap(view);
                     AppDataStore.toggleFavorite(vContext(h), p.id);
                     v.setSelected(true);
@@ -222,6 +255,20 @@ public class ProductCardAdapter extends RecyclerView.Adapter<ProductCardAdapter.
 
     private Context vContext(Holder h) {
         return h.itemView.getContext();
+    }
+
+    private static int photoCount(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        String[] parts = imageUrl.split("\\|", -1);
+        for (String part : parts) {
+            if (part != null && !part.trim().isEmpty()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private static String toThumbUrl(String url) {

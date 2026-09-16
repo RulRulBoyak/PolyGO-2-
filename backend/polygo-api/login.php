@@ -18,7 +18,7 @@ try {
     }
 
     // Support login via either Student ID (Matrix No) OR Email
-    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, password_hash FROM users WHERE student_id = ? OR email = ? LIMIT 1');
+    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, is_verified, password_hash FROM users WHERE student_id = ? OR email = ? LIMIT 1');
     $query->execute([$studentId, $studentId]);
     $user = $query->fetch();
 

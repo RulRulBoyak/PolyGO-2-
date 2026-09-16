@@ -19,6 +19,7 @@ public final class HapticManager {
      * Subtle tap for tab changes or item clicks.
      */
     public static void lightTap(View view) {
+        if (view == null) return;
         view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
     }
 
@@ -26,6 +27,7 @@ public final class HapticManager {
      * Clear click for important actions like Apply Sort or Save.
      */
     public static void mediumTap(View view) {
+        if (view == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
         } else {
@@ -37,6 +39,7 @@ public final class HapticManager {
      * Heavy pulse for major state changes or primary action buttons.
      */
     public static void heavyTap(View view) {
+        if (view == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
         } else {

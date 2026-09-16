@@ -71,27 +71,55 @@ try {
             respond(false, 'Missing update information');
         }
 
-        // Only participants (buyer or seller) may update, and only to known states.
-        // Sync with database enum: offer_sent, accepted, pickup, completed, cancelled
-        $allowed = ['offer_sent', 'accepted', 'pickup', 'completed', 'cancelled', 'declined'];
+        // Sync with the database enum: offer_sent, accepted, pickup, completed, declined, cancelled
+        $allowed = ['offer_sent', 'accepted', 'pickup', 'completed', 'declined', 'cancelled'];
         if (!in_array($status, $allowed, true)) {
-            respond(false, 'Invalid status: ' . $status);
+            respond(false, 'Invalid status');
         }
 
         try {
             $pdo->beginTransaction();
 
-            $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ? AND (buyer_id = ? OR seller_id = ?)');
-            $query->execute([$status, $status, $transactionId, $userId, $userId]);
-            if ($query->rowCount() === 0) {
+            // Load current state + participants. FOR UPDATE closes the race
+            // between two clients trying to advance the same deal.
+            $current = $pdo->prepare('SELECT buyer_id, seller_id, listing_id, status FROM transactions WHERE id = ? FOR UPDATE');
+            $current->execute([$transactionId]);
+            $txn = $current->fetch();
+            if (!$txn) {
                 $pdo->rollBack();
                 respond(false, 'Transaction not found or not authorized');
             }
+
+            $buyerId = (int)$txn['buyer_id'];
+            $sellerId = (int)$txn['seller_id'];
+            $listingId = (int)$txn['listing_id'];
+            if ($buyerId !== $userId && $sellerId !== $userId) {
+                $pdo->rollBack();
+                respond(false, 'Transaction not found or not authorized');
+            }
+
+            // Role-based state machine. Buyers may only withdraw (offer or an
+            // accepted deal). Sellers drive the deal forward, and ONLY they can
+            // complete it — completion marks the listing sold + credits green
+            // impact, so it must never be reachable by a buyer. No skipping, no
+            // self-transitions. The app completes directly after 'accepted',
+            // so that shortcut is explicitly allowed for the seller.
+            $from = (string)$txn['status'];
+            $transition = $from . '>' . $status;
+            $role = ($buyerId === $userId) ? 'buyer' : 'seller';
+            $rules = [
+                'buyer'  => ['offer_sent>cancelled', 'accepted>cancelled'],
+                'seller' => ['offer_sent>accepted', 'offer_sent>declined', 'accepted>pickup', 'accepted>completed', 'pickup>completed']
+            ];
+            if ($from === $status || !in_array($transition, $rules[$role], true)) {
+                $pdo->rollBack();
+                respond(false, 'Transaction update is not allowed for this user');
+            }
+
+            $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ?');
+            $query->execute([$status, $status, $transactionId]);
             if ($status === 'completed') {
                 // Mark listing as no longer available in the same unit of work.
-                // NOTE: an already-sold listing is a valid completion target, so
-                // we verify the listing exists via the JOIN (not affected rows,
-                // which are 0 when the flag is already 0).
                 $listingCheck = $pdo->prepare('SELECT l.id FROM listings l JOIN transactions t ON l.id = t.listing_id WHERE t.id = ?');
                 $listingCheck->execute([$transactionId]);
                 if ($listingCheck->fetch() === false) {
@@ -113,6 +141,9 @@ try {
                 }
             }
             $pdo->commit();
+
+            self::notifyDealUpdate($pdo, $transactionId, $listingId, $buyerId, $sellerId, $role, $status);
+
             respond(true, 'Transaction updated');
         } catch (Throwable $t) {
             if ($pdo->inTransaction()) {
@@ -158,4 +189,66 @@ try {
 } catch (Exception $e) {
     error_log('[polygo-api] transactions error: ' . $e->getMessage());
     respond(false, 'Transaction failed, please try again');
+}
+
+/**
+ * Push a status-change notification to the other party in the deal. The commit
+ * has already happened; a notification failure must never fail the request, and
+ * sendToUser() persists an inbox row independently of whether the push lands.
+ */
+function notifyDealUpdate(PDO $pdo, int $transactionId, int $listingId, int $buyerId, int $sellerId, string $role, string $status): void {
+    try {
+        if (in_array($status, ['accepted', 'declined', 'pickup', 'completed', 'cancelled'], true)) {
+            $listingsQ = $pdo->prepare('SELECT title FROM listings WHERE id = ?');
+            $listingsQ->execute([$listingId]);
+            $itemTitle = (string)$listingsQ->fetchColumn();
+
+            // The other party + their name.
+            $peerId = $role === 'buyer' ? $sellerId : $buyerId;
+            $nameQ = $pdo->prepare('SELECT full_name FROM users WHERE id = ?');
+            $nameQ->execute([$peerId]);
+            $peerName = (string)$nameQ->fetchColumn();
+
+            // Deep-link target: the conversation thread for this deal pair.
+            $threadQ = $pdo->prepare('SELECT id FROM threads WHERE listing_id = ?
+                AND ((buyer_id = ? AND seller_id = ?) OR (buyer_id = ? AND seller_id = ?))
+                ORDER BY id LIMIT 1');
+            $threadQ->execute([$listingId, $buyerId, $sellerId, $sellerId, $buyerId]);
+            $threadId = (int)$threadQ->fetchColumn();
+
+            $data = [
+                'type' => 'transactions',
+                'transaction_id' => (string)$transactionId,
+                'listing_id' => (string)$listingId
+            ];
+            if ($threadId > 0) {
+                $data['thread_id'] = (string)$threadId;
+            }
+
+            $title = '';
+            $body = '';
+            if ($status === 'accepted') {
+                $title = 'Offer Accepted';
+                $body = $peerName . ' accepted your offer for "' . $itemTitle . '"';
+            } elseif ($status === 'declined') {
+                $title = 'Offer Declined';
+                $body = $peerName . ' declined your offer for "' . $itemTitle . '"';
+            } elseif ($status === 'pickup') {
+                $title = 'Ready for Pickup';
+                $body = 'Your item "' . $itemTitle . '" is ready for pickup';
+            } elseif ($status === 'completed') {
+                $title = 'Deal Completed';
+                $body = 'Your deal for "' . $itemTitle . '" is complete';
+            } elseif ($status === 'cancelled') {
+                $title = 'Offer Cancelled';
+                $body = $peerName . ' cancelled the offer for "' . $itemTitle . '"';
+            }
+
+            if ($title !== '') {
+                NotificationManager::sendToUser($pdo, $peerId, $title, $body, $data);
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[polygo-api] deal notification failed: ' . $e->getMessage());
+    }
 }

@@ -15,7 +15,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -93,7 +93,7 @@ public class SustainabilityDashboardActivity extends BaseActivity {
 
         findViewById(R.id.btnHowItWorks).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.impact_how_title)
                 .setMessage(R.string.impact_how_body)
                 .setPositiveButton(android.R.string.ok, null)

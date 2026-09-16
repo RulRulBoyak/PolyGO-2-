@@ -41,8 +41,8 @@ public class TransactionsActivity extends AppCompatActivity {
         listContainer = findViewById(R.id.transactionList);
         emptyView = findViewById(R.id.emptyTransactions);
 
-        EmptyStates.bind(emptyView, R.drawable.ic_receipt_long, "No transactions yet",
-                "When you make an offer, the order will show here with meetup details.", "Browse listings",
+        EmptyStates.bind(emptyView, R.drawable.ic_receipt_long, getString(R.string.transactions_empty_title),
+                getString(R.string.transactions_empty_desc), getString(R.string.transactions_browse_listings),
                 v -> startActivity(new Intent(this, SearchActivity.class)));
 
         fetchTransactions();
@@ -67,7 +67,7 @@ public class TransactionsActivity extends AppCompatActivity {
             public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
                 // FALLBACK: Show local transactions if network fails
                 renderTransactions(AppDataStore.getTransactions(TransactionsActivity.this));
-                Toast.makeText(TransactionsActivity.this, "Viewing offline history", Toast.LENGTH_SHORT).show();
+                Toast.makeText(TransactionsActivity.this, R.string.toast_viewing_offline_history, Toast.LENGTH_SHORT).show();
             }
         });
     }

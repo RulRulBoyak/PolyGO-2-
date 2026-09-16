@@ -37,8 +37,8 @@ public class ReportActivity extends AppCompatActivity {
         String id = getIntent().getStringExtra(EXTRA_TARGET_ID);
         String name = getIntent().getStringExtra(EXTRA_TARGET_NAME);
         boolean listing = !"user".equals(type);
-        ((TextView) findViewById(R.id.tvReportTitle)).setText(listing ? "Report this listing" : "Report this user");
-        ((TextView) findViewById(R.id.tvReportTarget)).setText("Help keep PKS safe. Reporting: " + (name == null ? "this account" : name));
+        ((TextView) findViewById(R.id.tvReportTitle)).setText(listing ? getString(R.string.report_title_listing) : getString(R.string.report_title_user));
+        ((TextView) findViewById(R.id.tvReportTarget)).setText(getString(R.string.report_target_label, name == null ? getString(R.string.report_this_account) : name));
 
         Spinner spinner = findViewById(R.id.spinnerReason);
         String[] reasons = listing
@@ -54,7 +54,7 @@ public class ReportActivity extends AppCompatActivity {
                 @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) { }
                 @Override public void onFailure(Call<BaseResponse> call, Throwable t) { }
             });
-            Toast.makeText(this, "Report submitted. Thank you.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.toast_report_submitted, Toast.LENGTH_LONG).show();
             finish();
         });
     }

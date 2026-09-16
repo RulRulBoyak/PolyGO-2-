@@ -86,7 +86,7 @@ public class IsbnScannerActivity extends AppCompatActivity {
                 cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
 
             } catch (ExecutionException | InterruptedException e) {
-                Toast.makeText(this, "Error starting camera", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_error_starting_camera, Toast.LENGTH_SHORT).show();
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -130,7 +130,7 @@ public class IsbnScannerActivity extends AppCompatActivity {
         if (requestCode == 10) {
             if (allPermissionsGranted()) startCamera();
             else {
-                Toast.makeText(this, "Camera permission required", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_camera_permission_required, Toast.LENGTH_SHORT).show();
                 finish();
             }
         }

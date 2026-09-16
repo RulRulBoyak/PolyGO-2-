@@ -28,7 +28,7 @@
                 android:layout_height="40dp"
                 android:background="@color/white"
                 android:clickable="true"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
@@ -93,7 +93,7 @@
                         android:layout_width="160dp"
                         android:layout_height="160dp"
                         android:alpha="0.03"
-                        android:contentDescription="Watermark"
+                        android:contentDescription="@string/content_description_watermark"
                         android:src="@drawable/bg_verified_badge"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -181,7 +181,7 @@
                                 android:layout_width="80dp"
                                 android:layout_height="80dp"
                                 android:alpha="0.8"
-                                android:contentDescription="QR Code"
+                                android:contentDescription="@string/content_description_qr_code"
                                 android:src="@drawable/ic_grid"
                                 app:tint="@color/airbnb_ink" />
 

@@ -99,8 +99,8 @@ public class AuthViewModel extends ViewModel {
         repository.login(studentId, password, callback);
     }
 
-    public void register(String name, String studentId, String email, String password, Callback<PolyGoApi.LoginResponse> callback) {
-        repository.register(name, studentId, email, password, callback);
+    public void register(String name, String studentId, String email, String password, boolean consentAgreed, Callback<PolyGoApi.LoginResponse> callback) {
+        repository.register(name, studentId, email, password, consentAgreed, callback);
     }
 
     public void sendOtp(String email, Callback<PolyGoApi.OtpSendResponse> callback) {

@@ -11,11 +11,12 @@ if ($sellerId <= 0 && $sellerName === '') {
 }
 
 // Resolve user ID
+$userSelect = 'id, full_name, is_verified, bio, is_private, profile_pic_url, created_at';
 if ($sellerId > 0) {
-    $userQuery = $pdo->prepare('SELECT id, full_name, is_verified, bio, is_private, profile_pic_url FROM users WHERE id = ? LIMIT 1');
+    $userQuery = $pdo->prepare("SELECT $userSelect FROM users WHERE id = ? LIMIT 1");
     $userQuery->execute([$sellerId]);
 } else {
-    $userQuery = $pdo->prepare('SELECT id, full_name, is_verified, bio, is_private, profile_pic_url FROM users WHERE full_name = ? LIMIT 1');
+    $userQuery = $pdo->prepare("SELECT $userSelect FROM users WHERE full_name = ? LIMIT 1");
     $userQuery->execute([$sellerName]);
 }
 $user = $userQuery->fetch();
@@ -79,6 +80,9 @@ if ((bool)$user['is_private']) {
             'profile_pic_url' => $user['profile_pic_url'] ?? '',
             'active' => 0,
             'sold' => 0,
+            'rating' => 0.0,
+            'reviews' => 0,
+            'joined_at' => $user['created_at'] ?? '',
         ],
         'listings' => [],
         'reviews' => [],
@@ -115,6 +119,13 @@ try {
 } catch (Throwable $ignored) {
 }
 
+// Aggregate social proof: average rating + review count (mirrors the metrics action).
+$rateQuery = $pdo->prepare('SELECT AVG(stars), COUNT(*) FROM reviews WHERE seller_id = ?');
+$rateQuery->execute([$ownerId]);
+$rateRow = $rateQuery->fetch();
+$avgRating = round((float)$rateRow[0], 1);
+$reviewCount = (int)$rateRow[1];
+
 respond(true, 'Seller loaded', [
     'seller' => [
         'id' => $ownerId,
@@ -125,6 +136,9 @@ respond(true, 'Seller loaded', [
         'profile_pic_url' => $user['profile_pic_url'] ?? '',
         'active' => $active,
         'sold' => $sold,
+        'rating' => $avgRating,
+        'reviews' => $reviewCount,
+        'joined_at' => $user['created_at'] ?? '',
     ],
     'listings' => $listings,
     'reviews' => $reviews,

@@ -30,7 +30,7 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:focusable="true"
                 android:padding="8dp"
                 android:src="@drawable/ic_arrow_back"
@@ -226,8 +226,41 @@
         android:textSize="12sp"
         android:textStyle="italic"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/inputBarContainer"
+        app:layout_constraintBottom_toTopOf="@id/quickChipContainer"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Messenger-Style Quick Action Chips -->
+    <LinearLayout
+        android:id="@+id/quickChipContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/inputBarContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/grey_200" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupQuickActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                app:singleLine="true" />
+        </HorizontalScrollView>
+    </LinearLayout>
 
     <!-- Bottom Modern WhatsApp/iOS Pill Input Bar -->
     <LinearLayout
@@ -281,7 +314,7 @@
                 android:id="@+id/btnSend"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
-                android:contentDescription="Send"
+                android:contentDescription="@string/content_description_send"
                 android:insetLeft="0dp"
                 android:insetTop="0dp"
                 android:insetRight="0dp"

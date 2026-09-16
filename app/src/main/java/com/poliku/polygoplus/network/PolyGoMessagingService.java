@@ -65,7 +65,11 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(@NonNull String token) {
         Log.d(TAG, "Refreshed token: " + token);
-        
+
+        // Always remember the latest token locally so a login right after a
+        // rotation can still sync a valid value to the backend.
+        AppDataStore.saveFcmToken(getApplicationContext(), token);
+
         // If user is logged in, sync this token to the server immediately
         String userId = AppDataStore.userId(getApplicationContext());
         if (!userId.equals("0")) {
@@ -97,7 +101,7 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
 
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, PolyGoApplication.CHANNEL_ID)
-                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setSmallIcon(R.drawable.ic_notification)
                         .setColor(getResources().getColor(R.color.airbnb_coral, null))
                         .setContentTitle(title)
                         .setContentText(messageBody)

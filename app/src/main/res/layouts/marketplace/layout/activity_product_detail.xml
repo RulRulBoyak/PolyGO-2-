@@ -130,11 +130,35 @@
                         app:cornerRadius="24dp"
                         app:icon="@drawable/selector_star"
                         app:iconGravity="textStart"
-                        app:iconPadding="6dp"
-                        app:iconSize="18dp"
-                        app:iconTint="@color/save_icon_selector"
-                        app:strokeColor="@color/save_stroke_selector"
-                        app:strokeWidth="1.2dp" />
+app:iconPadding="6dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/save_icon_selector"
+                    app:strokeColor="@color/save_stroke_selector"
+                    app:strokeWidth="1.2dp" />
+
+                <!-- Share Listing Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnShareListing"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/share_listing_label"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="24dp"
+                    app:icon="@drawable/ic_share"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/pks_blue"
+                    app:strokeColor="@color/grey_200"
+                    app:strokeWidth="1.2dp" />
                 </LinearLayout>
 
                 <!-- Product Price -->
@@ -253,7 +277,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_marginHorizontal="16dp"
-                            android:contentDescription="Star rating"
+                            android:contentDescription="@string/content_description_star_rating"
                             android:src="@drawable/ic_star_filled"
                             app:tint="@color/pks_gold" />
 
@@ -345,6 +369,7 @@
 
                         <!-- Avatar Badge -->
                         <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/sellerAvatar"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:background="@color/soft_blue"
@@ -364,19 +389,37 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
 
-                            <TextView
-                                android:id="@+id/sellerName"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:textColor="@color/pks_blue"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                tools:text="Amirul Farhan" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/sellerName"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    android:textColor="@color/pks_blue"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="Amirul Farhan" />
+
+                                <ImageView
+                                    android:id="@+id/ivVerifiedBadge"
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:layout_marginStart="4dp"
+                                    android:contentDescription="@string/content_description_verified_seller"
+                                    android:src="@drawable/ic_verified"
+                                    android:visibility="gone"
+                                    tools:visibility="visible" />
+                            </LinearLayout>
 
                             <TextView
+                                android:id="@+id/sellerMeta"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
@@ -389,7 +432,7 @@
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:contentDescription="View Profile"
+                            android:contentDescription="@string/content_description_view_profile"
                             android:src="@drawable/ic_chevron_right"
                             app:tint="@color/airbnb_muted" />
 
@@ -426,7 +469,37 @@
                     android:textSize="13sp"
                     app:rippleColor="#15000000" />
 
+            <!-- Similar Listings Section -->
+            <LinearLayout
+                android:id="@+id/similarSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="-0.01"
+                    android:text="@string/similar_title"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSimilar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingEnd="16dp"
+                    tools:itemCount="3" />
             </LinearLayout>
+
+        </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

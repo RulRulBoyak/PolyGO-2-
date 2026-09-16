@@ -66,8 +66,9 @@ public final class PolyGoRepository {
                         for (PolyGoApi.Listing l : response.body().listings) {
                             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
                             ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price, l.rating,
-                                    l.distance, l.image_url, l.category, l.description, l.owner_id,
-                                    l.available, isOwner);
+                                    l.distance != null ? l.distance : (l.location == null ? "" : l.location), l.image_url,
+                                    l.category, l.description, l.owner_id, l.available, isOwner, l.location,
+                                    l.postedAt, l.views);
                             entity.reviewCount = l.review_count;
                             entities.add(entity);
                         }
@@ -91,8 +92,8 @@ public final class PolyGoRepository {
         api.googleLogin(new PolyGoApi.GoogleLoginRequest(idToken)).enqueue(callback);
     }
 
-    public void register(String name, String studentId, String email, String password, Callback<PolyGoApi.LoginResponse> callback) {
-        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password, true)).enqueue(callback);
+    public void register(String name, String studentId, String email, String password, boolean consentAgreed, Callback<PolyGoApi.LoginResponse> callback) {
+        api.register(new PolyGoApi.RegisterRequest(name, studentId, email, password, consentAgreed)).enqueue(callback);
     }
 
     public void sendOtp(String email, Callback<PolyGoApi.OtpSendResponse> callback) {
@@ -122,11 +123,16 @@ public final class PolyGoRepository {
     }
 
     public void getListings(int offset, int limit, String sort, Integer major, Callback<PolyGoApi.ListingsResponse> callback) {
+        getListings(offset, limit, sort, major, null, callback);
+    }
+
+    public void getListings(int offset, int limit, String sort, Integer major, Integer ownerId, Callback<PolyGoApi.ListingsResponse> callback) {
         PolyGoApi.ListingsRequest req = new PolyGoApi.ListingsRequest();
         req.offset = offset;
         req.limit = limit;
         req.sort = sort;
         req.major = major;
+        req.owner_id = ownerId;
         api.getListings(req).enqueue(callback);
     }
 
@@ -151,6 +157,14 @@ public final class PolyGoRepository {
 
     public void getListing(String id, Callback<PolyGoApi.ListingsResponse> callback) {
         api.getListings(new PolyGoApi.ListingsRequest(id)).enqueue(callback);
+    }
+
+    public Call<PolyGoApi.ListingsResponse> createGetListingCall(String id) {
+        return api.getListings(new PolyGoApi.ListingsRequest(id));
+    }
+
+    public Call<PolyGoApi.ListingsResponse> createSimilarCall(String id) {
+        return api.getListings(new PolyGoApi.ListingsRequest(id, "similar"));
     }
 
     public void markSold(String listingId, Callback<BaseResponse> callback) {
@@ -244,6 +258,14 @@ public final class PolyGoRepository {
     }
 
     public void sendMessage(String userId, String threadId, String listingId, String receiverId, String text, Callback<PolyGoApi.SendMessageResponse> callback) {
+        api.sendMessage(buildSendMessageRequest(userId, threadId, listingId, receiverId, text)).enqueue(callback);
+    }
+
+    public Call<PolyGoApi.SendMessageResponse> createSendMessageCall(String userId, String threadId, String listingId, String receiverId, String text) {
+        return api.sendMessage(buildSendMessageRequest(userId, threadId, listingId, receiverId, text));
+    }
+
+    private PolyGoApi.MessageRequest buildSendMessageRequest(String userId, String threadId, String listingId, String receiverId, String text) {
         PolyGoApi.MessageRequest req = new PolyGoApi.MessageRequest();
         req.user_id = userId;
         req.thread_id = threadId;
@@ -251,7 +273,7 @@ public final class PolyGoRepository {
         req.receiver_id = receiverId;
         req.text = text;
         req.action = "send";
-        api.sendMessage(req).enqueue(callback);
+        return req;
     }
 
     public void getNotifications(String userId, Callback<PolyGoApi.NotificationsResponse> callback) {

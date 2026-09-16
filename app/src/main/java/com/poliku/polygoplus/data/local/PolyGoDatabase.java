@@ -13,7 +13,7 @@ import com.poliku.polygoplus.data.local.entity.ThreadEntity;
 import com.poliku.polygoplus.data.local.entity.UserEntity;
 
 @Database(entities = {ListingEntity.class, UserEntity.class, ThreadEntity.class, MessageEntity.class, BlockEntity.class},
-          version = 3, exportSchema = false)
+          version = 4, exportSchema = false)
 public abstract class PolyGoDatabase extends RoomDatabase {
     public abstract ListingDao listingDao();
     public abstract ChatDao chatDao();

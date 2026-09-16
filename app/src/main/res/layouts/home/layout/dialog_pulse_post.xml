@@ -12,9 +12,13 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_category_circle"
+        android:backgroundTint="@color/soft_blue"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
         android:text="@string/pulse_tag_label"
         android:textStyle="bold"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:textColor="@color/pks_blue" />
 
     <com.google.android.material.chip.ChipGroup
@@ -59,7 +63,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="@string/pulse_title_hint">
+        android:hint="@string/pulse_title_hint"
+        app:boxBackgroundColor="@color/soft_blue"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeColor="@color/pks_blue">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPulseTitle"
@@ -74,7 +85,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="@string/pulse_body_hint">
+        android:hint="@string/pulse_body_hint"
+        app:boxBackgroundColor="@color/soft_blue"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeColor="@color/pks_blue">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPulseBody"

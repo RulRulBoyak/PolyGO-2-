@@ -12,34 +12,47 @@
     android:foreground="?attr/selectableItemBackground"
     android:stateListAnimator="@animator/press_scale"
     app:cardBackgroundColor="@color/white"
-    app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:strokeColor="#F2F3F7"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="12dp">
 
+        <!-- Image with 20dp top corners -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:contentDescription="Item image"
+            android:contentDescription="@string/item_image"
             android:scaleType="centerCrop"
             android:src="@drawable/bg_product_electronics"
             app:layout_constraintDimensionRatio="1.3:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.PolyGo.CardImage" />
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.PolyGo.CardImage.Large" />
 
+        <!-- Bottom scrim for badge readability on bright photos -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:background="@drawable/bg_scrim_bottom"
+            app:layout_constraintBottom_toBottomOf="@id/imageView"
+            app:layout_constraintEnd_toEndOf="@id/imageView"
+            app:layout_constraintStart_toStartOf="@id/imageView" />
+
+        <!-- Favorite heart -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonFavorite"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="4dp"
-            android:backgroundTint="#E6FFFFFF"
-            android:contentDescription="Add to favorites"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_margin="8dp"
+            android:backgroundTint="#D0FFFFFF"
+            android:contentDescription="@string/content_description_add_to_favorites"
             android:insetLeft="0dp"
             android:insetTop="0dp"
             android:insetRight="0dp"
@@ -50,36 +63,60 @@
             app:icon="@drawable/selector_favorite"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="20dp"
+            app:iconSize="18dp"
             app:iconTint="@color/favorite_icon_selector"
             app:layout_constraintEnd_toEndOf="@id/imageView"
             app:layout_constraintTop_toTopOf="@id/imageView"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.PolyGo.Circle" />
 
+        <!-- Sold / Archived badge -->
         <TextView
             android:id="@+id/textViewStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_status_badge"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
             android:text="Sold"
             android:textColor="@color/white"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold"
             android:visibility="gone"
             app:layout_constraintStart_toStartOf="@id/imageView"
             app:layout_constraintTop_toTopOf="@id/imageView"
             tools:visibility="visible" />
 
+        <!-- Photo count badge with camera icon -->
+        <TextView
+            android:id="@+id/photoCountBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_status_badge"
+            android:contentDescription="@string/product_photos_desc"
+            android:drawableStart="@drawable/ic_camera"
+            android:drawablePadding="3dp"
+            android:drawableTint="@color/white"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/imageView"
+            app:layout_constraintEnd_toEndOf="@id/imageView"
+            tools:text="3" />
+
+        <!-- Product info area -->
         <LinearLayout
             android:id="@+id/productInfo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="12dp"
+            android:paddingHorizontal="14dp"
             android:paddingTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -92,14 +129,14 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Premium Product"
-                android:textColor="@color/black"
+                android:textColor="@color/airbnb_ink"
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -115,7 +152,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:text="•"
+                    android:text="·"
                     android:textColor="@color/grey_700"
                     android:textSize="11sp" />
 
@@ -129,13 +166,39 @@
                     android:text="0.4 km"
                     android:textColor="@color/grey_700"
                     android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/textViewMetaSep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="·"
+                    android:textColor="@color/grey_700"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textViewPostedTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Just now"
+                    android:textColor="@color/grey_700"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
             </LinearLayout>
 
+            <!-- Price with pill background -->
             <TextView
                 android:id="@+id/textViewPrice"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:background="@drawable/bg_price_pill"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
                 android:text="RM 25.00"
                 android:textColor="@color/pks_blue"
                 android:textAppearance="?attr/textAppearanceTitleMedium"

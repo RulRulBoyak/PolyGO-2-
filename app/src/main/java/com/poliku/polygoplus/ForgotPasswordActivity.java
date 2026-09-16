@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.api.PolyGoApi;
@@ -28,7 +28,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         findViewById(R.id.btnSendReset).setOnClickListener(v -> {
             String id = ((EditText) findViewById(R.id.etResetId)).getText().toString().trim();
             if (id.isEmpty()) {
-                Toast.makeText(this, "Enter your ID or email", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_enter_id_or_email, Toast.LENGTH_SHORT).show();
                 return;
             }
             findViewById(R.id.btnSendReset).setEnabled(false);
@@ -38,12 +38,12 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                     if (body != null && body.isSuccess()) {
                         String temp = body.temporaryPassword;
                         if (temp == null || temp.isEmpty()) {
-                            temp = "Use the temporary password sent to your email";
+                            temp = getString(R.string.forgot_temp_password_email);
                         }
-                        new AlertDialog.Builder(ForgotPasswordActivity.this)
-                                .setTitle("Reset issued")
-                                .setMessage("Use this temporary password to log in, then change it in Profile:\n\n" + temp)
-                                .setPositiveButton("OK", (d, w) -> {
+                        new MaterialAlertDialogBuilder(ForgotPasswordActivity.this)
+                                .setTitle(R.string.dialog_reset_issued)
+                                .setMessage(getString(R.string.dialog_reset_issued_message, temp))
+                                .setPositiveButton(android.R.string.ok, (d, w) -> {
                                     findViewById(R.id.btnSendReset).setEnabled(true);
                                     finish();
                                 })
@@ -52,13 +52,13 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                     } else {
                         findViewById(R.id.btnSendReset).setEnabled(true);
                         Toast.makeText(ForgotPasswordActivity.this,
-                                body != null && body.getMessage() != null ? body.getMessage() : "Reset failed, please try again",
+                                body != null && body.getMessage() != null ? body.getMessage() : getString(R.string.toast_reset_failed),
                                 Toast.LENGTH_LONG).show();
                     }
                 }
                 @Override public void onFailure(Call<PolyGoApi.ForgotPasswordResponse> call, Throwable t) {
                     findViewById(R.id.btnSendReset).setEnabled(true);
-                    Toast.makeText(ForgotPasswordActivity.this, "Could not reach server, please try again", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ForgotPasswordActivity.this, R.string.toast_could_not_reach_server_try_again, Toast.LENGTH_LONG).show();
                 }
             });
         });

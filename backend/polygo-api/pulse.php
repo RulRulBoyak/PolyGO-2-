@@ -21,6 +21,13 @@ if ($action === 'list') {
 if ($action === 'post') {
     $userId = verify_jwt();
 
+    // UGC wall — per-user + per-IP so the campus feed cannot be flooded.
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (!rate_limit_check($pdo, 'pulse_uid:' . $userId, 10, 600) ||
+        !rate_limit_check($pdo, 'pulse_ip:' . $clientIp, 20, 600)) {
+        respond(false, 'You are posting too fast, please try again later');
+    }
+
     $tag   = strtoupper(trim((string)($input['tag'] ?? '')));
     $title = trim((string)($input['title'] ?? ''));
     $body  = trim((string)($input['body'] ?? ''));

@@ -51,6 +51,10 @@ try {
     if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? '10.0.2.2';
+        // Trusted hosts only: blocks Host-header injection rewriting photo URLs.
+        if ($host !== '' && !in_array($host, ['localhost', '127.0.0.1', '10.0.2.2', 'polygo.pks.edu.my'], true)) {
+            respond(false, 'Upload failed');
+        }
         $baseUrl = $scheme . '://' . $host . '/polygo-api/uploads/';
         $thumbUrl = $baseUrl . $fileName;
 

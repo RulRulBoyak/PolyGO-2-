@@ -84,7 +84,7 @@ public class LoginActivity extends BaseActivity {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         handleLoginResponse(response.body());
                     } else {
-                        onError("Login failed");
+                        onError(getString(R.string.toast_login_failed));
                     }
                 }
 
@@ -120,7 +120,7 @@ public class LoginActivity extends BaseActivity {
             HapticManager.lightTap(v);
             String webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
             if (webClientId == null || webClientId.isEmpty()) {
-                Toast.makeText(this, "Google sign-in is not available right now. Use your campus ID instead.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.toast_google_sign_in_unavailable, Toast.LENGTH_LONG).show();
                 return;
             }
             googleSignIn();
@@ -192,7 +192,7 @@ public class LoginActivity extends BaseActivity {
     private void onGoogleError(boolean cancelled, String message) {
         if (!cancelled) {
             HapticManager.error(LoginActivity.this);
-            Toast.makeText(this, message == null ? "Google sign-in failed. Please try again." : message, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, message == null ? getString(R.string.toast_google_sign_in_failed) : message, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -238,8 +238,11 @@ public class LoginActivity extends BaseActivity {
 
     private void syncFcmToken() {
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) return;
-            String token = task.getResult();
+            String token = task.isSuccessful() && task.getResult() != null
+                    ? task.getResult()
+                    : AppDataStore.pendingFcmToken(this);
+            if (token == null || token.isEmpty()) return;
+            AppDataStore.saveFcmToken(this, token);
             String userId = AppDataStore.userId(this);
             if (!userId.equals("0")) {
                 polyGoRepository.updateFcmToken(userId, token, new Callback<BaseResponse>() {

@@ -48,6 +48,7 @@ public class MessagesFragment extends Fragment {
     private View empty;
     private View shimmer;
     private MessagesViewModel viewModel;
+    private TextWatcher searchWatcher;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -71,7 +72,7 @@ public class MessagesFragment extends Fragment {
 
         view.findViewById(R.id.buttonCompose).setOnClickListener(v -> startActivity(new Intent(requireContext(), SearchActivity.class)));
         EditText search = view.findViewById(R.id.editTextMessageSearch);
-        search.addTextChangedListener(new TextWatcher() {
+        searchWatcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
@@ -81,7 +82,8 @@ public class MessagesFragment extends Fragment {
             }
 
             @Override public void afterTextChanged(Editable s) { }
-        });
+        };
+        search.addTextChangedListener(searchWatcher);
 
         ChipGroup filters = view.findViewById(R.id.messageFilters);
         filters.setOnCheckedChangeListener((group, checkedId) -> {
@@ -143,6 +145,16 @@ public class MessagesFragment extends Fragment {
     @Override public void onResume() {
         super.onResume();
         if (viewModel != null) viewModel.loadThreads();
+    }
+
+    @Override public void onDestroyView() {
+        View view = getView();
+        if (view != null && searchWatcher != null) {
+            EditText search = view.findViewById(R.id.editTextMessageSearch);
+            if (search != null) search.removeTextChangedListener(searchWatcher);
+            searchWatcher = null;
+        }
+        super.onDestroyView();
     }
 
     private void updateEmpty() {

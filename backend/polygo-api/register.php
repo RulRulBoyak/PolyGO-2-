@@ -19,6 +19,12 @@ if (!$consentAgreed) {
     respond(false, 'You must accept our Terms & Privacy Policy to register');
 }
 
+// Bot wall: cap signups per IP so a single client cannot mass-create accounts.
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+if (!rate_limit_check($pdo, 'register_ip:' . $clientIp, 5, 3600)) {
+    respond(false, 'Too many accounts created from this network. Try again later.');
+}
+
 try {
     $query = $pdo->prepare('INSERT INTO users (full_name, student_id, email, password_hash, consent_agreed_at) VALUES (?, ?, ?, ?, NOW())');
     $query->execute([$name, $studentId, $email, password_hash($password, PASSWORD_DEFAULT)]);

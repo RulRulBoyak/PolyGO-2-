@@ -34,13 +34,13 @@ public class ReviewActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         String seller = getIntent().getStringExtra(EXTRA_SELLER);
         String transactionId = getIntent().getStringExtra(EXTRA_TRANSACTION_ID);
-        ((TextView) findViewById(R.id.tvReviewSeller)).setText("Leave a 5-star review for " + (seller == null ? "this seller" : seller) + " after a successful campus meetup.");
+        ((TextView) findViewById(R.id.tvReviewSeller)).setText(getString(R.string.review_prompt, seller == null ? getString(R.string.review_this_seller) : seller));
 
         findViewById(R.id.btnSubmitReview).setOnClickListener(v -> {
             int stars = (int) ((RatingBar) findViewById(R.id.ratingBar)).getRating();
             String comment = ((EditText) findViewById(R.id.etReview)).getText().toString().trim();
             if (stars < 1) {
-                Toast.makeText(this, "Choose a star rating", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_choose_star_rating, Toast.LENGTH_SHORT).show();
                 return;
             }
             String sellerName = seller;
@@ -53,7 +53,7 @@ public class ReviewActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.addReview(ReviewActivity.this, sellerName, stars, comment);
                         if (txId != null) AppDataStore.markTransactionReviewed(ReviewActivity.this, txId);
-                        Toast.makeText(ReviewActivity.this, "Thanks for helping the PKS community", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ReviewActivity.this, R.string.toast_thanks_for_review, Toast.LENGTH_SHORT).show();
                         finish();
                     } else {
                         String msg = (response.body() != null && response.body().getMessage() != null)

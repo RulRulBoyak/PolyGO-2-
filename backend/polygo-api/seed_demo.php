@@ -10,6 +10,13 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/ImpactEngine.php';
 header('Content-Type: text/html; charset=utf-8');
 
+// Belt & braces: never run the seed on a production host, even via loopback.
+if (defined('APP_ENV') && APP_ENV === 'prod') {
+    http_response_code(403);
+    echo '<h1>Forbidden</h1><p>Seeding is disabled in production.</p>';
+    exit;
+}
+
 /**
  * PolyGo+ Demo Data Seed
  * Populates users, listings, reviews, transactions (incl. completed deals that

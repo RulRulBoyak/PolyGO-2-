@@ -9,10 +9,10 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="0dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="2dp"
     app:strokeColor="@color/grey_200"
-    app:strokeWidth="1.2dp">
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:layout_width="26dp"
                 android:layout_height="26dp"
                 android:layout_gravity="center"
-                android:contentDescription="Category Icon"
+                android:contentDescription="@string/category_icon"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_grid"
                 app:tint="@color/pks_blue" />

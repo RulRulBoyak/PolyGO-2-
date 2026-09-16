@@ -21,18 +21,13 @@ public class ReceiptActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         AppDataStore.TransactionRecord order = AppDataStore.getTransaction(this, getIntent().getStringExtra(EXTRA_TRANSACTION_ID));
         if (order == null) {
-            Toast.makeText(this, "Receipt not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_receipt_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
         String when = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(new Date(order.time));
         ((TextView) findViewById(R.id.tvReceiptBody)).setText(
-                "Item: " + order.title + "\nAgreed price: " + order.amount
-                        + "\nSeller: " + order.seller
-                        + "\nBuyer: " + AppDataStore.userName(this)
-                        + "\nMeetup: " + order.location
-                        + "\nStatus: " + order.status
-                        + "\nDate: " + when
-                        + "\nReceipt ID: " + order.id);
+                getString(R.string.receipt_body, order.title, order.amount, order.seller,
+                        AppDataStore.userName(this), order.location, order.status, when, order.id));
     }
 }

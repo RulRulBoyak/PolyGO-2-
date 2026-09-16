@@ -22,10 +22,13 @@ if (is_file($secretsFile)) {
     require_once $secretsFile;
 }
 if (!defined('JWT_SECRET')) {
-    // The fallback secret is ONLY acceptable in the local/dev workflow. In
-    // production we fail closed: an undeclared JWT_SECRET is a server config
-    // error, not a reason to silently sign tokens with a known key.
-    $devFallback = defined('APP_ENV') ? (APP_ENV === 'dev') : is_dev_request();
+    // The fallback secret is ONLY acceptable in the local/dev workflow AND only
+    // when the request actually arrives from a dev host. Shipping the template
+    // secrets.php with APP_ENV='dev' to a prod server still fails closed here,
+    // because the well-known dev key is never used for remote requests.
+    $devFallback = defined('APP_ENV')
+        ? (APP_ENV === 'dev' && is_dev_request())
+        : is_dev_request();
     if ($devFallback) {
         define('JWT_SECRET', 'polygo_dev_fallback_change_me_before_production');
     } else {
@@ -71,6 +74,9 @@ function input_json(): array {
 }
 
 function respond(bool $success, string $message, array $extra = []): void {
+    if (!$success && strpos($message, 'Unauthorized') === 0) {
+        http_response_code(401);
+    }
     echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
     exit;
 }
@@ -246,7 +252,8 @@ function app_check_jwks(): ?array
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 8,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ]);
         $raw = curl_exec($ch);
         curl_close($ch);

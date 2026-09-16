@@ -25,6 +25,10 @@ if ($action === 'propose') {
     $name = trim((string)($input['name'] ?? ''));
 
     if ($name === '') respond(false, 'Category name cannot be empty');
+    if (mb_strlen($name) > 50) respond(false, 'Category name is too long');
+    if (!rate_limit_check($pdo, 'cat_propose_uid:' . $userId, 5, 3600)) {
+        respond(false, 'Too many proposals, please try again later');
+    }
 
     try {
         $query = $pdo->prepare('INSERT INTO categories (name, proposed_by, is_published) VALUES (?, ?, 0)');

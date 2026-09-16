@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -17,13 +18,14 @@ import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
+import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.AiDiscoveryActivity;
 import com.poliku.polygoplus.CampusPulseActivity;
-import com.poliku.polygoplus.ErrorStateActivity;
 import com.poliku.polygoplus.LoginActivity;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.SearchActivity;
@@ -88,6 +90,8 @@ public class HomeFragment extends Fragment {
         setupHeader();
         setupEventCarousel();
         setupProducts();
+        setupCategoryRow();
+        setupPicksRail();
         setupSearchActions();
         
         observeViewModel();
@@ -99,6 +103,8 @@ public class HomeFragment extends Fragment {
         });
         
         viewModel.loadProducts();
+        viewModel.loadCategories();
+        viewModel.loadPicks();
     }
 
     @Override
@@ -121,6 +127,7 @@ public class HomeFragment extends Fragment {
                         binding.shimmerMarket.shimmerView.setVisibility(View.VISIBLE);
                         binding.shimmerMarket.shimmerView.startShimmer();
                         binding.recyclerViewProducts.setVisibility(View.GONE);
+                        binding.tvEmptyProducts.setVisibility(View.GONE);
                     }
                     break;
 
@@ -133,23 +140,45 @@ public class HomeFragment extends Fragment {
                     if (productAdapter != null) productAdapter.updateData(list);
                     boolean isEmpty = list == null || list.isEmpty();
                     binding.recyclerViewProducts.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+                    binding.tvEmptyProducts.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
                     break;
 
                 case ERROR:
                     binding.swipeRefreshHome.setRefreshing(false);
                     binding.shimmerMarket.shimmerView.stopShimmer();
                     binding.shimmerMarket.shimmerView.setVisibility(View.GONE);
-                    
-                    Context context = getContext();
-                    if (context == null) return;
-                    
-                    if (AppDataStore.getListings(context).isEmpty()) {
-                        startActivity(new Intent(context, ErrorStateActivity.class));
-                    } else {
-                        Snackbar.make(binding.getRoot(),
-                                "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
+                    // Show previously loaded content instead of a blank grid.
+                    if (productAdapter != null && productAdapter.getItemCount() > 0) {
+                        binding.recyclerViewProducts.setVisibility(View.VISIBLE);
+                        binding.tvEmptyProducts.setVisibility(View.GONE);
                     }
+                    // The global NetworkErrorHandler already surfaces the offline
+                    // screen; here we only note the failure for cached-data users.
+                    Snackbar.make(binding.getRoot(),
+                            "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
                     break;
+            }
+        });
+
+        viewModel.picksResource.observe(getViewLifecycleOwner(), resource -> {
+            if (resource == null || binding == null) return;
+            if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
+                RecyclerView.Adapter<?> adapter = binding.rvPicks.getAdapter();
+                if (adapter instanceof PicksAdapter) {
+                    ((PicksAdapter) adapter).update(resource.data);
+                    binding.rvPicks.setVisibility(resource.data.isEmpty() ? View.GONE : View.VISIBLE);
+                }
+            }
+        });
+
+        viewModel.categoriesResource.observe(getViewLifecycleOwner(), resource -> {
+            if (resource == null || binding == null) return;
+            if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
+                RecyclerView.Adapter<?> adapter = binding.rvCategories.getAdapter();
+                if (adapter instanceof CategoryRowAdapter) {
+                    ((CategoryRowAdapter) adapter).update(resource.data);
+                    binding.rvCategories.setVisibility(resource.data.isEmpty() ? View.GONE : View.VISIBLE);
+                }
             }
         });
     }
@@ -178,6 +207,7 @@ public class HomeFragment extends Fragment {
             Glide.with(this)
                     .load(photo)
                     .circleCrop()
+                    .override(160, 160)
                     .into(binding.ivProfilePic);
         }
 
@@ -215,6 +245,18 @@ public class HomeFragment extends Fragment {
                 HapticManager.lightTap(binding.eventCarousel);
             }
         });
+    }
+
+    private void setupPicksRail() {
+        binding.rvPicks.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
+        PicksAdapter adapter = new PicksAdapter();
+        binding.rvPicks.setAdapter(adapter);
+    }
+
+    private void setupCategoryRow() {
+        binding.rvCategories.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
+        CategoryRowAdapter adapter = new CategoryRowAdapter();
+        binding.rvCategories.setAdapter(adapter);
     }
 
     private void setupProducts() {
@@ -328,6 +370,114 @@ public class HomeFragment extends Fragment {
                 super(itemView);
             }
         }
+    }
+
+    private final class PicksAdapter extends RecyclerView.Adapter<PicksAdapter.PickVH> {
+        private final List<ListingEntity> items = new ArrayList<>();
+
+        void update(List<ListingEntity> list) {
+            items.clear();
+            items.addAll(list);
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public PickVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_pick_card, parent, false);
+            return new PickVH(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull PickVH holder, int position) {
+            ListingEntity p = items.get(position);
+            holder.title.setText(p.title);
+            holder.price.setText("RM " + p.price);
+            ImageView img = holder.itemView.findViewById(R.id.ivPickImage);
+            Glide.with(holder.itemView.getContext())
+                    .load(p.imageUrl == null || p.imageUrl.isEmpty() ? R.drawable.bg_product_home : p.imageUrl)
+                    .placeholder(R.drawable.bg_product_home)
+                    .error(R.drawable.bg_product_home)
+                    .override(400, 400)
+                    .centerCrop()
+                    .into(img);
+            holder.itemView.setOnClickListener(v -> openProduct(p.id));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class PickVH extends RecyclerView.ViewHolder {
+            final TextView title, price;
+
+            PickVH(@NonNull View itemView) {
+                super(itemView);
+                title = itemView.findViewById(R.id.tvPickTitle);
+                price = itemView.findViewById(R.id.tvPickPrice);
+            }
+        }
+    }
+
+    private final class CategoryRowAdapter extends RecyclerView.Adapter<CategoryRowAdapter.CategoryVH> {
+        private final List<PolyGoApi.Category> items = new ArrayList<>();
+
+        void update(List<PolyGoApi.Category> list) {
+            items.clear();
+            items.addAll(list);
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public CategoryVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_home_category_icon, parent, false);
+            return new CategoryVH(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull CategoryVH holder, int position) {
+            PolyGoApi.Category c = items.get(position);
+            holder.name.setText(c.name);
+            ImageView icon = holder.itemView.findViewById(R.id.ivCategoryIcon);
+            icon.setImageResource(resolveCategoryIcon(c.icon_res));
+            holder.itemView.setOnClickListener(v -> {
+                Context context = getContext();
+                if (context == null) return;
+                HapticManager.lightTap(v);
+                startActivity(new Intent(context, SearchActivity.class)
+                        .putExtra(SearchActivity.EXTRA_CATEGORY, c.name));
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class CategoryVH extends RecyclerView.ViewHolder {
+            final TextView name;
+
+            CategoryVH(@NonNull View itemView) {
+                super(itemView);
+                name = itemView.findViewById(R.id.tvCategoryName);
+            }
+        }
+    }
+
+    private int resolveCategoryIcon(String iconRes) {
+        if (iconRes == null || iconRes.isEmpty()) return R.drawable.ic_category_tech;
+        int id = getResources().getIdentifier(iconRes, "drawable", requireContext().getPackageName());
+        return id != 0 ? id : R.drawable.ic_category_tech;
+    }
+
+    private void openProduct(String listingId) {
+        Context context = getContext();
+        if (context == null) return;
+        Intent intent = new Intent(context, ProductDetailActivity.class);
+        intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, listingId);
+        detailLauncher.launch(intent);
     }
 
 }

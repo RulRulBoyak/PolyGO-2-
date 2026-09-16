@@ -56,7 +56,7 @@
                     style="@style/Widget.Material3.Button.IconButton"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:contentDescription="New message"
+                    android:contentDescription="@string/content_description_new_message"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
                     android:insetRight="0dp"
@@ -87,7 +87,7 @@
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:contentDescription="Search"
+                        android:contentDescription="@string/content_description_search"
                         android:src="@drawable/ic_search"
                         app:tint="@color/airbnb_muted" />
 

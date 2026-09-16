@@ -43,6 +43,14 @@ if (($input['action'] ?? '') === 'relist') {
     if (!$listing) respond(false, 'Listing not found');
     if ((int)$listing['owner_id'] !== $ownerId) respond(false, 'Not authorized');
 
+    // A listing that already sold (completed deal) cannot be relisted — the
+    // buyer paid for it and the seller earned green impact on it.
+    $soldCheck = $pdo->prepare('SELECT COUNT(*) FROM transactions WHERE listing_id = ? AND status = "completed"');
+    $soldCheck->execute([$id]);
+    if ((int)$soldCheck->fetchColumn() > 0) {
+        respond(false, 'This listing was already sold and cannot be relisted');
+    }
+
     $relist = $pdo->prepare('UPDATE listings SET archived_at = NULL, is_available = 1 WHERE id = ?');
     if ($relist->execute([$id])) {
         respond(true, 'Listing relisted');
@@ -50,14 +58,50 @@ if (($input['action'] ?? '') === 'relist') {
     respond(false, 'Failed to relist listing');
 }
 
+// Similar listings: same category, excluding the current listing.
+if (($input['action'] ?? '') === 'similar') {
+    if ($id <= 0) respond(false, 'Missing listing id');
+    $catQuery = $pdo->prepare('SELECT category FROM listings WHERE id = ?');
+    $catQuery->execute([$id]);
+    $category = $catQuery->fetchColumn();
+    if ($category === false) respond(false, 'Listing not found');
+
+    $similar = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at, l.views, u.is_verified, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms,
+        COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
+        COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
+        FROM listings l LEFT JOIN majors m ON m.id = l.major_id INNER JOIN users u ON u.id = l.owner_id
+        WHERE l.category = ? AND l.id <> ? AND l.archived_at IS NULL AND l.is_available = 1
+        ORDER BY l.created_at DESC LIMIT 10');
+    $similar->execute([$category, $id]);
+    $rows = [];
+    foreach ($similar->fetchAll() as $item) {
+        $item['id'] = (int)$item['id'];
+        $item['owner_id'] = (int)$item['owner_id'];
+        $item['is_available'] = (bool)$item['is_available'];
+        $item['archived'] = $item['archived_at'] !== null;
+        $item['major_id'] = $item['major_id'] !== null ? (int)$item['major_id'] : null;
+        $item['views'] = (int)($item['views'] ?? 0);
+        $item['is_verified'] = (bool)($item['is_verified'] ?? false);
+        $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
+        $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
+            ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
+            : '';
+        if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
+            $item['thumb_url'] = $item['image_url'];
+        }
+        $rows[] = $item;
+    }
+    respond(true, 'Similar listings loaded', ['listings' => $rows]);
+}
+
 // Single Listing retrieval
 if ($id > 0) {
-    $query = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at,
+    $query = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at, l.views, u.is_verified, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms,
         COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
         COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
         FROM listings l LEFT JOIN majors m ON m.id = l.major_id INNER JOIN users u ON u.id = l.owner_id WHERE l.id = ?');
     if ($blockedClause !== '') {
-        $query = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at,
+        $query = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at, l.views, u.is_verified, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms,
             COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
             COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
             FROM listings l LEFT JOIN majors m ON m.id = l.major_id INNER JOIN users u ON u.id = l.owner_id WHERE l.id = ? AND (' . $blockedClause . ')');
@@ -70,6 +114,15 @@ if ($id > 0) {
         $item['is_available'] = (bool)$item['is_available'];
         $item['archived'] = $item['archived_at'] !== null;
         $item['major_id'] = $item['major_id'] !== null ? (int)$item['major_id'] : null;
+        $item['views'] = (int)($item['views'] ?? 0);
+        $item['is_verified'] = (bool)($item['is_verified'] ?? false);
+        $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
+        // Increment view count (owner views excluded)
+        if ($viewerId <= 0 || $viewerId !== (int)$item['owner_id']) {
+            $inc = $pdo->prepare('UPDATE listings SET views = views + 1 WHERE id = ?');
+            $inc->execute([$id]);
+            $item['views'] = $item['views'] + 1;
+        }
         respond(true, 'Listing loaded', ['listings' => [$item]]);
     } else {
         respond(false, 'Listing not found');
@@ -98,7 +151,7 @@ if (!empty($staleRows)) {
 // Owner's own listings (including archived state) for "My Listings"
 if (($input['action'] ?? '') === 'mylistings') {
     $ownerId = verify_jwt();
-    $myQuery = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at,
+    $myQuery = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.archived_at, l.views, u.is_verified, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms,
         COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
         COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
         FROM listings l LEFT JOIN majors m ON m.id = l.major_id INNER JOIN users u ON u.id = l.owner_id WHERE l.owner_id = ? ORDER BY l.created_at DESC LIMIT 200');
@@ -110,6 +163,9 @@ if (($input['action'] ?? '') === 'mylistings') {
         $item['is_available'] = (bool)$item['is_available'];
         $item['archived'] = $item['archived_at'] !== null;
         $item['major_id'] = $item['major_id'] !== null ? (int)$item['major_id'] : null;
+        $item['views'] = (int)($item['views'] ?? 0);
+        $item['is_verified'] = (bool)($item['is_verified'] ?? false);
+        $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
         $mine[] = $item;
     }
     respond(true, 'My listings loaded', ['listings' => $mine]);
@@ -121,6 +177,7 @@ $offset = (int)($input['offset'] ?? 0);
 $sort = $input['sort'] ?? 'newest';
 $search = $input['query'] ?? '';
 $majorId = (int)($input['major'] ?? 0);
+$ownerId = (int)($input['owner_id'] ?? 0);
 
 // Determine ORDER BY clause
 $orderBy = 'l.created_at DESC'; // Default: Newest
@@ -130,7 +187,7 @@ else if ($sort === 'oldest') $orderBy = 'l.created_at ASC';
 else if ($sort === 'top_rated') $orderBy = '(SELECT COALESCE(AVG(r.stars), 0) FROM reviews r WHERE r.seller_id = l.owner_id) DESC, l.created_at DESC';
 
 // Fetch items with optional search
-$sql = 'SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at,
+$sql = 'SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.tags, l.free_slots, l.major_id, m.name AS major_name, l.location, l.is_available, l.created_at, l.views, u.is_verified, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms,
         COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
         COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
         FROM listings l
@@ -152,6 +209,11 @@ if (!empty($search)) {
     }
 }
 
+if ($ownerId > 0) {
+    $sql .= ' AND l.owner_id = ?';
+    $params[] = $ownerId;
+}
+
 if ($majorId > 0) {
     $sql .= ' AND l.major_id = ?';
     $params[] = $majorId;
@@ -170,6 +232,9 @@ foreach ($query->fetchAll() as $item) {
     $item['owner_id'] = (int)$item['owner_id'];
     $item['is_available'] = (bool)$item['is_available'];
     $item['major_id'] = $item['major_id'] !== null ? (int)$item['major_id'] : null;
+    $item['views'] = (int)($item['views'] ?? 0);
+    $item['is_verified'] = (bool)($item['is_verified'] ?? false);
+    $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
     $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
         ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
         : '';
@@ -192,6 +257,10 @@ if ($blockedClause !== '') {
 if ($majorId > 0) {
     $countWhere .= ' AND l.major_id = ?';
     $countParams[] = $majorId;
+}
+if ($ownerId > 0) {
+    $countWhere .= ' AND l.owner_id = ?';
+    $countParams[] = $ownerId;
 }
 $totalQuery = $pdo->prepare('SELECT COUNT(*) FROM listings l' . $countWhere);
 $totalQuery->execute($countParams);

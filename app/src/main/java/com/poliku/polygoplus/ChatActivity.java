@@ -11,7 +11,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -20,6 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -52,6 +54,9 @@ public class ChatActivity extends AppCompatActivity {
     private String lastMeetupLandmark = "PKS Library";
     private ActivityResultLauncher<Intent> safeMeetupLauncher;
     private boolean isBlocked;
+    private boolean imeOpen;
+    private boolean quickRepliesAnswered;
+    private Call<PolyGoApi.SendMessageResponse> pendingSend;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,8 +97,13 @@ public class ChatActivity extends AppCompatActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
+            imeOpen = ime.bottom > 0;
+            updateQuickChips();
             return insets;
         });
+
+        buildQuickChips();
+        updateQuickChips();
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnChatMore).setOnClickListener(v -> {
@@ -165,6 +175,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (body != null && body.messages != null) {
                     adapter.submitMessages(body.messages);
                     scrollToBottom();
+                    updateQuickChips();
                 }
             }
 
@@ -175,6 +186,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (thread != null) {
                     adapter.submit(thread.messages);
                     scrollToBottom();
+                    updateQuickChips();
                 }
             }
         });
@@ -183,7 +195,7 @@ public class ChatActivity extends AppCompatActivity {
     private void sendMessage() {
         String text = input.getText().toString().trim();
         if (text.isEmpty()) {
-            input.setError("Write a message");
+            input.setError(getString(R.string.chat_error_write_message));
             return;
         }
         sendText(text);
@@ -196,9 +208,11 @@ public class ChatActivity extends AppCompatActivity {
         input.setText("");
 
         String userId = AppDataStore.userId(this);
-        polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, text, new Callback<PolyGoApi.SendMessageResponse>() {
+        pendingSend = polyGoRepository.createSendMessageCall(userId, threadId, listingId, sellerId, text);
+        pendingSend.enqueue(new Callback<PolyGoApi.SendMessageResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     // First message of a new conversation: capture the real server
                     // thread id so later messages/loads target the same thread.
@@ -217,9 +231,10 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
-                Toast.makeText(ChatActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatActivity.this, getString(R.string.toast_chat_network_error, t.getMessage()), Toast.LENGTH_SHORT).show();
                 if (threadId != null && !threadId.isEmpty()) {
                     AppDataStore.sendMessage(ChatActivity.this, threadId, text);
                     showLocalMessages();
@@ -249,8 +264,46 @@ public class ChatActivity extends AppCompatActivity {
     private void applyBlockedState() {
         if (isFinishing() || isDestroyed()) return;
         input.setEnabled(!isBlocked);
-        input.setHint(isBlocked ? getString(R.string.blocked_chat_hint) : "Message...");
+        input.setHint(isBlocked ? getString(R.string.blocked_chat_hint) : getString(R.string.chat_message_hint));
         findViewById(R.id.btnSend).setEnabled(!isBlocked);
+        updateQuickChips();
+    }
+
+    private void buildQuickChips() {
+        ChipGroup group = findViewById(R.id.chipGroupQuickActions);
+        if (group == null) return;
+        String[] texts = {
+                getString(R.string.quick_reply_available),
+                getString(R.string.quick_reply_negotiable),
+                getString(R.string.quick_reply_meetup),
+                getString(R.string.quick_reply_payment)
+        };
+        for (String t : texts) {
+            Chip chip = new Chip(this);
+            chip.setText(t);
+            chip.setCheckable(false);
+            chip.setClickable(true);
+            chip.setEnsureMinTouchTargetSize(false);
+            chip.setOnClickListener(v -> {
+                HapticManager.lightTap(v);
+                useQuickChip(t);
+            });
+            group.addView(chip);
+        }
+    }
+
+    private void useQuickChip(String text) {
+        quickRepliesAnswered = true;
+        View container = findViewById(R.id.quickChipContainer);
+        if (container != null) container.setVisibility(View.GONE);
+        sendText(text);
+    }
+
+    private void updateQuickChips() {
+        View container = findViewById(R.id.quickChipContainer);
+        if (container == null) return;
+        boolean visible = !isBlocked && !imeOpen && !quickRepliesAnswered && adapter.getItemCount() < 3;
+        container.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private void showMoreMenu() {
@@ -258,7 +311,7 @@ public class ChatActivity extends AppCompatActivity {
         ArrayList<String> options = new ArrayList<>();
         options.add(isBlocked ? getString(R.string.menu_unblock_user) : getString(R.string.menu_block_user));
         options.add(getString(R.string.menu_report_user));
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(name)
                 .setItems(options.toArray(new String[0]), (dialog, which) -> {
                     if (which == 0) {
@@ -276,7 +329,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void confirmBlock() {
         String name = otherName == null ? "Campus seller" : otherName;
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.block_user_confirm_title, name))
                 .setMessage(R.string.block_user_confirm_message)
                 .setNegativeButton(android.R.string.cancel, null)
@@ -309,7 +362,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void confirmUnblock() {
         String name = otherName == null ? "Campus seller" : otherName;
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.unblock_user_confirm_title, name))
                 .setMessage(R.string.unblock_user_confirm_message)
                 .setNegativeButton(android.R.string.cancel, null)
@@ -434,6 +487,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override protected void onDestroy() {
+        if (pendingSend != null) pendingSend.cancel();
         super.onDestroy();
     }
 

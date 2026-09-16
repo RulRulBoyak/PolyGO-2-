@@ -9,6 +9,13 @@ if (!defined('GEMINI_API_KEY') || GEMINI_API_KEY === '') {
     respond(false, 'AI is not configured on the server yet');
 }
 
+// This calls a paid external AI service — keep abuse in check.
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+if (!rate_limit_check($pdo, 'ai_uid:' . $ownerId, 30, 3600) ||
+    !rate_limit_check($pdo, 'ai_ip:' . $clientIp, 60, 3600)) {
+    respond(false, 'Too many AI requests. Try again later.');
+}
+
 // Accept a single image the same way upload_image.php does (field name "image").
 if (!isset($_FILES['image'])) {
     respond(false, 'No image file provided');
@@ -79,7 +86,8 @@ $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($raw === false) {
-    respond(false, 'AI service unreachable. ' . $curlError);
+    error_log('[polygo-api] ai_suggest curl error: ' . $curlError);
+    respond(false, 'AI service unreachable, please try again');
 }
 if ($httpCode >= 400) {
     respond(false, 'AI request failed (HTTP ' . $httpCode . ')');

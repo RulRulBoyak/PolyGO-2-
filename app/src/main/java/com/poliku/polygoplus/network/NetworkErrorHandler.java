@@ -42,6 +42,15 @@ public final class NetworkErrorHandler {
             if (context == null) {
                 return;
             }
+            // Only interrupt the user when the app is actually on screen and the
+            // error screen is not already on top (avoids stacked launches from
+            // background chat loads, WorkManager syncs and fragment retries).
+            if (!AuthSessionHandler.isAppForeground()) {
+                return;
+            }
+            if (AuthSessionHandler.getTopActivity() instanceof ErrorStateActivity) {
+                return;
+            }
             Intent intent = new Intent(context, ErrorStateActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try {

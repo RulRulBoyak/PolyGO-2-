@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS listings (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     archived_at TIMESTAMP NULL DEFAULT NULL,
+    views INT UNSIGNED NOT NULL DEFAULT 0,
     INDEX idx_listings_archived (archived_at),
     INDEX idx_listings_major (major_id),
     CONSTRAINT fk_listing_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
@@ -165,7 +166,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     reviewer_name VARCHAR(120) NOT NULL,
     stars TINYINT UNSIGNED NOT NULL,
     comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_reviewer_listing (reviewer_id, listing_id)
 );
 
 CREATE TABLE IF NOT EXISTS reports (

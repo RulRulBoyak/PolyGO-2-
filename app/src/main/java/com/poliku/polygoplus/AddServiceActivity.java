@@ -138,6 +138,7 @@ public class AddServiceActivity extends BaseActivity {
         etTime.setText(viewModel.getDeliveryTime());
         etDescription.setText(viewModel.getDescription());
         restoreLocationUi(viewModel.getLocation(), viewModel.getCustomLocation());
+        syncServiceCategoryChipsFromField();
     }
 
     private void updateViewModelUris() {
@@ -203,7 +204,7 @@ public class AddServiceActivity extends BaseActivity {
 
         findViewById(R.id.btnAiSuggest).setOnClickListener(v -> {
             if (selectedUris.isEmpty()) {
-                Toast.makeText(this, "Add a portfolio photo first", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_add_portfolio_photo_first, Toast.LENGTH_SHORT).show();
                 return;
             }
             HapticManager.swell(this);
@@ -240,7 +241,7 @@ public class AddServiceActivity extends BaseActivity {
             AppDataStore.saveDraft(this, etTitle.getText().toString(), 
                     autoCategory.getText().toString(), etPrice.getText().toString(), 
                     etDescription.getText().toString(), viewModel.imageUri.getValue(), selectedLocation());
-            Toast.makeText(this, "Service draft saved", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_service_draft_saved, Toast.LENGTH_SHORT).show();
             finish();
         });
     }
@@ -316,25 +317,73 @@ public class AddServiceActivity extends BaseActivity {
                     }
                 }
                 names.add("Others");
-                
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, names);
-                autoCategory.setAdapter(adapter);
-                autoCategory.setOnItemClickListener((parent, view, position, id) -> {
-                    if ("Others".equals(names.get(position))) {
-                        tilCustomCategory.setVisibility(View.VISIBLE);
-                    } else {
-                        tilCustomCategory.setVisibility(View.GONE);
-                        etCustomCategory.setText("");
-                    }
-                });
+                populateServiceChips(names);
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable t) {
-                String[] fallback = {"Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Others"};
-                autoCategory.setAdapter(new ArrayAdapter<>(AddServiceActivity.this, android.R.layout.simple_list_item_1, fallback));
+                populateServiceChips(Arrays.asList("Repair", "Printing", "Delivery", "Cleaning", "Lessons", "Laundry", "Others"));
             }
         });
+    }
+
+    private void populateServiceChips(List<String> names) {
+        ChipGroup group = findViewById(R.id.chipGroupServiceCategory);
+        if (group == null) return;
+        group.removeAllViews();
+        for (String name : names) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, group, false);
+            chip.setId(View.generateViewId());
+            chip.setText(name);
+            chip.setTag(name);
+            if (!"Others".equalsIgnoreCase(name)) {
+                chip.setChipIcon(getDrawable(iconForServiceCategory(name)));
+            }
+            chip.setOnCheckedChangeListener((c, checked) -> {
+                if (!checked || c.getTag() == null) return;
+                autoCategory.setText(c.getTag().toString(), false);
+                if ("Others".equalsIgnoreCase(c.getTag().toString())) {
+                    tilCustomCategory.setVisibility(View.VISIBLE);
+                } else {
+                    tilCustomCategory.setVisibility(View.GONE);
+                    etCustomCategory.setText("");
+                }
+            });
+            group.addView(chip);
+        }
+        syncServiceCategoryChipsFromField();
+    }
+
+    private void syncServiceCategoryChipsFromField() {
+        ChipGroup group = findViewById(R.id.chipGroupServiceCategory);
+        if (group == null || group.getChildCount() == 0) return;
+        String current = autoCategory.getText() == null ? "" : autoCategory.getText().toString().trim();
+        boolean matched = false;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            Chip chip = (Chip) group.getChildAt(i);
+            boolean isMatch = chip.getTag() != null && chip.getTag().toString().equalsIgnoreCase(current);
+            if (isMatch) {
+                chip.setChecked(true);
+                matched = true;
+            }
+        }
+        if (!matched && !current.isEmpty()) {
+            group.clearCheck();
+            tilCustomCategory.setVisibility(View.VISIBLE);
+        } else if (!matched) {
+            ((Chip) group.getChildAt(0)).setChecked(true);
+        }
+    }
+
+    private int iconForServiceCategory(String name) {
+        if (name == null) return R.drawable.ic_category_tech;
+        String n = name.toLowerCase();
+        if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("clean")) return R.drawable.ic_category_repair;
+        if (n.contains("less") || n.contains("tutor") || n.contains("study")) return R.drawable.ic_category_books;
+        if (n.contains("deliver") || n.contains("tech") || n.contains("phot")) return R.drawable.ic_category_tech;
+        if (n.contains("fashion") || n.contains("cloth") || n.contains("tailor")) return R.drawable.ic_category_fashion;
+        if (n.contains("home") || n.contains("food")) return R.drawable.ic_category_home;
+        return R.drawable.ic_category_tech;
     }
 
     private void loadMajors() {
@@ -380,7 +429,7 @@ public class AddServiceActivity extends BaseActivity {
         }
 
         if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty() || selectedUris.isEmpty()) {
-            Toast.makeText(this, "Please fill in all fields including photos", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_fill_all_fields_photos, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -389,7 +438,7 @@ public class AddServiceActivity extends BaseActivity {
         }
 
         findViewById(R.id.btnPublishService).setEnabled(false);
-        Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.toast_uploading_images, Toast.LENGTH_SHORT).show();
 
         final String finalCategory = category;
 
@@ -399,7 +448,7 @@ public class AddServiceActivity extends BaseActivity {
         String ownerId = AppDataStore.userId(this);
         if (ownerId == null) {
             findViewById(R.id.btnPublishService).setEnabled(true);
-            Toast.makeText(this, "Please sign in first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_please_sign_in_first, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -475,16 +524,16 @@ public class AddServiceActivity extends BaseActivity {
                         HapticManager.success(AddServiceActivity.this);
                         celebrate();
                         AppDataStore.addUserListing(AddServiceActivity.this, listingId, title, category, price, description, imageUrl, selectedLocation());
-                        Toast.makeText(AddServiceActivity.this, "Service posted successfully!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(AddServiceActivity.this, R.string.toast_service_posted_success, Toast.LENGTH_LONG).show();
                         new Handler(Looper.getMainLooper()).postDelayed(AddServiceActivity.this::finish, 1500);
                     } else {
                         findViewById(R.id.btnPublishService).setEnabled(true);
-                        Toast.makeText(AddServiceActivity.this, "Post error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AddServiceActivity.this, R.string.toast_post_error, Toast.LENGTH_SHORT).show();
                     }
                 } else if (workInfo.getState() == WorkInfo.State.FAILED || workInfo.getState() == WorkInfo.State.CANCELLED) {
                     findViewById(R.id.btnPublishService).setEnabled(true);
                     String error = workInfo.getOutputData().getString("error");
-                    Toast.makeText(AddServiceActivity.this, error != null ? error : "Upload failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AddServiceActivity.this, error != null ? error : getString(R.string.toast_upload_failed), Toast.LENGTH_SHORT).show();
                 }
             });
         }

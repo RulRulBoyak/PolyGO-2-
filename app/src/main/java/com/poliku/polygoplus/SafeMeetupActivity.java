@@ -3,13 +3,9 @@ package com.poliku.polygoplus;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
-import android.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -20,14 +16,21 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.gms.location.CurrentLocationRequest;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -55,10 +58,14 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
     @Inject PolyGoRepository polyGoRepository;
 
     private GoogleMap mMap;
+    private Marker myMarker;
     private String threadId, listingId, sellerId, otherName, landmark;
     private boolean dealActive;
     private ObjectAnimator pulseAnimator;
     private ActivityResultLauncher<String[]> locationPermissionLauncher;
+    private FusedLocationProviderClient fusedLocationClient;
+    private Runnable pendingLocationAction;
+    private ExtendedFloatingActionButton btnEmergency;
 
     private static final LatLng PKS_CENTER = new LatLng(1.4831, 110.3475);
     private static final LatLng[] PKS_POIS = {
@@ -76,16 +83,15 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_safe_meetup);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         locationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestMultiplePermissions(), granted -> {
-                    boolean hasAny = false;
-                    for (Boolean b : granted.values()) {
-                        if (Boolean.TRUE.equals(b)) {
-                            hasAny = true;
-                            break;
-                        }
+                    if (pendingLocationAction != null) {
+                        Runnable action = pendingLocationAction;
+                        pendingLocationAction = null;
+                        action.run();
                     }
-                    sendEmergencyAlert();
                 });
 
         threadId = getIntent().getStringExtra(EXTRA_THREAD_ID);
@@ -124,21 +130,55 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
             finish();
         });
 
-        findViewById(R.id.btnEmergency).setOnClickListener(v -> triggerEmergency());
+        findViewById(R.id.btnShareLocation).setOnClickListener(v -> {
+            HapticManager.lightTap(v);
+            if (!dealActive) {
+                Toast.makeText(this, getString(R.string.safe_meetup_location_off), Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (!hasLocationPermission()) {
+                pendingLocationAction = this::shareCurrentLocation;
+                locationPermissionLauncher.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION});
+            } else {
+                shareCurrentLocation();
+            }
+        });
+
+        btnEmergency = findViewById(R.id.btnEmergency);
+        btnEmergency.setOnClickListener(v -> triggerEmergency());
+
+        // An active meetup may share a live position, so ask for the permission
+        // up front instead of surprising the user mid-flow.
+        if (dealActive && !hasLocationPermission()) {
+            pendingLocationAction = this::refreshMyLocation;
+            locationPermissionLauncher.launch(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION});
+        } else if (mMap != null && dealActive && hasLocationPermission()) {
+            refreshMyLocation();
+        }
 
         startEmergencyPulse();
+    }
+
+    private boolean hasLocationPermission() {
+        boolean fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return fine || coarse;
     }
 
     private void triggerEmergency() {
         HapticManager.error(this);
         if (!AppDataStore.hasSeenMeetupDisclosure(this)) {
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.safe_meetup_disclosure_title)
                     .setMessage(R.string.safe_meetup_disclosure_message)
                     .setCancelable(false)
                     .setPositiveButton(R.string.safe_meetup_disclosure_understood, (d, w) -> {
                         AppDataStore.markMeetupDisclosureSeen(this);
-                        new AlertDialog.Builder(this)
+                        new MaterialAlertDialogBuilder(this)
                                 .setTitle(R.string.safe_meetup_emergency_title)
                                 .setMessage(R.string.safe_meetup_emergency_confirm)
                                 .setNegativeButton(android.R.string.cancel, null)
@@ -149,7 +189,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
                     .show();
             return;
         }
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.safe_meetup_emergency_title)
                 .setMessage(R.string.safe_meetup_emergency_confirm)
                 .setNegativeButton(android.R.string.cancel, null)
@@ -158,11 +198,10 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     private void requestEmergencyLocation() {
-        boolean fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (fine || coarse) {
+        if (hasLocationPermission()) {
             sendEmergencyAlert();
         } else {
+            pendingLocationAction = this::sendEmergencyAlert;
             locationPermissionLauncher.launch(new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION});
@@ -178,9 +217,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
             return;
         }
 
-        boolean fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        boolean coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        if (fine || coarse) {
+        if (hasLocationPermission()) {
             requestCurrentLocation((lat, lng) -> dispatchEmergencyAlert(userId, listingId, safeLandmark, lat, lng));
         } else {
             dispatchEmergencyAlert(userId, listingId, safeLandmark, null, null);
@@ -210,39 +247,91 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         });
     }
 
+    /** Send a non-emergency "I am here" chat message with the current coordinates. */
+    private void shareCurrentLocation() {
+        String userId = AppDataStore.userId(this);
+        String safeLandmark = landmark == null || landmark.trim().isEmpty() ? "PKS Library" : landmark;
+
+        if (userId == null || threadId == null || sellerId == null) {
+            Toast.makeText(this, getString(R.string.safe_meetup_share_sent), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        requestCurrentLocation((lat, lng) -> {
+            final String text;
+            if (lat != null && lng != null) {
+                text = String.format(getString(R.string.safe_meetup_share_location),
+                        AppDataStore.userName(this), safeLandmark)
+                        + " Location: https://maps.google.com/?q=" + lat + "," + lng + ".";
+            } else {
+                text = String.format(getString(R.string.safe_meetup_share_location_nofix),
+                        AppDataStore.userName(this), safeLandmark);
+            }
+
+            polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, text, new Callback<PolyGoApi.SendMessageResponse>() {
+                @Override public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
+                    Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_share_sent, Toast.LENGTH_LONG).show();
+                }
+                @Override public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
+                    AppDataStore.sendMessage(SafeMeetupActivity.this, threadId, text);
+                    Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_share_sent, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
+
+    private void refreshMyLocation() {
+        requestCurrentLocation((lat, lng) -> {
+            if (lat == null || lng == null || mMap == null) {
+                return;
+            }
+            LatLng position = new LatLng(lat, lng);
+            if (myMarker == null) {
+                myMarker = mMap.addMarker(new MarkerOptions()
+                        .position(position)
+                        .title(getString(R.string.safe_meetup_your_position))
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+            } else {
+                myMarker.setPosition(position);
+            }
+            if (mMap.getCameraPosition() == null || mMap.getCameraPosition().zoom < 15f) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 16f));
+            }
+        });
+    }
+
     private void requestCurrentLocation(LocationResult result) {
-        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (lm == null) {
+        if (!hasLocationPermission()) {
             result.onResult(null, null);
             return;
         }
-        Location last = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (last == null) last = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        if (last != null) {
-            result.onResult(last.getLatitude(), last.getLongitude());
-            return;
+        if (fusedLocationClient == null) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         }
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                lm.getCurrentLocation(LocationManager.FUSED_PROVIDER, null, getMainExecutor(), loc -> {
-                    runOnUiThread(() -> result.onResult(loc == null ? null : loc.getLatitude(), loc == null ? null : loc.getLongitude()));
-                });
-            } catch (Exception ignored) {
-                result.onResult(null, null);
-            }
-        } else {
-            try {
-                lm.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
-                    @Override public void onLocationChanged(Location l) {
-                        if (l != null) result.onResult(l.getLatitude(), l.getLongitude());
-                        else result.onResult(null, null);
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(loc -> {
+                    if (loc != null) {
+                        result.onResult(loc.getLatitude(), loc.getLongitude());
+                    } else {
+                        requestFreshFix(result);
                     }
-                    @Override public void onProviderEnabled(String provider) { }
-                    @Override public void onProviderDisabled(String provider) { }
-                }, null);
-            } catch (Exception ignored) {
-                result.onResult(null, null);
-            }
+                })
+                .addOnFailureListener(e -> requestFreshFix(result));
+    }
+
+    private void requestFreshFix(LocationResult result) {
+        try {
+            CurrentLocationRequest request = new CurrentLocationRequest.Builder()
+                    .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+                    .setDurationMillis(10000)
+                    .build();
+            fusedLocationClient.getCurrentLocation(request, new CancellationTokenSource().getToken())
+                    .addOnSuccessListener(loc -> result.onResult(loc == null ? null : loc.getLatitude(), loc == null ? null : loc.getLongitude()))
+                    .addOnFailureListener(e -> result.onResult(null, null))
+                    .addOnCanceledListener(() -> result.onResult(null, null));
+        } catch (Exception ignored) {
+            result.onResult(null, null);
         }
     }
 
@@ -270,7 +359,10 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     private void startEmergencyPulse() {
-        View btn = findViewById(R.id.btnEmergency);
+        View btn = btnEmergency;
+        if (btn == null) {
+            return;
+        }
         pulseAnimator = ObjectAnimator.ofPropertyValuesHolder(btn,
                 PropertyValuesHolder.ofFloat("scaleX", 1f, 1.08f),
                 PropertyValuesHolder.ofFloat("scaleY", 1f, 1.08f));
@@ -307,5 +399,10 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pks, 17f));
         mMap.setBuildingsEnabled(true);
         mMap.setIndoorEnabled(true);
+
+        // Map may become ready after the permission flow completed in onCreate.
+        if (dealActive && hasLocationPermission()) {
+            refreshMyLocation();
+        }
     }
 }

@@ -82,8 +82,9 @@ public class ExploreViewModel extends AndroidViewModel {
                             for (PolyGoApi.Listing l : body.listings) {
                                 boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
                                 ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price,
-                                        l.rating, l.distance, l.image_url, l.category, l.description,
-                                        l.owner_id, l.available, isOwner);
+                                        l.rating, l.distance != null ? l.distance : (l.location == null ? "" : l.location),
+                                        l.image_url, l.category, l.description,
+                                        l.owner_id, l.available, isOwner, l.location, l.postedAt, l.views);
                                 entity.reviewCount = l.review_count;
                                 entity.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
                                 allItems.add(entity);
@@ -98,7 +99,18 @@ public class ExploreViewModel extends AndroidViewModel {
 
             @Override
             public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
-                _listingsResource.postValue(Resource.error(t.getMessage(), null));
+                worker.execute(() -> {
+                    List<ListingEntity> cached = AppDataStore.listingsToEntities(AppDataStore.getActiveListings(getApplication()));
+                    if (cached != null && !cached.isEmpty()) {
+                        synchronized (allItems) {
+                            allItems.clear();
+                            allItems.addAll(cached);
+                        }
+                        applyFilters();
+                    } else {
+                        _listingsResource.postValue(Resource.error(t.getMessage(), null));
+                    }
+                });
             }
         });
     }

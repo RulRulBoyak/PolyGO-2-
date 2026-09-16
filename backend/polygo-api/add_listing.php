@@ -36,6 +36,17 @@ try {
         respond(false, 'Missing required listing information');
     }
 
+    // Bound the inputs the same way the schema + marketplace expect.
+    if (mb_strlen($title) > 150) respond(false, 'Title is too long (max 150 characters)');
+    if (mb_strlen($description) > 2000) respond(false, 'Description is too long (max 2000 characters)');
+    if ($category === '' || mb_strlen($category) > 80) respond(false, 'Please choose a valid category');
+    if ($price <= 0 || $price > 100000) respond(false, 'Please enter a valid price');
+    if ($majorId !== null) {
+        $majorCheck = $pdo->prepare('SELECT id FROM majors WHERE id = ? LIMIT 1');
+        $majorCheck->execute([$majorId]);
+        if (!$majorCheck->fetch()) respond(false, 'Invalid major selected');
+    }
+
     $query = $pdo->prepare('INSERT INTO listings (owner_id, title, category, description, price, image_url, tags, free_slots, major_id, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     if ($query->execute([$ownerId, $title, $category, $description, $price, $imageUrl, $tags, $freeSlots, $majorId, $location])) {
         respond(true, 'Listing added successfully', ['id' => $pdo->lastInsertId()]);

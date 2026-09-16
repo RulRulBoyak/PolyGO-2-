@@ -1,6 +1,5 @@
 package com.poliku.polygoplus;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +8,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +22,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.RelativeTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +95,7 @@ public class CampusPulseActivity extends AppCompatActivity {
         TextInputEditText etTitle = dialogView.findViewById(R.id.etPulseTitle);
         TextInputEditText etBody = dialogView.findViewById(R.id.etPulseBody);
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.pulse_post_dialog_title)
                 .setView(dialogView)
                 .setNegativeButton(R.string.cancel, null)
@@ -145,24 +145,6 @@ public class CampusPulseActivity extends AppCompatActivity {
         });
     }
 
-    private static String relativeTime(Context context, long epochSeconds) {
-        long now = System.currentTimeMillis() / 1000L;
-        long diff = now - epochSeconds;
-        if (diff < 60L) {
-            return context.getString(R.string.pulse_time_just_now);
-        }
-        if (diff < 3600L) {
-            return context.getString(R.string.pulse_time_m, diff / 60L);
-        }
-        if (diff < 86400L) {
-            return context.getString(R.string.pulse_time_h, diff / 3600L);
-        }
-        if (diff < 604800L) {
-            return context.getString(R.string.pulse_time_d, diff / 86400L);
-        }
-        return context.getString(R.string.pulse_time_w, diff / 604800L);
-    }
-
     private class PulseAdapter extends RecyclerView.Adapter<PulseAdapter.Holder> {
         private final List<PolyGoApi.PulseAlert> items;
 
@@ -183,7 +165,7 @@ public class CampusPulseActivity extends AppCompatActivity {
             h.tag.setText(tag);
             h.title.setText(item.title);
             h.body.setText(item.body);
-            h.time.setText(relativeTime(h.itemView.getContext(), item.createdAt));
+            h.time.setText(RelativeTimeFormatter.format(h.itemView.getContext(), item.createdAt * 1000L));
             h.itemView.setOnClickListener(v -> HapticManager.lightTap(v));
         }
 

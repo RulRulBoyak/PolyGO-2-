@@ -133,7 +133,7 @@ public class VerificationActivity extends AppCompatActivity {
         btnSimulate.setOnClickListener(v -> {
             HapticManager.success(this);
             AppDataStore.approvePendingVerification(this);
-            Toast.makeText(this, "Verification Approved (Dev)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_verification_approved_dev, Toast.LENGTH_SHORT).show();
             render();
         });
         if (!BuildConfig.DEBUG) {
@@ -146,19 +146,19 @@ public class VerificationActivity extends AppCompatActivity {
         if (checkedId == R.id.chipStudent) {
             String matrix = etMatrixNo.getText().toString().trim();
             if (selectedImageUri == null && matrix.isEmpty()) {
-                Toast.makeText(this, "Please snap your card or enter Matrix No", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_snap_card_or_enter_matrix, Toast.LENGTH_SHORT).show();
                 return;
             }
         } else if (checkedId == R.id.chipAlumni) {
             String q1 = etAlumniQ1.getText().toString().trim();
             String q2 = etAlumniQ2.getText().toString().trim();
             if (q1.isEmpty() || q2.isEmpty()) {
-                Toast.makeText(this, "Please answer the alumni challenge questions", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_answer_alumni_questions, Toast.LENGTH_SHORT).show();
                 return;
             }
             // Basic verification for alumni (Futuristic: would check against alumni DB)
             if (!q1.toLowerCase().contains("pks") && !q1.toLowerCase().contains("poliku")) {
-                Toast.makeText(this, "Challenge answer 1 seems incorrect", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_challenge_answer_incorrect, Toast.LENGTH_SHORT).show();
                 return;
             }
         }

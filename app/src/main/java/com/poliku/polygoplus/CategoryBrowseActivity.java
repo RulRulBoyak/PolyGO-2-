@@ -18,7 +18,7 @@ public class CategoryBrowseActivity extends AppCompatActivity {
     private static final int[] ICONS = {
         R.drawable.ic_category_food, R.drawable.ic_category_drink, R.drawable.ic_category_tech,
         R.drawable.ic_category_books, R.drawable.ic_category_repair, R.drawable.ic_category_fashion,
-        R.drawable.ic_category_home, R.drawable.ic_category_repair
+        R.drawable.ic_category_home, R.drawable.ic_category_tech
     };
 
     @Override

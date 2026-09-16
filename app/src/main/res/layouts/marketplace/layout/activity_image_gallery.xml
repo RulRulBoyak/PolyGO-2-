@@ -29,7 +29,7 @@
             android:layout_marginTop="16dp"
             android:background="#66000000"
             android:clickable="true"
-            android:contentDescription="Close Gallery"
+            android:contentDescription="@string/content_description_close_gallery"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"
             android:padding="12dp"

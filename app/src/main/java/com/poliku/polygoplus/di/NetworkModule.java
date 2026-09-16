@@ -10,6 +10,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.poliku.polygoplus.BuildConfig;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.network.AuthSessionHandler;
 import com.poliku.polygoplus.network.NetworkErrorHandler;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import dagger.hilt.components.SingletonComponent;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -32,6 +34,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @Module
 @InstallIn(SingletonComponent.class)
 public final class NetworkModule {
+
+    private static final long APP_CHECK_TTL_MS = 1000L * 60 * 50;
+    private static volatile String cachedAppCheckToken;
+    private static volatile long cachedAppCheckTokenAt;
+    private static final Object APP_CHECK_LOCK = new Object();
 
     @Provides
     @Singleton
@@ -61,22 +68,66 @@ public final class NetworkModule {
             }
         };
 
+        // App Check tokens are cached by the SDK (~1h). Waiting on the token
+        // task is therefore rare (only when a fresh token is being minted), not
+        // a per-request cost. We still keep the last-known token as a fallback
+        // so a transient provider hiccup never drops the header (which would
+        // fail the request server-side when enforcement is on).
         Interceptor appCheckInterceptor = chain -> {
             Request request = chain.request();
             if (!"GET".equalsIgnoreCase(request.method())) {
-                try {
-                    Task<AppCheckToken> tokenTask = FirebaseAppCheck.getInstance().getAppCheckToken(false);
-                    AppCheckToken token = Tasks.await(tokenTask, 5, TimeUnit.SECONDS);
-                    if (token != null && token.getToken() != null && !token.getToken().isEmpty()) {
-                        request = request.newBuilder()
-                                .addHeader("X-Firebase-AppCheck", token.getToken())
-                                .build();
+                String token = cachedAppCheckToken;
+                if (token == null || System.currentTimeMillis() - cachedAppCheckTokenAt > APP_CHECK_TTL_MS) {
+                    synchronized (APP_CHECK_LOCK) {
+                        token = cachedAppCheckToken;
+                        if (token == null || System.currentTimeMillis() - cachedAppCheckTokenAt > APP_CHECK_TTL_MS) {
+                            String fetched = null;
+                            try {
+                                Task<AppCheckToken> tokenTask = FirebaseAppCheck.getInstance().getAppCheckToken(false);
+                                AppCheckToken minted = Tasks.await(tokenTask, 3, TimeUnit.SECONDS);
+                                fetched = minted != null ? minted.getToken() : null;
+                            } catch (Exception ignored) {
+                                // Provider not ready / timed out — fall back below.
+                            }
+                            if (fetched != null && !fetched.isEmpty()) {
+                                cachedAppCheckToken = fetched;
+                                cachedAppCheckTokenAt = System.currentTimeMillis();
+                                token = fetched;
+                            } else {
+                                token = cachedAppCheckToken;
+                            }
+                        }
                     }
-                } catch (Exception ignored) {
-                    // Token unavailable (e.g. provider not ready) — request proceeds without it.
+                }
+                if (token != null && !token.isEmpty()) {
+                    request = request.newBuilder()
+                            .addHeader("X-Firebase-AppCheck", token)
+                            .build();
                 }
             }
             return chain.proceed(request);
+        };
+
+        Interceptor authResponseInterceptor = chain -> {
+            Response response = chain.proceed(chain.request());
+            if (response.code() == 401) {
+                AuthSessionHandler.onSessionExpired();
+                return response;
+            }
+            // Fallback for the pre-401 backend: JWT failures arrive as HTTP 200
+            // with a JSON body whose message starts with "Unauthorized". peekBody
+            // is non-consuming, so the Retrofit callback can still parse it.
+            if (response.code() == 200 && response.body() != null) {
+                try {
+                    String peek = response.peekBody(512).string();
+                    if (peek.contains("Unauthorized")) {
+                        AuthSessionHandler.onSessionExpired();
+                    }
+                } catch (Exception ignored) {
+                    // Peek failed – ignore, the callback will surface the real error.
+                }
+            }
+            return response;
         };
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -84,6 +135,7 @@ public final class NetworkModule {
                 .addInterceptor(authInterceptor)
                 .addInterceptor(networkErrorInterceptor)
                 .addInterceptor(appCheckInterceptor)
+                .addInterceptor(authResponseInterceptor)
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)

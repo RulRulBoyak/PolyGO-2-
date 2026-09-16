@@ -62,7 +62,7 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:contentDescription="@string/safe_meetup_location_on"
+                    android:contentDescription="@string/safe_meetup_location_icon"
                     android:src="@drawable/ic_location"
                     app:tint="@color/pks_blue" />
 
@@ -142,6 +142,15 @@
                         android:layout_height="56dp"
                         android:layout_weight="1"
                         android:text="I have arrived" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnShareLocation"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/safe_meetup_share" />
 
                 </LinearLayout>
 

@@ -12,6 +12,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 import com.poliku.polygoplus.data.AppDataStore;
+import com.poliku.polygoplus.network.AuthSessionHandler;
 import com.poliku.polygoplus.network.NetworkErrorHandler;
 
 import androidx.work.Configuration;
@@ -42,6 +43,9 @@ public class PolyGoApplication extends Application implements Configuration.Prov
 
         // Global network-failure -> ErrorStateActivity hook
         NetworkErrorHandler.register(this);
+
+        // Session-expiry interceptor + activity foreground tracker
+        AuthSessionHandler.register(this);
         
         createNotificationChannel();
 

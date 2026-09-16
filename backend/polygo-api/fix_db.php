@@ -9,6 +9,12 @@ if (!in_array($maintenanceClient, ['127.0.0.1', '::1', '10.0.2.2'], true)) {
 require_once __DIR__ . '/config.php';
 header('Content-Type: text/html; charset=utf-8');
 try {
+    // Belt & braces: never run master-repair on a production host.
+    if (defined('APP_ENV') && APP_ENV === 'prod') {
+        http_response_code(403);
+        echo '<h1>Forbidden</h1><p>Maintenance is disabled in production.</p>';
+        exit;
+    }
     echo "<h1>🚀 PolyGo+ Database Master Repair</h1>";
 
     // 1. Repair Users Table (Add profile_pic_url)

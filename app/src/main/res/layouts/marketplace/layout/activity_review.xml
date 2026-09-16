@@ -29,7 +29,7 @@
                 android:layout_height="40dp"
                 android:background="@color/white"
                 android:clickable="true"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
@@ -62,7 +62,7 @@
                 <ImageView
                     android:layout_width="16dp"
                     android:layout_height="16dp"
-                    android:contentDescription="Verified Seller"
+                    android:contentDescription="@string/content_description_verified_seller"
                     android:src="@drawable/ic_verified"
                     app:tint="@color/pks_blue" />
 

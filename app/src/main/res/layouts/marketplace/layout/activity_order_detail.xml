@@ -28,7 +28,7 @@
                 android:layout_height="40dp"
                 android:background="@color/white"
                 android:clickable="true"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
@@ -233,7 +233,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginTop="2dp"
-                            android:contentDescription="Info"
+                            android:contentDescription="@string/content_description_info"
                             android:src="@drawable/ic_info_circle"
                             app:tint="@color/airbnb_muted" />
 

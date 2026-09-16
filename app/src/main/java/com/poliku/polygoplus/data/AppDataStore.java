@@ -2,6 +2,8 @@ package com.poliku.polygoplus.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Principal Rule 2.1 & 2.2: Defensive Immutability & Main-Thread Safety
@@ -55,6 +58,10 @@ public final class AppDataStore {
     private static final String KEY_MAINTENANCE = "maintenance_mode";
     private static final String KEY_BIO_LOCK = "bio_lock_enabled";
     private static final String KEY_MEETUP_DISCLOSURE = "meetup_disclosure_seen";
+    private static final String KEY_NOTIF_PERM_ASKED = "notif_permission_asked";
+    private static final String KEY_PICKED_MAJOR_ID = "picked_major_id";
+    private static final String KEY_PICKED_MAJOR_NAME = "picked_major_name";
+    private static final String KEY_FCM_TOKEN = "fcm_token";
 
     public static final String[] PKS_LANDMARKS = {
         "Block A", "Block B", "Block C", "Cafeteria", "Library",
@@ -69,6 +76,7 @@ public final class AppDataStore {
 
     private static volatile MasterKey masterKey;
     private static volatile SharedPreferences cachedPrefs;
+    private static volatile Boolean onboardingSeenCache;
 
     private static SharedPreferences prefs(Context context) {
         SharedPreferences local = cachedPrefs;
@@ -183,6 +191,20 @@ public final class AppDataStore {
 
     public static String userToken(Context context) {
         return prefs(context).getString("user_token", "");
+    }
+
+    // Remember the latest FCM token the OS issued, even while logged out, so the
+    // next successful login can sync it to the backend without waiting for a fresh
+    // registration callback.
+    public static void saveFcmToken(Context context, String token) {
+        if (token == null || token.isEmpty()) return;
+        DISK_EXECUTOR.execute(() ->
+            prefs(context).edit().putString(KEY_FCM_TOKEN, token).apply()
+        );
+    }
+
+    public static String pendingFcmToken(Context context) {
+        return prefs(context).getString(KEY_FCM_TOKEN, "");
     }
 
     public static String userId(Context context) {
@@ -797,6 +819,22 @@ public final class AppDataStore {
         DISK_EXECUTOR.execute(() -> saveArray(context, KEY_SEARCH_HISTORY, new JSONArray())); 
     }
 
+    public static void setPickedMajor(Context context, int majorId, String majorName) {
+        DISK_EXECUTOR.execute(() -> prefs(context)
+                .edit()
+                .putInt(KEY_PICKED_MAJOR_ID, majorId)
+                .putString(KEY_PICKED_MAJOR_NAME, majorName == null ? "" : majorName)
+                .apply());
+    }
+
+    public static int pickedMajorId(Context context) {
+        return prefs(context).getInt(KEY_PICKED_MAJOR_ID, 0);
+    }
+
+    public static String pickedMajorName(Context context) {
+        return prefs(context).getString(KEY_PICKED_MAJOR_NAME, "");
+    }
+
     public static List<String> computeTrending(Context context) {
         java.util.LinkedHashMap<String, Integer> freq = new java.util.LinkedHashMap<>();
         List<String> history = getSearchHistory(context);
@@ -858,9 +896,30 @@ public final class AppDataStore {
     }
 
     public static void setOnboardingSeen(Context context) { 
-        DISK_EXECUTOR.execute(() -> prefs(context).edit().putBoolean(KEY_ONBOARDING, true).apply()); 
+        DISK_EXECUTOR.execute(() -> {
+            prefs(context).edit().putBoolean(KEY_ONBOARDING, true).apply();
+            onboardingSeenCache = true;
+        }); 
     }
-    
+
+    /**
+     * Reads the onboarding flag off the main thread so cold-start routing in
+     * SplashActivity never blocks on the EncryptedSharedPreferences key init.
+     * Delivers the result on the main thread.
+     */
+    public static void hasSeenOnboardingAsync(Context context, Consumer<Boolean> onReady) {
+        Boolean cached = onboardingSeenCache;
+        if (cached != null) {
+            new Handler(Looper.getMainLooper()).post(() -> onReady.accept(cached));
+            return;
+        }
+        DISK_EXECUTOR.execute(() -> {
+            boolean seen = prefs(context).getBoolean(KEY_ONBOARDING, false);
+            onboardingSeenCache = seen;
+            new Handler(Looper.getMainLooper()).post(() -> onReady.accept(seen));
+        });
+    }
+
     public static boolean hasSeenOnboarding(Context context) {
         return prefs(context).getBoolean(KEY_ONBOARDING, false);
     }
@@ -883,6 +942,14 @@ public final class AppDataStore {
 
     public static void markMeetupDisclosureSeen(Context context) {
         prefs(context).edit().putBoolean(KEY_MEETUP_DISCLOSURE, true).apply();
+    }
+
+    public static boolean hasAskedNotificationPermission(Context context) {
+        return prefs(context).getBoolean(KEY_NOTIF_PERM_ASKED, false);
+    }
+
+    public static void markNotificationPermissionAsked(Context context) {
+        DISK_EXECUTOR.execute(() -> prefs(context).edit().putBoolean(KEY_NOTIF_PERM_ASKED, true).apply());
     }
 
     public static String verificationStatus(Context context) {
@@ -943,18 +1010,28 @@ public final class AppDataStore {
         @NonNull public final String id, title, seller, price, rating, reviewCount, distance, imageUri, category, description, ownerId;
         public final int imageRes; public final boolean owner, available;
         public boolean archived;
+        public long postedAt;
+        public int views;
+        public String location;
+        public boolean verified;
 
         public ProductRecord(@NonNull String id, @NonNull String title, @NonNull String seller, @NonNull String price, @NonNull String rating, @NonNull String reviewCount, @NonNull String distance, int imageRes, @NonNull String imageUri, @NonNull String category, @NonNull String description, boolean owner, boolean available, @NonNull String ownerId) {
             this.id = id; this.title = title; this.seller = seller; this.price = price; this.rating = rating; this.reviewCount = reviewCount; this.distance = distance; this.imageRes = imageRes; this.imageUri = imageUri; this.category = category; this.description = description; this.owner = owner; this.available = available; this.ownerId = ownerId;
         }
 
         public ProductRecord withOwnerStatus(boolean isOwner) {
-            return new ProductRecord(id, title, seller, price, rating, reviewCount, distance, imageRes, imageUri, category, description, isOwner, available, ownerId);
+            ProductRecord rec = new ProductRecord(id, title, seller, price, rating, reviewCount, distance, imageRes, imageUri, category, description, isOwner, available, ownerId);
+            rec.archived = archived;
+            rec.postedAt = postedAt;
+            rec.views = views;
+            rec.location = location;
+            rec.verified = verified;
+            return rec;
         }
 
         public ListingEntity toEntity() {
             ListingEntity e = new ListingEntity(id, title, seller, price, rating, distance, imageUri.isEmpty() ? "" : imageUri,
-                    category, description, ownerId, available, owner);
+                    category, description, ownerId, available, owner, location, postedAt, views);
             e.reviewCount = reviewCount;
             e.archived = archived;
             return e;
@@ -974,7 +1051,7 @@ public final class AppDataStore {
 
         public JSONObject toJson() throws JSONException {
             JSONObject o = new JSONObject();
-            o.put("id", id); o.put("title", title); o.put("seller", seller); o.put("price", price); o.put("rating", rating); o.put("review_count", reviewCount); o.put("distance", distance); o.put("imageRes", imageRes); o.put("imageUri", imageUri); o.put("category", category); o.put("description", description); o.put("owner", owner); o.put("available", available); o.put("owner_id", ownerId); o.put("archived", archived);
+            o.put("id", id); o.put("title", title); o.put("seller", seller); o.put("price", price); o.put("rating", rating); o.put("review_count", reviewCount); o.put("distance", distance); o.put("imageRes", imageRes); o.put("imageUri", imageUri); o.put("category", category); o.put("description", description); o.put("owner", owner); o.put("available", available); o.put("owner_id", ownerId); o.put("archived", archived); o.put("posted_at_ms", postedAt); o.put("views", views); o.put("location", location); o.put("verified", verified);
             return o;
         }
 
@@ -983,6 +1060,10 @@ public final class AppDataStore {
             String price = PriceFormatter.format(o.optString("price", "0")).replace("RM ", "");
             ProductRecord rec = new ProductRecord(o.optString("id", "0"), o.optString("title", "Item"), o.optString("seller", "User"), price, o.optString("rating", "4.5"), o.optString("review_count", "0"), o.optString("distance", "Near"), o.optInt("imageRes", R.drawable.bg_product_home), o.optString("imageUri", ""), o.optString("category", "General"), o.optString("description", ""), o.optBoolean("owner", false), o.optBoolean("available", true), o.optString("owner_id", "0"));
             rec.archived = o.optBoolean("archived", false);
+            rec.postedAt = o.optLong("posted_at_ms", 0);
+            rec.views = o.optInt("views", 0);
+            rec.location = o.optString("location", "");
+            rec.verified = o.optBoolean("verified", false);
             return rec;
         }
 
@@ -991,9 +1072,13 @@ public final class AppDataStore {
             String price = PriceFormatter.format(l.price).replace("RM ", "");
             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
             String imageUri = l.image_url == null ? "" : l.image_url;
-            String distance = l.distance == null ? "Near" : l.distance;
+            String distance = l.distance == null ? (l.location == null || l.location.isEmpty() ? "Near" : l.location) : l.distance;
             ProductRecord rec = new ProductRecord(l.id, l.title, l.seller, price, l.rating, l.review_count, distance, R.drawable.bg_product_home, imageUri, l.category, l.description, isOwner, l.available, l.owner_id);
             rec.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
+            rec.postedAt = l.postedAt;
+            rec.views = l.views;
+            rec.location = l.location;
+            rec.verified = l.verified;
             return rec;
         }
     }

@@ -10,22 +10,29 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.imageview.ShapeableImageView;
+import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.data.ProductCardAdapter;
+import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.CarouselAdapter;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.RelativeTimeFormatter;
 
 import javax.inject.Inject;
 
@@ -36,6 +43,9 @@ import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @AndroidEntryPoint
 public class ProductDetailActivity extends AppCompatActivity {
@@ -50,6 +60,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     private CollapsingToolbarLayout collapsingToolbar;
     private String detailFreeSlots;
     private String detailMajorName;
+    private Call<PolyGoApi.ListingsResponse> pendingFetch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +69,15 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         carousel = findViewById(R.id.productCarousel);
         ViewCompat.setTransitionName(carousel, "product_image_hero");
+
+        View productBottomBar = findViewById(R.id.productBottomBar);
+        if (productBottomBar != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(productBottomBar, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, v.getPaddingTop(), systemBars.right, systemBars.bottom);
+                return insets;
+            });
+        }
 
         String id = getIntent().getStringExtra(EXTRA_LISTING_ID);
         
@@ -90,7 +110,8 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void fetchProduct(String id) {
-        polyGoRepository.getListing(id, new Callback<PolyGoApi.ListingsResponse>() {
+        pendingFetch = polyGoRepository.createGetListingCall(id);
+        pendingFetch.enqueue(new Callback<PolyGoApi.ListingsResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
                 PolyGoApi.ListingsResponse body = response.body();
@@ -101,6 +122,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                     detailMajorName = l.major_name;
                     if (product != null) {
                         renderProduct();
+                        loadSimilar(id);
                     } else {
                         tryLocalFallback(id);
                     }
@@ -120,7 +142,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         product = AppDataStore.getListing(this, id);
         if (product != null) renderProduct();
         else {
-            Toast.makeText(this, "Product not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_product_not_found, Toast.LENGTH_SHORT).show();
             finish();
         }
     }
@@ -154,15 +176,22 @@ public class ProductDetailActivity extends AppCompatActivity {
             meta += " (" + product.reviewCount + ")";
         }
         meta += "  •  " + product.distance + "  •  " + product.category;
+        String postedDetail = RelativeTimeFormatter.formatDetail(this, product.postedAt);
+        if (!postedDetail.isEmpty()) {
+            meta += "  •  " + postedDetail;
+        }
+        if (product.views > 0) {
+            meta += "  •  " + getString(R.string.product_views_count, product.views);
+        }
         ((TextView) findViewById(R.id.productMeta)).setText(meta);
         ((TextView) findViewById(R.id.productDescription)).setText(product.description);
 
         StringBuilder suffix = new StringBuilder();
         if (detailMajorName != null && !detailMajorName.isEmpty()) {
-            suffix.append("\nDepartment: ").append(detailMajorName);
+            suffix.append(getString(R.string.product_department_line, detailMajorName));
         }
         if (detailFreeSlots != null && !detailFreeSlots.isEmpty()) {
-            suffix.append("\nFree slots: ").append(detailFreeSlots);
+            suffix.append(getString(R.string.product_free_slots_line, detailFreeSlots));
         }
         if (suffix.length() > 0) {
             TextView descView = findViewById(R.id.productDescription);
@@ -172,8 +201,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvReviewScore)).setText(product.rating);
         boolean hasReviews = product.reviewCount != null && !product.reviewCount.isEmpty() && !"0".equals(product.reviewCount);
         ((TextView) findViewById(R.id.tvReviewCount)).setText(hasReviews
-                ? "(" + product.reviewCount + " reviews)"
-                : "No reviews yet");
+                ? getString(R.string.product_reviews_count, product.reviewCount)
+                : getString(R.string.seller_no_reviews));
         findViewById(R.id.cardReviews).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             Intent i = new Intent(this, SellerProfileActivity.class);
@@ -196,6 +225,14 @@ public class ProductDetailActivity extends AppCompatActivity {
             i.putExtra(SellerProfileActivity.EXTRA_SELLER_ID, product.ownerId);
             startActivity(i);
         });
+        View verifiedBadge = findViewById(R.id.ivVerifiedBadge);
+        if (verifiedBadge != null) {
+            verifiedBadge.setVisibility(product.verified ? View.VISIBLE : View.GONE);
+        }
+        TextView sellerMetaView = findViewById(R.id.sellerMeta);
+        if (sellerMetaView != null) {
+            sellerMetaView.setText(product.verified ? R.string.seller_verified_meta : R.string.seller_student_meta);
+        }
         findViewById(R.id.btnReportListing).setOnClickListener(v -> {
             Intent i = new Intent(this, ReportActivity.class);
             i.putExtra(ReportActivity.EXTRA_TARGET_TYPE, "listing");
@@ -204,21 +241,33 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(i);
         });
 
+        if (!product.owner) {
+            loadSellerStats(product.ownerId, product.seller);
+        }
+
         updateSaveButton(AppDataStore.isFavorite(this, product.id));
         saveButton.setOnClickListener(v -> {
             HapticManager.lightTap(v);
             toggleFavorite();
         });
 
+        MaterialButton shareBtn = findViewById(R.id.btnShareListing);
+        if (shareBtn != null) {
+            shareBtn.setOnClickListener(v -> {
+                HapticManager.lightTap(v);
+                shareListing();
+            });
+        }
+
         MaterialButton message = findViewById(R.id.btnMessageSeller);
         if (product.owner) {
-            message.setText("This is your listing");
+            message.setText(getString(R.string.product_this_is_your_listing));
             message.setEnabled(false);
             findViewById(R.id.btnMakeOffer).setEnabled(false);
             MaterialButton sold = findViewById(R.id.btnMarkSold);
             sold.setVisibility(View.VISIBLE);
             if (product.archived) {
-                sold.setText("Relist");
+                sold.setText(getString(R.string.product_relist));
                 sold.setOnClickListener(v -> {
                     HapticManager.mediumTap(v);
                     v.setEnabled(false);
@@ -227,19 +276,19 @@ public class ProductDetailActivity extends AppCompatActivity {
                         public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                                 AppDataStore.unarchiveListing(ProductDetailActivity.this, product.id);
-                                Toast.makeText(ProductDetailActivity.this, "Listing relisted", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProductDetailActivity.this, R.string.toast_listing_relisted, Toast.LENGTH_SHORT).show();
                                 favoriteChanged = true; // Trigger refresh on Home
                                 finish();
                             } else {
                                 v.setEnabled(true);
-                                Toast.makeText(ProductDetailActivity.this, "Could not relist listing", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProductDetailActivity.this, R.string.toast_could_not_relist, Toast.LENGTH_SHORT).show();
                             }
                         }
 
                         @Override
                         public void onFailure(Call<BaseResponse> call, Throwable t) {
                             v.setEnabled(true);
-                            Toast.makeText(ProductDetailActivity.this, "Could not reach server", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.toast_could_not_reach_server, Toast.LENGTH_SHORT).show();
                         }
                     });
                 });
@@ -253,19 +302,19 @@ public class ProductDetailActivity extends AppCompatActivity {
                         public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                                 AppDataStore.markSold(ProductDetailActivity.this, product.id);
-                                Toast.makeText(ProductDetailActivity.this, "Listing marked as sold", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProductDetailActivity.this, R.string.toast_listing_marked_sold, Toast.LENGTH_SHORT).show();
                                 favoriteChanged = true; // Trigger refresh on Home
                                 finish();
                             } else {
                                 v.setEnabled(true);
-                                Toast.makeText(ProductDetailActivity.this, "Could not mark listing as sold", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProductDetailActivity.this, R.string.toast_could_not_mark_sold, Toast.LENGTH_SHORT).show();
                             }
                         }
 
                         @Override
                         public void onFailure(Call<BaseResponse> call, Throwable t) {
                             v.setEnabled(true);
-                            Toast.makeText(ProductDetailActivity.this, "Could not reach server", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.toast_could_not_reach_server, Toast.LENGTH_SHORT).show();
                         }
                     });
                 });
@@ -274,7 +323,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         message.setOnClickListener(v -> {
             if (!AppDataStore.isLoggedIn(this)) {
-                Toast.makeText(this, "Please log in to contact the seller", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_login_to_contact, Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, LoginActivity.class));
                 return;
             }
@@ -288,12 +337,113 @@ public class ProductDetailActivity extends AppCompatActivity {
         findViewById(R.id.btnMakeOffer).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             if (!AppDataStore.isLoggedIn(this)) {
-                Toast.makeText(this, "Please log in to make an offer", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_login_to_make_offer, Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, LoginActivity.class));
                 return;
             }
             showOfferDialog();
         });
+    }
+
+    private void shareListing() {
+        String url = "https://polygo.pks.edu.my/listing/" + product.id;
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, product.title);
+        send.putExtra(Intent.EXTRA_TEXT, product.title + "\n" + url);
+        startActivity(Intent.createChooser(send, getString(R.string.share_listing_label)));
+    }
+
+    private void loadSimilar(String id) {
+        LinearLayout section = findViewById(R.id.similarSection);
+        RecyclerView rv = findViewById(R.id.rvSimilar);
+        if (section == null || rv == null) return;
+        rv.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        ProductCardAdapter adapter = new ProductCardAdapter(null, (a, product, view) -> {
+            Intent i = new Intent(this, ProductDetailActivity.class);
+            i.putExtra(EXTRA_LISTING_ID, product.id);
+            startActivity(i);
+        });
+        adapter.setItemWidthDp(170);
+        rv.setAdapter(adapter);
+        polyGoRepository.createSimilarCall(id).enqueue(new Callback<PolyGoApi.ListingsResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+                List<ListingEntity> items = new ArrayList<>();
+                PolyGoApi.ListingsResponse body = response.body();
+                if (body != null && body.listings != null) {
+                    String currentUserId = AppDataStore.userId(ProductDetailActivity.this);
+                    for (PolyGoApi.Listing l : body.listings) {
+                        items.add(new ListingEntity(l.id, l.title, l.seller, l.price, l.rating,
+                                l.distance != null ? l.distance : (l.location == null ? "" : l.location),
+                                l.image_url, l.category, l.description, l.owner_id, l.available,
+                                currentUserId != null && currentUserId.equals(l.owner_id),
+                                l.location, l.postedAt, l.views));
+                    }
+                }
+                adapter.updateData(items);
+                section.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.ListingsResponse> call, Throwable t) {
+                section.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void loadSellerStats(String ownerId, String sellerName) {
+        if (ownerId == null || ownerId.trim().isEmpty()) return;
+        polyGoRepository.getSeller(ownerId, sellerName, new Callback<PolyGoApi.SellerResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.SellerResponse> call, Response<PolyGoApi.SellerResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+                PolyGoApi.SellerResponse body = response.body();
+                if (body == null || body.user == null || body.user.isPrivate) return;
+
+                TextView meta = findViewById(R.id.sellerMeta);
+                if (meta == null) return;
+                PolyGoApi.User seller = body.user;
+                String pic = seller.profile_pic_url == null ? "" : seller.profile_pic_url.trim();
+                if (!pic.isEmpty()) {
+                    ShapeableImageView avatar = findViewById(R.id.sellerAvatar);
+                    if (avatar != null) {
+                        Glide.with(ProductDetailActivity.this)
+                                .load(pic)
+                                .placeholder(R.drawable.ic_person)
+                                .error(R.drawable.ic_person)
+                                .override(96, 96)
+                                .circleCrop()
+                                .into(avatar);
+                    }
+                }
+
+                StringBuilder stats = new StringBuilder();
+                if (seller.reviews > 0) {
+                    stats.append(getString(R.string.seller_rating_segment, seller.rating, seller.reviews));
+                    stats.append(" • ");
+                }
+                stats.append(getString(R.string.seller_sold_segment, seller.sold));
+                if (seller.joined_at != null && !seller.joined_at.trim().isEmpty()) {
+                    stats.append(" • ").append(getString(R.string.seller_joined_segment, formatJoined(seller.joined_at)));
+                }
+                meta.setText(stats.toString());
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.SellerResponse> call, Throwable t) {
+            }
+        });
+    }
+
+    private String formatJoined(String raw) {
+        try {
+            return new SimpleDateFormat("MMM yyyy", Locale.ENGLISH)
+                    .format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT).parse(raw.trim()));
+        } catch (Exception ignored) {
+            return raw;
+        }
     }
 
     private void setupIndicators(int count) {
@@ -324,7 +474,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void toggleFavorite() {
         if (!AppDataStore.isLoggedIn(this)) {
-            Toast.makeText(this, "Login required to save items", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_login_required_save, Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
@@ -343,12 +493,12 @@ public class ProductDetailActivity extends AppCompatActivity {
                     updateSaveButton(fav);
 
                     if (!fav) {
-                        Snackbar.make(saveButton, "Removed from saved items", Snackbar.LENGTH_LONG)
-                                .setAction("UNDO", v -> toggleFavorite())
+                        Snackbar.make(saveButton, R.string.snack_removed_from_saved, Snackbar.LENGTH_LONG)
+                                .setAction(getString(R.string.action_undo), v -> toggleFavorite())
                                 .setActionTextColor(getResources().getColor(R.color.pks_blue_variant))
                                 .show();
                     } else {
-                        Toast.makeText(ProductDetailActivity.this, "Saved to your items", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProductDetailActivity.this, R.string.toast_saved_to_items, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     onFailure(call, new Throwable("Toggle failed"));
@@ -363,11 +513,11 @@ public class ProductDetailActivity extends AppCompatActivity {
                 updateSaveButton(fav);
 
                 if (!fav) {
-                    Snackbar.make(saveButton, "Removed (offline)", Snackbar.LENGTH_LONG)
-                            .setAction("UNDO", v -> toggleFavorite())
+                    Snackbar.make(saveButton, R.string.snack_removed_offline, Snackbar.LENGTH_LONG)
+                            .setAction(getString(R.string.action_undo), v -> toggleFavorite())
                             .show();
                 } else {
-                    Toast.makeText(ProductDetailActivity.this, "Saved (offline)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProductDetailActivity.this, R.string.toast_saved_offline, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -380,7 +530,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void showReviewGate(String sellerName) {
         if (!AppDataStore.isLoggedIn(this)) {
-            Toast.makeText(this, "Please log in to leave a review", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_login_to_leave_review, Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
@@ -394,11 +544,17 @@ public class ProductDetailActivity extends AppCompatActivity {
             return;
         }
         HapticManager.error(this);
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.review_verified_buyer_title)
                 .setMessage(R.string.review_verified_buyer_message)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (pendingFetch != null) pendingFetch.cancel();
+        super.onDestroy();
     }
 
     @Override

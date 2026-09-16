@@ -31,19 +31,19 @@ public class DealTrackerActivity extends AppCompatActivity {
 
         findViewById(R.id.btnCloseDeal).setOnClickListener(v -> {
             HapticManager.success(this);
-            Toast.makeText(this, "Transaction complete. Funds released to seller.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.toast_transaction_complete_funds_released, Toast.LENGTH_LONG).show();
             finish();
         });
     }
 
     private void setupTimeline() {
         // Mocking the 6 stages of a PKS deal
-        setStep(R.id.step1, "Offer Sent", "Waiting for seller acceptance", true);
-        setStep(R.id.step2, "Price Agreed", "RM 45.00 confirmed by both", true);
-        setStep(R.id.step3, "Meetup Scheduled", "Today at 4:30 PM, Cafeteria", true);
-        setStep(R.id.step4, "Physical Inspection", "Buyer is testing the item", false);
-        setStep(R.id.step5, "Payment Confirmed", "Waiting for buyer approval", false);
-        setStep(R.id.step6, "Deal Closed", "Transaction officially complete", false);
+        setStep(R.id.step1, getString(R.string.deal_step_offer_sent), getString(R.string.deal_step_waiting_acceptance), true);
+        setStep(R.id.step2, getString(R.string.deal_step_price_agreed), getString(R.string.deal_step_price_confirmed), true);
+        setStep(R.id.step3, getString(R.string.deal_step_meetup_scheduled), getString(R.string.deal_step_meetup_details), true);
+        setStep(R.id.step4, getString(R.string.deal_step_inspection), getString(R.string.deal_step_inspection_details), false);
+        setStep(R.id.step5, getString(R.string.deal_step_payment_confirmed), getString(R.string.deal_step_payment_details), false);
+        setStep(R.id.step6, getString(R.string.deal_step_deal_closed), getString(R.string.deal_step_deal_closed_details), false);
     }
 
     private void setStep(int id, String title, String desc, boolean completed) {
@@ -77,7 +77,7 @@ public class DealTrackerActivity extends AppCompatActivity {
             public void onFinish() {
                 tvTimerClock.setText("00:00");
                 HapticManager.error(DealTrackerActivity.this);
-                Toast.makeText(DealTrackerActivity.this, "Inspection time ended.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(DealTrackerActivity.this, R.string.toast_inspection_time_ended, Toast.LENGTH_SHORT).show();
             }
         }.start();
     }

@@ -20,6 +20,7 @@
     <string name="greeting_afternoon">Selamat tengah hari</string>
     <string name="greeting_evening">Selamat petang</string>
     <string name="explore_campus">Terokai Kampus</string>
+    <string name="home_greeting_sub">Apa yang berlaku di kampus hari ini?</string>
     <string name="recent_listings">Iklan Terkini</string>
     <string name="view_all">Lihat Semua</string>
 
@@ -145,6 +146,8 @@
     <string name="seller_active_listings">Senarai aktif</string>
     <string name="seller_campus_reviews">Ulasan Kampus</string>
     <string name="seller_verified_pill">Penjual Disahkan PKS</string>
+    <string name="seller_verified_meta">Pelajar Disahkan • Kampus PKS</string>
+    <string name="seller_student_meta">Pelajar • Kampus PKS</string>
     <string name="seller_no_active">Tiada senarai aktif</string>
     <string name="seller_no_products_desc">%1$s tiada barang untuk dijual buat masa ini.</string>
     <string name="seller_browse_campus">Teroka kampus</string>
@@ -196,8 +199,14 @@
     <!-- Safe Meetup -->
     <string name="safe_meetup_arrived">Saya dah tiba di %1$s. Jumpa di sana! 📍</string>
     <string name="safe_meetup_emergency">Amaran Keselamatan dicetus oleh %1$s di %2$s</string>
-    <string name="safe_meetup_location_on">Perkongsian lokasi AKTIF • hanya dikongsi semasa pertemuan ini</string>
+    <string name="safe_meetup_location_on">Lokasi dikongsi atas permintaan • ketik Kongsi untuk hantar lokasi semasa</string>
     <string name="safe_meetup_location_off">Perkongsian lokasi dilumpuhkan. Mulakan urus niaga untuk kongsi titik pertemuan.</string>
+    <string name="safe_meetup_location_icon">Ikon lokasi</string>
+    <string name="safe_meetup_share">Kongsi lokasi saya</string>
+    <string name="safe_meetup_share_sent">Lokasi dikongsi dengan rakan pertemuan anda</string>
+    <string name="safe_meetup_share_location">Lokasi semasa dikongsi oleh %1$s di %2$s</string>
+    <string name="safe_meetup_share_location_nofix">Lokasi semasa dikongsi oleh %1$s di %2$s — koordinat tidak dapat ditentukan</string>
+    <string name="safe_meetup_your_position">Kedudukan semasa anda</string>
     <string name="safe_meetup_emergency_title">Amaran Kecemasan</string>
     <string name="safe_meetup_emergency_confirm">Hantar amaran keselamatan kepada pengguna lain dan Keselamatan PKS?</string>
     <string name="safe_meetup_emergency_sent">Amaran dihantar. Keselamatan PKS telah dimaklumkan.</string>
@@ -236,6 +245,12 @@
     <string name="pulse_time_h">%1$dj lalu</string>
     <string name="pulse_time_d">%1$dh lalu</string>
     <string name="pulse_time_w">%1$dmg lalu</string>
+    <string name="listing_posted_prefix">Tersenarai %1$s</string>
+    <string name="listing_listed_on">Tersenarai pada %1$s</string>
+    <string name="product_views_count">%1$d paparan</string>
+    <string name="product_photos_desc">%1$d foto</string>
+    <string name="similar_title">Item serupa</string>
+    <string name="share_listing_label">Kongsi</string>
     <string name="textbook_looking_up">Mencari ISBN: %1$s</string>
     <string name="textbook_details_found">Maklumat buku dijumpai - semak sebelum terbit</string>
     <string name="textbook_not_found_title">Tiada maklumat buku dijumpai</string>
@@ -331,4 +346,360 @@
 
     <!-- AI Proxy -->
     <string name="ai_suggest_error">Perkhidmatan AI tidak tersedia. Masukkan butiran penyenaraian anda secara manual.</string>
+
+    <!-- Marketplace: chat quick replies + seller social proof -->
+    <string name="quick_reply_available">Barang ini masih ada?</string>
+    <string name="quick_reply_negotiable">Boleh turunkan harga?</string>
+    <string name="quick_reply_meetup">Boleh jumpa di mana?</string>
+    <string name="quick_reply_payment">Boleh bayar melalui pindahan bank?</string>
+    <string name="seller_rating_segment">★ %1$s (%2$d)</string>
+    <string name="seller_sold_segment">%1$d terjual</string>
+    <string name="seller_joined_segment">Ahli sejak %1$s</string>
+    <string name="home_categories">Kategori</string>
+    <string name="picks_for_you">Pilihan Untuk Anda</string>
+    <string name="picks_for_you_subtitle">Barangan terbaik untuk jabatan anda</string>
+    <!-- Legal -->
+    <string name="privacy_title">Privacy Policy</string>
+    <string name="terms_title">Terms of Service</string>
+    <string name="privacy_title_ms">Dasar Privasi</string>
+    <string name="terms_title_ms">Terma Perkhidmatan</string>
+    <string name="lang_toggle_to_bm">BM</string>
+    <string name="lang_toggle_to_en">EN</string>
+<string name="privacy_policy_text">
+        &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n
+        Last updated: September 11, 2026\n\n
+        PolyGo+ ("we", "our", or "us") is committed to protecting your privacy in line with Malaysia\'s Personal Data Protection Act (PDPA) 2010. This Privacy Policy explains how your personal information is collected, used, and disclosed by PolyGo+.\n\n
+        &lt;b&gt;1. Information We Collect&lt;/b&gt;\n
+        To facilitate a secure campus marketplace, we collect information you provide when you register, including:\n
+        - Name and Mobile Number\n
+        - Campus Email Address\n
+        - Student / Matrix ID (for PKS verification)\n
+        - Profile information\n
+        - Meetup landmark selections and precise meetup locations for verified safe-meetup features\n
+        - Search history (used only to improve the Trending algorithm)\n
+        - Photos you upload (listings and profile picture)\n\n
+        &lt;b&gt;2. How We Use Your Information&lt;/b&gt;\n
+        We use the information we collect to:\n
+        - Verify your status as a student/staff through PKS verification.\n
+        - Provide, operate, and maintain our marketplace and chat.\n
+        - Facilitate transactions between buyers and sellers.\n
+        - Power the AI "Suggest Details" feature using Google Gemini (only your photo and listing text are sent; you are never asked for sensitive personal data).\n
+        - Send you technical notices, updates, and support messages.\n\n
+        &lt;b&gt;3. AI-Generated Content and Moderation&lt;/b&gt;\n
+        PolyGo+ uses a third-party generative AI service (Google Gemini) to suggest listing details. AI suggestions are a draft and always require your review before publishing. If an AI suggestion is offensive or incorrect, use the "Flag AI Suggestion" button inside the listing form to report it. You remain responsible for the final content you publish.\n\n
+        &lt;b&gt;4. Sharing of Information&lt;/b&gt;\n
+        We do not sell your personal information. We share it only:\n
+        - Between buyers and sellers to facilitate a transaction.\n
+        - With Google Firebase (for push notifications).\n
+        - With Google Gemini (for the AI suggestion feature).\n
+        - If required by law or to protect the rights of PolyGo+.\n\n
+        &lt;b&gt;5. Biometric Data (PDPA Amendment 2024)&lt;/b&gt;\n
+        Biometric data is sensitive personal data under Malaysia\'s Personal Data Protection (Amendment) Act 2024 (Act A1727). PolyGo+ does not collect, transmit, or store biometric data. The optional "Biometric Lock" feature uses your fingerprint or face only through the device\'s secure local authentication (Android BiometricPrompt backed by a hardware Keystore / StrongBox). No biometric templates ever leave your device, and no biometric data appears in "Download My Data" exports.\n\n
+        &lt;b&gt;6. Access, Correction, Portability and Deletion (PDPA Rights)&lt;/b&gt;\n
+        You may request access to, and correction of, your personal data. You may also download a copy of all your data via "Download My Data" in Account Settings (JSON or CSV export) and delete your account and all associated data at any time using "Delete Account". Deletion removes your profile, listings, chats, reviews, transactions and uploaded images from our servers.\n\n
+        &lt;b&gt;7. Data Security&lt;/b&gt;\n
+        We use reasonable measures (encrypted passwords, JWT-authenticated APIs) to help protect information about you from loss, theft, misuse, and unauthorized access.\n\n
+        &lt;b&gt;8. Data Protection Officer &amp; Contact&lt;/b&gt;\n
+        Our Data Protection Officer (DPO) oversees PDPA compliance. For any privacy inquiry, or to request deletion outside the app, contact us at: support@poliku.com.\n\n
+        PolyGo+ is designed for use by campus students and staff aged 18 and above.\n
+    </string>
+
+<string name="privacy_policy_text_ms">
+        &lt;b&gt;Dasar Privasi untuk PolyGo+&lt;/b&gt;\n\n
+        Dikemas kini: 11 September 2026\n\n
+        PolyGo+ ("kami") komited melindungi privasi anda selaras dengan Akta Perlindungan Data Peribadi (PDPA) 2010. Dasar ini menerangkan cara maklumat peribadi anda dikumpul, digunakan dan didedahkan.\n\n
+        &lt;b&gt;1. Maklumat Yang Kami Kumpul&lt;/b&gt;\n
+        Untuk memudahkan pasaran kampus yang selamat, kami mengumpul maklumat berikut semasa pendaftaran:\n
+        - Nama dan Nombor Telefon\n
+        - Alamat E-mel Kampus\n
+        - ID Matrik / Pelajar (untuk pengesahan PKS)\n
+        - Maklumat profil\n
+        - Lokasi pertemuan yang dipilih untuk ciri pertemuan selamat\n
+        - Sejarah carian (digunakan hanya untuk algoritma Trending)\n
+        - Foto yang anda muat naik (iklan dan gambar profil)\n\n
+        &lt;b&gt;2. Cara Kami Menggunakan Maklumat Anda&lt;/b&gt;\n
+        Maklumat digunakan untuk:\n
+        - Mengesahkan status pelajar/staf melalui pengesahan PKS.\n
+        - Menyediakan, mengendali dan menyelenggara pasaran serta sembang.\n
+        - Memudahkan urus niaga antara pembeli dan penjual.\n
+        - Menjana ciri AI "Cadang Butiran" menggunakan Google Gemini (hanya foto dan teks iklan dihantar).\n
+        - Menghantar notis teknikal dan mesej sokongan.\n\n
+        &lt;b&gt;3. Kandungan Jana AI dan Moderasi&lt;/b&gt;\n
+        PolyGo+ menggunakan perkhidmatan AI generatif pihak ketiga (Google Gemini) untuk mencadangkan butiran iklan. Cadangan AI hanyalah draf dan mesti disemak oleh anda sebelum diterbitkan. Jika cadangan AI menyinggung atau tidak tepat, gunakan butang "Laporkan Cadangan AI" dalam borang iklan untuk melaporkannya.\n\n
+        &lt;b&gt;4. Perkongsian Maklumat&lt;/b&gt;\n
+        Kami tidak menjual maklumat peribadi anda. Kami berkongsi hanya:\n
+        - Antara pembeli dan penjual untuk memudahkan urus niaga.\n
+        - Dengan Google Firebase (untuk pemberitahuan push).\n
+        - Dengan Google Gemini (untuk ciri cadangan AI).\n
+        - Jika diperlukan oleh undang-undang atau untuk melindungi hak PolyGo+.\n\n
+        &lt;b&gt;5. Data Biometrik (Pindaan PDPA 2024)&lt;/b&gt;\n
+        Data biometrik ialah data peribadi sensitif di bawah Akta Perlindungan Data Peribadi (Pindaan) 2024 (Akta A1727). PolyGo+ tidak mengumpul, menghantar atau menyimpan data biometrik. Ciri "Kunci Biometrik" pilihan hanya menggunakan cap jari atau wajah anda melalui pengesahan setempat selamat peranti (Android BiometricPrompt yang disokong oleh Keystore / StrongBox perkakasan). Tiada templat biometrik meninggalkan peranti anda, dan tiada data biometrik muncul dalam eksport "Muat Turun Data Saya".\n\n
+        &lt;b&gt;6. Hak Akses, Pembetulan, Pemindahan dan Pemadaman Data (Hak PDPA)&lt;/b&gt;\n
+        Anda boleh meminta akses dan pembetulan data peribadi anda. Anda juga boleh memuat turun salinan semua data anda melalui "Muat Turun Data Saya" dalam Tetapan Akaun (eksport JSON atau CSV) dan memadam akaun serta semua data berkaitan pada bila-bila masa melalui "Padam Akaun". Pemadaman membuang profil, iklan, sembang, ulasan, urus niaga dan gambar yang dimuat naik daripada pelayan kami.\n\n
+        &lt;b&gt;7. Keselamatan Data&lt;/b&gt;\n
+        Kami menggunakan langkah yang munasabah (kata laluan disulitkan, API disahkan JWT) untuk melindungi maklumat anda daripada kehilangan, kecurian, penyalahgunaan dan akses tanpa kebenaran.\n\n
+        &lt;b&gt;8. Pegawai Perlindungan Data &amp; Hubungi&lt;/b&gt;\n
+        Pegawai Perlindungan Data (DPO) kami menyelia pematuhan PDPA. Untuk sebarang pertanyaan privasi, atau untuk meminta pemadaman di luar aplikasi, hubungi kami di: support@poliku.com.\n\n
+        PolyGo+ direka untuk pelajar dan staf kampus berumur 18 tahun ke atas.\n
+    </string>
+
+<string name="terms_of_service_text">
+        &lt;b&gt;Terms of Service for PolyGo+&lt;/b&gt;\n\n
+        Last updated: September 11, 2026\n\n
+        PolyGo+ is a campus-only marketplace for Politeknik Kuching Sarawak (PKS) students and staff.\n\n
+        &lt;b&gt;1. Eligibility&lt;/b&gt;\n
+        You must have a valid PKS student or staff identity and be 18 years of age or older. Accounts may remain unverified until an admin approves your request.\n\n
+        &lt;b&gt;2. Marketplace rules&lt;/b&gt;\n
+        List only items you own. Prohibited goods, scams, and harassment are not allowed. Meet in public campus locations such as Block A or the cafeteria.\n\n
+        &lt;b&gt;3. Transactions&lt;/b&gt;\n
+        PolyGo+ helps you record offers, meetups and receipts. Payment is arranged between buyer and seller. Mark a deal complete only after the meetup succeeds.\n\n
+        &lt;b&gt;4. AI-generated suggestions&lt;/b&gt;\n
+        The AI "Suggest Details" feature drafts listing text for you to review. You are responsible for the accuracy and appropriateness of what you publish. Use "Flag AI Suggestion" to report an offensive or incorrect suggestion.\n\n
+        &lt;b&gt;5. Community moderation&lt;/b&gt;\n
+        Use Report listing or Report user if you see prohibited items or suspicious behaviour. We may remove content and suspend accounts.\n\n
+        &lt;b&gt;6. Account deletion &amp; data requests (PDPA)&lt;/b&gt;\n
+        You may delete your account and all associated data at any time from Account Settings. For deletion outside the app, or for any privacy request, contact our Data Protection Officer at support@poliku.com.\n\n
+        &lt;b&gt;7. Contact&lt;/b&gt;\n
+        Questions: support@poliku.com
+    </string>
+
+<string name="terms_of_service_text_ms">
+        &lt;b&gt;Terma Perkhidmatan untuk PolyGo+&lt;/b&gt;\n\n
+        Dikemas kini: 11 September 2026\n\n
+        PolyGo+ ialah pasaran khas kampus untuk pelajar dan staf Politeknik Kuching Sarawak (PKS).\n\n
+        &lt;b&gt;1. Kelayakan&lt;/b&gt;\n
+        Anda mesti mempunyai identiti pelajar atau staf PKS yang sah dan berumur 18 tahun ke atas. Akaun mungkin belum disahkan sehingga pentadbir meluluskan permintaan anda.\n\n
+        &lt;b&gt;2. Peraturan pasaran&lt;/b&gt;\n
+        Sila hanya iklankan barangan milik anda. Barangan larangan, penipuan dan gangguan tidak dibenarkan. Berjumpa di lokasi kampus awam seperti Blok A atau kafeteria.\n\n
+        &lt;b&gt;3. Urus niaga&lt;/b&gt;\n
+        PolyGo+ membantu anda merekod tawaran, pertemuan dan resit. Pembayaran diuruskan antara pembeli dan penjual. Tandakan urus niaga selesai hanya selepas pertemuan berjaya.\n\n
+        &lt;b&gt;4. Cadangan janaan AI&lt;/b&gt;\n
+        Ciri AI "Cadang Butiran" menyediakan draf teks iklan untuk anda semak. Anda bertanggungjawab terhadap ketepatan dan kesesuaian kandungan yang diterbitkan. Gunakan "Laporkan Cadangan AI" untuk melaporkan cadangan yang menyinggung atau tidak tepat.\n\n
+        &lt;b&gt;5. Moderasi komuniti&lt;/b&gt;\n
+        Gunakan Lapor iklan atau Lapor pengguna jika anda melihat barangan larangan atau tingkah laku mencurigakan. Kami mungkin membuang kandungan dan menggantung akaun.\n\n
+        &lt;b&gt;6. Pemadaman akaun dan permintaan data (PDPA)&lt;/b&gt;\n
+        Anda boleh memadam akaun dan semua data berkaitan pada bila-bila masa dari Tetapan Akaun. Untuk pemadaman di luar aplikasi, atau sebarang permintaan privasi, hubungi Pegawai Perlindungan Data kami di support@poliku.com.\n\n
+        &lt;b&gt;7. Hubungi&lt;/b&gt;\n
+        Pertanyaan: support@poliku.com
+    </string>
+
+<string name="data_safety_title">Data Safety &amp; Privacy</string>
+    <string name="data_safety_title_ms">Keselamatan Data &amp; Privasi</string>
+    <string name="data_safety_text">&lt;b&gt;What data the app processes&lt;/b&gt;&lt;br/&gt;
+The app processes the information you enter or upload: your PKS account details (name, student ID, e-mail, contact number), the profile and listings you publish, chat messages, favourites, transactions, reviews and green-impact metrics. If you use AI search or AI listing suggestions, your image or prompt is sent to Google\'s Gemini API to generate a reply and is not permanently stored on our server.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;How it is used&lt;/b&gt;&lt;br/&gt;
+Your data is used to run the campus marketplace - matching buyers and sellers, organising deals, safety and moderation (reporting and blocking), and improving your experience. It is shared only with service providers needed to run the app (Firebase for sign-in and push notifications, Google Gemini for AI features) and is never sold.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Location&lt;/b&gt;&lt;br/&gt;
+Location is only shared while a Safe Meetup is active during an accepted deal, so both parties can meet safely. It is not collected during normal browsing.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Biometric data&lt;/b&gt;&lt;br/&gt;
+The optional Biometric Lock runs entirely on your device using Android\'s secure local authenticators (Keystore/StrongBox). Biometric data is never sent to, stored on, or exported from PolyGo+ servers, consistent with the sensitive-data protections of Malaysia\'s PDPA (Amendment) Act 2024 (Act A1727).&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Your PDPA rights&lt;/b&gt;&lt;br/&gt;
+You can download all your data (Account &amp;gt; Download My Data) as JSON or CSV and permanently delete your account and every record linked to it (Account &amp;gt; Delete Account). You can also make your profile private, block other users, and report content or users inside the app.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Retention &amp;amp; deletion&lt;/b&gt;&lt;br/&gt;
+Data is kept while your account is active and is removed when you delete your account. For questions or a formal request, contact our Data Protection Officer at support@poliku.com.</string>
+    <string name="data_safety_text_ms">&lt;b&gt;Data yang diproses oleh aplikasi&lt;/b&gt;&lt;br/&gt;
+Aplikasi memproses maklumat yang anda masukkan atau muat naik: butiran akaun PKS anda (nama, nombor pelajar, e-mel, nombor telefon), profil dan penyenaraian yang anda terbitkan, mesej sembang, kegemaran, urus niaga, ulasan dan metrik impak hijau. Jika anda menggunakan carian AI atau cadangan penyenaraian AI, imej atau soalan anda dihantar ke API Gemini Google untuk menjana jawapan dan tidak disimpan secara kekal di pelayan kami.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Bagaimana ia digunakan&lt;/b&gt;&lt;br/&gt;
+Data anda digunakan untuk menjalankan pasaran kampus - memadankan pembeli dan penjual, mengurus urus niaga, keselamatan dan moderasi (melapor dan menyekat), serta meningkatkan pengalaman anda. Data hanya dikongsi dengan pembekal perkhidmatan yang diperlukan untuk menjalankan aplikasi (Firebase untuk log masuk dan pemberitahuan, Google Gemini untuk ciri AI) dan tidak pernah dijual.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Lokasi&lt;/b&gt;&lt;br/&gt;
+Lokasi hanya dikongsi semasa Meetup Selamat aktif dalam urus niaga yang diterima, supaya kedua-dua pihak dapat bertemu dengan selamat. Ia tidak dikumpul semasa penerokaan biasa.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Data biometrik&lt;/b&gt;&lt;br/&gt;
+Kunci Biometrik pilihan berjalan sepenuhnya pada peranti anda menggunakan pengesah setempat selamat Android (Keystore/StrongBox). Data biometrik tidak pernah dihantar ke, disimpan di, atau dieksport daripada pelayan PolyGo+, selaras dengan perlindungan data sensitif di bawah Akta PDPA (Pindaan) 2024 (Akta A1727).&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Hak PDPA anda&lt;/b&gt;&lt;br/&gt;
+Anda boleh memuat turun semua data anda (Akaun &amp;gt; Muat Turun Data Saya) sebagai JSON atau CSV dan memadam akaun anda serta semua rekod berkaitan secara kekal (Akaun &amp;gt; Padam Akaun). Anda juga boleh menetapkan profil anda sebagai persendirian, menyekat pengguna lain, dan melaporkan kandungan atau pengguna dalam aplikasi.&lt;br/&gt;&lt;br/&gt;
+&lt;b&gt;Penyimpanan &amp;amp; pemadaman&lt;/b&gt;&lt;br/&gt;
+Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam akaun anda. Untuk pertanyaan atau permintaan rasmi, hubungi Pegawai Perlindungan Data kami di support@poliku.com.</string>
+
+    <!-- Account -->
+    <string name="toast_complete_profile">Lengkapkan profil anda</string>
+    <string name="toast_uploading_profile_picture">Memuat naik gambar profil baharu...</string>
+    <string name="toast_upload_failed">Muat naik gagal</string>
+    <string name="toast_upload_failed_reason">Muat naik gagal: %1$s</string>
+    <string name="toast_profile_saved">Profil disimpan</string>
+    <string name="toast_save_error">Ralat simpan</string>
+    <string name="toast_save_error_reason">Ralat simpan: %1$s</string>
+
+    <!-- Marketplace: add service -->
+    <string name="toast_add_portfolio_photo_first">Tambah foto portfolio dahulu</string>
+    <string name="toast_service_draft_saved">Draf perkhidmatan disimpan</string>
+    <string name="toast_fill_all_fields_photos">Sila lengkapkan semua ruangan termasuk foto</string>
+    <string name="toast_uploading_images">Memuat naik gambar...</string>
+    <string name="toast_please_sign_in_first">Sila log masuk dahulu</string>
+    <string name="toast_service_posted_success">Perkhidmatan berjaya disiarkan!</string>
+    <string name="toast_post_error">Ralat siaran</string>
+
+    <!-- Chat -->
+    <string name="chat_error_write_message">Tulis mesej</string>
+    <string name="toast_chat_network_error">Ralat rangkaian: %1$s</string>
+    <string name="chat_message_hint">Mesej...</string>
+
+    <!-- Deal Tracker -->
+    <string name="deal_step_offer_sent">Tawaran Dihantar</string>
+    <string name="deal_step_waiting_acceptance">Menunggu penerimaan penjual</string>
+    <string name="deal_step_price_agreed">Harga Dipersetujui</string>
+    <string name="deal_step_price_confirmed">RM 45.00 disahkan oleh kedua-dua pihak</string>
+    <string name="deal_step_meetup_scheduled">Pertemuan Dijadualkan</string>
+    <string name="deal_step_meetup_details">Hari ini jam 4:30 petang, Kafeteria</string>
+    <string name="deal_step_inspection">Pemeriksaan Fizikal</string>
+    <string name="deal_step_inspection_details">Pembeli sedang menguji barangan</string>
+    <string name="deal_step_payment_confirmed">Pembayaran Disahkan</string>
+    <string name="deal_step_payment_details">Menunggu kelulusan pembeli</string>
+    <string name="deal_step_deal_closed">Urus Niaga Selesai</string>
+    <string name="deal_step_deal_closed_details">Urus niaga selesai secara rasmi</string>
+    <string name="toast_inspection_time_ended">Masa pemeriksaan tamat.</string>
+    <string name="toast_transaction_complete_funds_released">Urus niaga selesai. Dana telah dikeluarkan kepada penjual.</string>
+
+    <!-- Marketplace: edit product -->
+    <string name="toast_add_photo_for_ai">Tambahkan foto dahulu untuk dianalisis AI</string>
+    <string name="toast_draft_saved">Draf disimpan</string>
+    <string name="toast_add_at_least_one_photo">Tambah sekurang-kurangnya satu foto</string>
+    <string name="toast_complete_listing_details">Lengkapkan butiran penyenaraian</string>
+    <string name="toast_enter_valid_price">Masukkan harga yang sah</string>
+    <string name="toast_listing_published">Penyenaraian diterbitkan!</string>
+    <string name="toast_listing_error">Ralat penyenaraian</string>
+
+    <!-- Auth: forgot password -->
+    <string name="toast_enter_id_or_email">Masukkan ID atau e-mel anda</string>
+    <string name="forgot_temp_password_email">Gunakan kata laluan sementara yang dihantar ke e-mel anda</string>
+    <string name="dialog_reset_issued">Pengesetan Semula Dihantar</string>
+    <string name="dialog_reset_issued_message">Gunakan kata laluan sementara ini untuk log masuk, kemudian tukar dalam Profil:\n\n%1$s</string>
+    <string name="toast_reset_failed">Reset gagal, sila cuba lagi</string>
+    <string name="toast_could_not_reach_server">Pelayan tidak dapat dihubungi</string>
+    <string name="toast_could_not_reach_server_try_again">Pelayan tidak dapat dihubungi, sila cuba lagi</string>
+
+    <!-- Home -->
+    <string name="toast_press_back_again">Tekan kembali untuk keluar</string>
+    <string name="toast_login_required_post">Sila log masuk untuk menyiarkan penyenaraian</string>
+
+    <!-- Scanner -->
+    <string name="toast_error_starting_camera">Ralat memulakan kamera</string>
+    <string name="toast_camera_permission_required">Kebenaran kamera diperlukan</string>
+
+    <!-- Auth: login -->
+    <string name="toast_login_failed">Log masuk gagal</string>
+    <string name="toast_google_sign_in_unavailable">Log masuk Google tidak tersedia buat masa ini. Gunakan ID kampus anda sebaliknya.</string>
+    <string name="toast_google_sign_in_failed">Log masuk Google gagal. Sila cuba lagi.</string>
+
+    <!-- Orders & Transactions -->
+    <string name="toast_order_not_found">Pesanan tidak ditemui</string>
+    <string name="map_pin_label">📍\n%1$s\nPenanda tempat kampus PKS</string>
+    <string name="toast_transaction_completed">Urus niaga selesai!</string>
+    <string name="toast_completed_offline">Selesai (Mod Luar Talian)</string>
+    <string name="toast_deal_accepted_tracker">Urus niaga diterima — penjejak pertemuan aktif dalam chat</string>
+    <string name="toast_accepted_offline">Diterima (Mod Luar Talian)</string>
+
+    <!-- Auth: OTP -->
+    <string name="otp_sent_subtitle">Kami telah menghantar kod 6 digit ke %1$s</string>
+    <string name="toast_enter_valid_otp">Sila masukkan kod 6 digit yang sah</string>
+    <string name="toast_invalid_code">Kod tidak sah</string>
+    <string name="toast_code_resent_to">Kod dihantar semula ke %1$s</string>
+    <string name="toast_failed_to_resend">Gagal menghantar semula</string>
+    <string name="toast_registration_failed">Pendaftaran gagal</string>
+
+    <!-- Product Detail -->
+    <string name="toast_product_not_found">Produk tidak ditemui</string>
+    <string name="product_department_line">\nJabatan: %1$s</string>
+    <string name="product_free_slots_line">\nSlot lapang: %1$s</string>
+    <string name="product_reviews_count">(%1$s ulasan)</string>
+    <string name="product_this_is_your_listing">Ini penyenaraian anda</string>
+    <string name="product_relist">Terbitkan Semula</string>
+    <string name="toast_listing_relisted">Penyenaraian diterbitkan semula</string>
+    <string name="toast_could_not_relist">Penyenaraian tidak dapat diterbitkan semula</string>
+    <string name="toast_listing_marked_sold">Penyenaraian ditandakan terjual</string>
+    <string name="toast_could_not_mark_sold">Penyenaraian tidak dapat ditandakan terjual</string>
+    <string name="toast_login_to_contact">Sila log masuk untuk menghubungi penjual</string>
+    <string name="toast_login_to_make_offer">Sila log masuk untuk membuat tawaran</string>
+    <string name="toast_login_required_save">Sila log masuk untuk menyimpan item</string>
+    <string name="snack_removed_from_saved">Dikeluarkan daripada item disimpan</string>
+    <string name="action_undo">Buat Asal</string>
+    <string name="toast_saved_to_items">Disimpan ke item anda</string>
+    <string name="snack_removed_offline">Dikeluarkan (luar talian)</string>
+    <string name="toast_saved_offline">Disimpan (luar talian)</string>
+    <string name="toast_login_to_leave_review">Sila log masuk untuk meninggalkan ulasan</string>
+
+    <!-- Receipt -->
+    <string name="toast_receipt_not_found">Resit tidak ditemui</string>
+    <string name="receipt_body">Item: %1$s\nHarga dipersetujui: %2$s\nPenjual: %3$s\nPembeli: %4$s\nPertemuan: %5$s\nStatus: %6$s\nTarikh: %7$s\nID Resit: %8$s</string>
+
+    <!-- Report -->
+    <string name="report_title_listing">Lapor penyenaraian ini</string>
+    <string name="report_title_user">Lapor pengguna ini</string>
+    <string name="report_target_label">Bantu pastikan PKS selamat. Melapor: %1$s</string>
+    <string name="report_this_account">akaun ini</string>
+    <string name="toast_report_submitted">Laporan dihantar. Terima kasih.</string>
+
+    <!-- Review -->
+    <string name="review_prompt">Tinggalkan ulasan 5 bintang untuk %1$s selepas pertemuan kampus yang berjaya.</string>
+    <string name="review_this_seller">penjual ini</string>
+    <string name="toast_choose_star_rating">Pilih penilaian bintang</string>
+    <string name="toast_thanks_for_review">Terima kasih kerana membantu komuniti PKS</string>
+
+    <!-- Seller Profile -->
+    <string name="seller_new">Baharu</string>
+    <string name="toast_cannot_review_yourself">Anda tidak boleh mengulas diri sendiri</string>
+
+    <!-- Textbook Hub -->
+    <string name="toast_alerts_in_development">Amaran masih dalam pembangunan.</string>
+
+    <!-- Transactions: EmptyState -->
+    <string name="transactions_empty_title">Tiada urus niaga lagi</string>
+    <string name="transactions_empty_desc">Apabila anda membuat tawaran, pesanan akan dipaparkan di sini dengan butiran pertemuan.</string>
+    <string name="transactions_browse_listings">Layari penyenaraian</string>
+    <string name="toast_viewing_offline_history">Sedang melihat sejarah luar talian</string>
+
+    <!-- Verification -->
+    <string name="toast_verification_approved_dev">Pengesahan Diluluskan (Dev)</string>
+    <string name="toast_snap_card_or_enter_matrix">Sila tangkap kad anda atau masukkan No Matrik</string>
+    <string name="toast_answer_alumni_questions">Sila jawab soalan cabaran alumni</string>
+    <string name="toast_challenge_answer_incorrect">Jawapan cabaran 1 kelihatan tidak betul</string>
+
+    <!-- Favorites -->
+    <string name="toast_login_required_save_favorites">Sila log masuk untuk menyimpan kegemaran</string>
+    <string name="snack_item_removed_from_favorites">Item dikeluarkan daripada kegemaran</string>
+
+    <!-- Profile security -->
+    <string name="profile_guest_user">Tetamu</string>
+    <string name="profile_login_to_access_features">Log masuk untuk mengakses semua ciri</string>
+    <string name="bio_prompt_change_password">Sahkan identiti untuk menukar kata laluan</string>
+    <string name="bio_title_enable_biometric_lock">Dayakan Kunci Biometrik</string>
+    <string name="bio_prompt_enable_lock">Sahkan untuk mendayakan lapisan keselamatan</string>
+    <string name="error_password_min_length">Gunakan sekurang-kurangnya 6 aksara</string>
+    <string name="error_password_mismatch">Kata laluan tidak sepadan</string>
+    <string name="toast_password_changed">Kata laluan ditukar</string>
+    <string name="toast_password_change_failed">Gagal menukar kata laluan</string>
+
+    <!-- Content descriptions (localized) -->
+    <string name="content_description_security">Keselamatan</string>
+    <string name="content_description_report_user">Lapor pengguna</string>
+    <string name="content_description_profile_picture">Gambar profil</string>
+    <string name="content_description_change_photo">Tukar gambar</string>
+    <string name="content_description_key_icon">Ikon kunci</string>
+    <string name="content_description_sign_in_google">Daftar masuk dengan Google</string>
+    <string name="content_description_category">Kategori</string>
+    <string name="content_description_empty_state">Grafik keadaan kosong</string>
+    <string name="content_description_product">Produk</string>
+    <string name="content_description_close_gallery">Tutup galeri</string>
+    <string name="content_description_clear_search">Bersihkan carian</string>
+    <string name="content_description_sort">Isih</string>
+    <string name="content_description_send">Hantar</string>
+    <string name="content_description_new_message">Mesej baharu</string>
+    <string name="content_description_search">Cari</string>
+    <string name="content_description_star_rating">Skor bintang</string>
+    <string name="content_description_view_profile">Lihat profil</string>
+    <string name="content_description_watermark">Tanda air</string>
+    <string name="content_description_qr_code">Kod QR</string>
+    <string name="content_description_info">Maklumat</string>
+    <string name="content_description_cancel_report">Batal laporan</string>
+    <string name="content_description_verified_seller">Penjual disahkan</string>
+    <string name="content_description_profile">Profil</string>
+    <string name="content_description_add_to_favorites">Tambah ke kegemaran</string>
+    <string name="home_empty_products">Anda belum menyiarkan sebarang iklan. Ketik + untuk menambah yang pertama!</string>
+
+    <!-- Notification permission rationale -->
+    <string name="notif_permission_title">Pemberitahuan</string>
+    <string name="notif_permission_message">Benarkan pemberitahuan supaya anda tidak terlepas sebarang mesej, tawaran, atau kemas kini iklan dari kampus anda.</string>
+    <string name="notif_allow">Benarkan</string>
+    <string name="notif_not_now">Tidak sekarang</string>
+    <string name="notif_open_settings">Buka Tetapan</string>
+
 </resources>

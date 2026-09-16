@@ -24,6 +24,12 @@ if ($action === 'send') {
         // Create new thread — refuse when either side has blocked the other.
         if ($receiverId <= 0) respond(false, 'Missing receiver');
         if (is_blocked($pdo, $userId, $receiverId)) respond(false, 'You cannot message this user');
+        // The receiver must be the actual listing owner — never trust the caller.
+        $ownerCheck = $pdo->prepare('SELECT owner_id FROM listings WHERE id = ? LIMIT 1');
+        $ownerCheck->execute([$listingId]);
+        $ownerId = (int)$ownerCheck->fetchColumn();
+        if ($ownerId <= 0) respond(false, 'Listing not found');
+        if ($ownerId !== $receiverId) respond(false, 'You can only chat with the seller of this listing');
         // Reuse an existing thread for the same listing pair (either direction)
         // instead of silently creating a duplicate conversation per message.
         $find = $pdo->prepare('SELECT id FROM threads WHERE listing_id = ?

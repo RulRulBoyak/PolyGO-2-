@@ -12,7 +12,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,7 +57,7 @@ public class TextbookHubActivity extends AppCompatActivity {
         
         findViewById(R.id.btnWantedList).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            Toast.makeText(this, "Alerts are in development.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_alerts_in_development, Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -94,7 +94,7 @@ public class TextbookHubActivity extends AppCompatActivity {
     }
 
     private void showNoBookDetailsDialog(String isbn) {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.textbook_not_found_title)
                 .setMessage(getString(R.string.textbook_not_found, isbn))
                 .setNegativeButton(R.string.cancel, null)

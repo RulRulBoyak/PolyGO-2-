@@ -108,6 +108,14 @@
         <item name="cornerSize">16dp</item>
     </style>
 
+    <style name="ShapeAppearance.PolyGo.CardImage.Large" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeTopRight">20dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
     <style name="ShapeAppearance.PolyGo.ProductImage" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">0dp</item>
@@ -116,6 +124,18 @@
     <style name="ShapeAppearance.PolyGo.Circle" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Widget.PolyGo.Chip.Filter" parent="Widget.Material3.Chip.Filter">
+        <item name="android:textColor">@drawable/selector_chip_filter_text</item>
+        <item name="chipBackgroundColor">@drawable/selector_chip_filter_bg</item>
+        <item name="chipStrokeColor">@drawable/selector_chip_filter_stroke</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipIconTint">@drawable/selector_chip_filter_icon</item>
+        <item name="chipIconSize">18dp</item>
+        <item name="chipMinHeight">40dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="rippleColor">?attr/colorPrimary</item>
     </style>
 
 </resources>

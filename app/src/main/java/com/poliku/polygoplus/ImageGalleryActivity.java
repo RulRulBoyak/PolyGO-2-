@@ -48,6 +48,7 @@ public class ImageGalleryActivity extends AppCompatActivity {
                         .load(source)
                         .placeholder(R.drawable.bg_product_home)
                         .error(R.drawable.bg_product_home)
+                        .thumbnail(0.2f)
                         .into(image);
             }
 

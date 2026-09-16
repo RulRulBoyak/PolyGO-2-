@@ -219,6 +219,7 @@ public interface PolyGoApi {
     class ListingsRequest {
         public String query, sort, id, action;
         public Integer major;
+        public Integer owner_id;
         public int offset, limit;
 
         public ListingsRequest() {
@@ -387,10 +388,15 @@ public interface PolyGoApi {
         public String id, name, studentId, email, mobile, role, bio;
         @SerializedName("profile_pic_url")
         public String profile_pic_url;
+        @SerializedName("is_verified")
         public boolean verified;
         public int active, sold;
         @SerializedName("is_private")
         public boolean isPrivate;
+        @SerializedName("joined_at")
+        public String joined_at;
+        public float rating;
+        public int reviews;
     }
 
     class CategoryResponse extends BaseResponse {
@@ -416,7 +422,7 @@ public interface PolyGoApi {
     }
 
     class Listing {
-        public String id, title, seller, price, rating, review_count, distance, image_url, category, description, owner_id, free_slots, major_name;
+        public String id, title, seller, price, rating, review_count, distance, image_url, category, description, owner_id, free_slots, major_name, location;
         @SerializedName("thumb_url")
         public String thumbUrl;
         @SerializedName("is_available")
@@ -425,6 +431,11 @@ public interface PolyGoApi {
         public String archivedAt;
         @SerializedName("major_id")
         public Integer majorId;
+        @SerializedName("posted_at_ms")
+        public long postedAt;
+        @SerializedName("is_verified")
+        public boolean verified;
+        public int views;
     }
 
     class ThreadsResponse extends BaseResponse {

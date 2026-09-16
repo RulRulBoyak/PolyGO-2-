@@ -57,7 +57,7 @@ public class OtpActivity extends BaseActivity {
             return false;
         });
 
-        ((TextView) findViewById(R.id.tvOtpSubtitle)).setText("We've sent a 6-digit code to " + email);
+        ((TextView) findViewById(R.id.tvOtpSubtitle)).setText(getString(R.string.otp_sent_subtitle, email));
 
         // Dev-only: the backend may echo the OTP back on debug builds; never auto-fill in release.
         if (BuildConfig.DEBUG) {
@@ -71,7 +71,7 @@ public class OtpActivity extends BaseActivity {
     private void verify() {
         String otp = etOtp.getText().toString().trim();
         if (otp.length() < 6) {
-            Toast.makeText(this, "Please enter a valid 6-digit code", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_enter_valid_otp, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -82,7 +82,7 @@ public class OtpActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     completeRegistration();
                 } else {
-                    onError("Invalid code");
+                    onError(getString(R.string.toast_invalid_code));
                 }
             }
 
@@ -106,9 +106,9 @@ public class OtpActivity extends BaseActivity {
                     if (BuildConfig.DEBUG && response.body().otp != null && !response.body().otp.isEmpty()) {
                         etOtp.setText(response.body().otp);
                     }
-                    Toast.makeText(OtpActivity.this, "Code resent to " + email, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OtpActivity.this, getString(R.string.toast_code_resent_to, email), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(OtpActivity.this, "Failed to resend", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OtpActivity.this, R.string.toast_failed_to_resend, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -139,7 +139,9 @@ public class OtpActivity extends BaseActivity {
                         
                         AppDataStore.saveRemoteSession(OtpActivity.this, userJson, body.token);
                     } catch (Exception ignored) {}
-                    
+
+                    syncFcmToken();
+
                     new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                         Intent intent = new Intent(OtpActivity.this, VerificationActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -147,7 +149,7 @@ public class OtpActivity extends BaseActivity {
                         finish();
                     }, 2000);
                 } else {
-                    Toast.makeText(OtpActivity.this, "Registration failed", Toast.LENGTH_LONG).show();
+                    Toast.makeText(OtpActivity.this, R.string.toast_registration_failed, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -155,6 +157,29 @@ public class OtpActivity extends BaseActivity {
             public void onFailure(retrofit2.Call<PolyGoApi.LoginResponse> call, Throwable t) {
                 Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
             }
+        });
+    }
+
+    private void syncFcmToken() {
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            String token = task.isSuccessful() && task.getResult() != null
+                    ? task.getResult()
+                    : AppDataStore.pendingFcmToken(this);
+            if (token == null || token.isEmpty()) return;
+            AppDataStore.saveFcmToken(this, token);
+            String userId = AppDataStore.userId(this);
+            if (userId == null || userId.equals("0")) return;
+
+            com.poliku.polygoplus.api.PolyGoApi.UpdateProfileRequest req =
+                    new com.poliku.polygoplus.api.PolyGoApi.UpdateProfileRequest();
+            req.user_id = userId;
+            req.fcm_token = token;
+            api.updateProfile(req).enqueue(new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
+                @Override public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call,
+                                                 retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {}
+                @Override public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call,
+                                                Throwable t) {}
+            });
         });
     }
 }

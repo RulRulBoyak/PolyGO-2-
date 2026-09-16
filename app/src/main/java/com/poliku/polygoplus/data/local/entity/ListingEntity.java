@@ -24,13 +24,17 @@ public class ListingEntity {
     public String category;
     public String description;
     public String ownerId;
+    public String location;
     public boolean available;
     public boolean isOwner;
     public boolean archived;
+    public long postedAt;
+    public int views;
 
     public ListingEntity(@NonNull String id, String title, String seller, String price, 
                          String rating, String distance, String imageUrl, String category, 
-                         String description, String ownerId, boolean available, boolean isOwner) {
+                         String description, String ownerId, boolean available, boolean isOwner,
+                         String location, long postedAt, int views) {
         this.id = id;
         this.title = title;
         this.seller = seller;
@@ -43,5 +47,8 @@ public class ListingEntity {
         this.ownerId = ownerId;
         this.available = available;
         this.isOwner = isOwner;
+        this.location = location;
+        this.postedAt = postedAt;
+        this.views = views;
     }
 }

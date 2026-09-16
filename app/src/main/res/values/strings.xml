@@ -20,6 +20,7 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="explore_campus">Explore Campus</string>
+    <string name="home_greeting_sub">What\'s happening on campus today?</string>
     <string name="recent_listings">Recent Listings</string>
     <string name="view_all">View All</string>
 
@@ -271,6 +272,8 @@
     <string name="seller_active_listings">Active listings</string>
     <string name="seller_campus_reviews">Campus Reviews</string>
     <string name="seller_verified_pill">PKS Verified Seller</string>
+    <string name="seller_verified_meta">Verified Student • PKS Campus</string>
+    <string name="seller_student_meta">Student • PKS Campus</string>
     <string name="seller_no_active">No active listings</string>
     <string name="seller_no_products_desc">%1$s has no items for sale right now.</string>
     <string name="seller_browse_campus">Browse campus</string>
@@ -322,8 +325,14 @@
     <!-- Safe Meetup -->
     <string name="safe_meetup_arrived">I\'ve arrived at %1$s. See you there! 📍</string>
     <string name="safe_meetup_emergency">Safety Alert triggered by %1$s at %2$s</string>
-    <string name="safe_meetup_location_on">Live location sharing ON • shared only during this meetup</string>
+    <string name="safe_meetup_location_on">Location shared on demand • tap Share to send your live position</string>
     <string name="safe_meetup_location_off">Location sharing is disabled. Start a deal to share your meeting point.</string>
+    <string name="safe_meetup_location_icon">Location icon</string>
+    <string name="safe_meetup_share">Share my location</string>
+    <string name="safe_meetup_share_sent">Location shared with your meetup partner</string>
+    <string name="safe_meetup_share_location">Live location shared by %1$s at %2$s</string>
+    <string name="safe_meetup_share_location_nofix">Live location shared by %1$s at %2$s — coordinates could not be determined</string>
+    <string name="safe_meetup_your_position">Your live position</string>
     <string name="safe_meetup_emergency_title">Emergency Alert</string>
     <string name="safe_meetup_emergency_confirm">Send a safety alert to the other user and PKS Security?</string>
     <string name="safe_meetup_emergency_sent">Alert sent. PKS Security has been notified.</string>
@@ -362,6 +371,12 @@
     <string name="pulse_time_h">%1$dh ago</string>
     <string name="pulse_time_d">%1$dd ago</string>
     <string name="pulse_time_w">%1$dw ago</string>
+    <string name="listing_posted_prefix">Listed %1$s</string>
+    <string name="listing_listed_on">Listed on %1$s</string>
+    <string name="product_views_count">%1$d views</string>
+    <string name="product_photos_desc">%1$d photos</string>
+    <string name="similar_title">Similar listings</string>
+    <string name="share_listing_label">Share</string>
     <string name="textbook_looking_up">Looking up ISBN: %1$s</string>
     <string name="textbook_details_found">Book details found - review before publishing</string>
     <string name="textbook_not_found_title">No book details found</string>
@@ -483,4 +498,208 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- AI Proxy -->
     <string name="ai_suggest_error">AI service unavailable. Enter your listing details manually.</string>
+
+    <!-- Marketplace: chat quick replies + seller social proof -->
+    <string name="quick_reply_available">Is this still available?</string>
+    <string name="quick_reply_negotiable">Can you lower the price?</string>
+    <string name="quick_reply_meetup">Where can we meet?</string>
+    <string name="quick_reply_payment">Can I pay by bank transfer?</string>
+    <string name="seller_rating_segment">★ %1$s (%2$d)</string>
+    <string name="seller_sold_segment">%1$d sold</string>
+    <string name="seller_joined_segment">Member since %1$s</string>
+    <string name="home_categories">Categories</string>
+    <string name="picks_for_you">Picks for You</string>
+    <string name="picks_for_you_subtitle">Top-rated items for your department</string>
+
+    <!-- Account -->
+    <string name="toast_complete_profile">Complete your profile</string>
+    <string name="toast_uploading_profile_picture">Uploading new profile picture...</string>
+    <string name="toast_upload_failed">Upload failed</string>
+    <string name="toast_upload_failed_reason">Upload failed: %1$s</string>
+    <string name="toast_profile_saved">Profile saved</string>
+    <string name="toast_save_error">Save error</string>
+    <string name="toast_save_error_reason">Save error: %1$s</string>
+
+    <!-- Marketplace: add service -->
+    <string name="toast_add_portfolio_photo_first">Add a portfolio photo first</string>
+    <string name="toast_service_draft_saved">Service draft saved</string>
+    <string name="toast_fill_all_fields_photos">Please fill in all fields including photos</string>
+    <string name="toast_uploading_images">Uploading images...</string>
+    <string name="toast_please_sign_in_first">Please sign in first</string>
+    <string name="toast_service_posted_success">Service posted successfully!</string>
+    <string name="toast_post_error">Post error</string>
+
+    <!-- Chat -->
+    <string name="chat_error_write_message">Write a message</string>
+    <string name="toast_chat_network_error">Network error: %1$s</string>
+    <string name="chat_message_hint">Message...</string>
+
+    <!-- Deal Tracker -->
+    <string name="deal_step_offer_sent">Offer Sent</string>
+    <string name="deal_step_waiting_acceptance">Waiting for seller acceptance</string>
+    <string name="deal_step_price_agreed">Price Agreed</string>
+    <string name="deal_step_price_confirmed">RM 45.00 confirmed by both</string>
+    <string name="deal_step_meetup_scheduled">Meetup Scheduled</string>
+    <string name="deal_step_meetup_details">Today at 4:30 PM, Cafeteria</string>
+    <string name="deal_step_inspection">Physical Inspection</string>
+    <string name="deal_step_inspection_details">Buyer is testing the item</string>
+    <string name="deal_step_payment_confirmed">Payment Confirmed</string>
+    <string name="deal_step_payment_details">Waiting for buyer approval</string>
+    <string name="deal_step_deal_closed">Deal Closed</string>
+    <string name="deal_step_deal_closed_details">Transaction officially complete</string>
+    <string name="toast_inspection_time_ended">Inspection time ended.</string>
+    <string name="toast_transaction_complete_funds_released">Transaction complete. Funds released to seller.</string>
+
+    <!-- Marketplace: edit product -->
+    <string name="toast_add_photo_for_ai">Add a photo first for AI to analyze</string>
+    <string name="toast_draft_saved">Draft saved</string>
+    <string name="toast_add_at_least_one_photo">Add at least one photo</string>
+    <string name="toast_complete_listing_details">Complete the listing details</string>
+    <string name="toast_enter_valid_price">Enter a valid price</string>
+    <string name="toast_listing_published">Listing published!</string>
+    <string name="toast_listing_error">Listing error</string>
+
+    <!-- Auth: forgot password -->
+    <string name="toast_enter_id_or_email">Enter your ID or email</string>
+    <string name="forgot_temp_password_email">Use the temporary password sent to your email</string>
+    <string name="dialog_reset_issued">Reset issued</string>
+    <string name="dialog_reset_issued_message">Use this temporary password to log in, then change it in Profile:\n\n%1$s</string>
+    <string name="toast_reset_failed">Reset failed, please try again</string>
+    <string name="toast_could_not_reach_server">Could not reach server</string>
+    <string name="toast_could_not_reach_server_try_again">Could not reach server, please try again</string>
+
+    <!-- Home -->
+    <string name="toast_press_back_again">Press back again to exit</string>
+    <string name="toast_login_required_post">Login required to post listings</string>
+
+    <!-- Scanner -->
+    <string name="toast_error_starting_camera">Error starting camera</string>
+    <string name="toast_camera_permission_required">Camera permission required</string>
+
+    <!-- Auth: login -->
+    <string name="toast_login_failed">Login failed</string>
+    <string name="toast_google_sign_in_unavailable">Google sign-in is not available right now. Use your campus ID instead.</string>
+    <string name="toast_google_sign_in_failed">Google sign-in failed. Please try again.</string>
+
+    <!-- Orders & Transactions -->
+    <string name="toast_order_not_found">Order not found</string>
+    <string name="map_pin_label">📍\n%1$s\nPKS campus landmark</string>
+    <string name="toast_transaction_completed">Transaction completed!</string>
+    <string name="toast_completed_offline">Completed (Offline Mode)</string>
+    <string name="toast_deal_accepted_tracker">Deal accepted — meetup tracker is live in chat</string>
+    <string name="toast_accepted_offline">Accepted (Offline Mode)</string>
+
+    <!-- Auth: OTP -->
+    <string name="otp_sent_subtitle">We\'ve sent a 6-digit code to %1$s</string>
+    <string name="toast_enter_valid_otp">Please enter a valid 6-digit code</string>
+    <string name="toast_invalid_code">Invalid code</string>
+    <string name="toast_code_resent_to">Code resent to %1$s</string>
+    <string name="toast_failed_to_resend">Failed to resend</string>
+    <string name="toast_registration_failed">Registration failed</string>
+
+    <!-- Product Detail -->
+    <string name="toast_product_not_found">Product not found</string>
+    <string name="product_department_line">\nDepartment: %1$s</string>
+    <string name="product_free_slots_line">\nFree slots: %1$s</string>
+    <string name="product_reviews_count">(%1$s reviews)</string>
+    <string name="product_this_is_your_listing">This is your listing</string>
+    <string name="product_relist">Relist</string>
+    <string name="toast_listing_relisted">Listing relisted</string>
+    <string name="toast_could_not_relist">Could not relist listing</string>
+    <string name="toast_listing_marked_sold">Listing marked as sold</string>
+    <string name="toast_could_not_mark_sold">Could not mark listing as sold</string>
+    <string name="toast_login_to_contact">Please log in to contact the seller</string>
+    <string name="toast_login_to_make_offer">Please log in to make an offer</string>
+    <string name="toast_login_required_save">Login required to save items</string>
+    <string name="snack_removed_from_saved">Removed from saved items</string>
+    <string name="action_undo">UNDO</string>
+    <string name="toast_saved_to_items">Saved to your items</string>
+    <string name="snack_removed_offline">Removed (offline)</string>
+    <string name="toast_saved_offline">Saved (offline)</string>
+    <string name="toast_login_to_leave_review">Please log in to leave a review</string>
+
+    <!-- Receipt -->
+    <string name="toast_receipt_not_found">Receipt not found</string>
+    <string name="receipt_body">Item: %1$s\nAgreed price: %2$s\nSeller: %3$s\nBuyer: %4$s\nMeetup: %5$s\nStatus: %6$s\nDate: %7$s\nReceipt ID: %8$s</string>
+
+    <!-- Report -->
+    <string name="report_title_listing">Report this listing</string>
+    <string name="report_title_user">Report this user</string>
+    <string name="report_target_label">Help keep PKS safe. Reporting: %1$s</string>
+    <string name="report_this_account">this account</string>
+    <string name="toast_report_submitted">Report submitted. Thank you.</string>
+
+    <!-- Review -->
+    <string name="review_prompt">Leave a 5-star review for %1$s after a successful campus meetup.</string>
+    <string name="review_this_seller">this seller</string>
+    <string name="toast_choose_star_rating">Choose a star rating</string>
+    <string name="toast_thanks_for_review">Thanks for helping the PKS community</string>
+
+    <!-- Seller Profile -->
+    <string name="seller_new">New</string>
+    <string name="toast_cannot_review_yourself">You cannot review yourself</string>
+
+    <!-- Textbook Hub -->
+    <string name="toast_alerts_in_development">Alerts are in development.</string>
+
+    <!-- Transactions: EmptyState -->
+    <string name="transactions_empty_title">No transactions yet</string>
+    <string name="transactions_empty_desc">When you make an offer, the order will show here with meetup details.</string>
+    <string name="transactions_browse_listings">Browse listings</string>
+    <string name="toast_viewing_offline_history">Viewing offline history</string>
+
+    <!-- Verification -->
+    <string name="toast_verification_approved_dev">Verification Approved (Dev)</string>
+    <string name="toast_snap_card_or_enter_matrix">Please snap your card or enter Matrix No</string>
+    <string name="toast_answer_alumni_questions">Please answer the alumni challenge questions</string>
+    <string name="toast_challenge_answer_incorrect">Challenge answer 1 seems incorrect</string>
+
+    <!-- Favorites -->
+    <string name="toast_login_required_save_favorites">Login required to save favorites</string>
+    <string name="snack_item_removed_from_favorites">Item removed from favorites</string>
+
+    <!-- Profile security -->
+    <string name="profile_guest_user">Guest User</string>
+    <string name="profile_login_to_access_features">Log in to access all features</string>
+    <string name="bio_prompt_change_password">Confirm identity to change password</string>
+    <string name="bio_title_enable_biometric_lock">Enable Biometric Lock</string>
+    <string name="bio_prompt_enable_lock">Verify to enable security layer</string>
+    <string name="error_password_min_length">Use at least 6 characters</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="toast_password_changed">Password changed</string>
+    <string name="toast_password_change_failed">Failed to change password</string>
+
+    <!-- Content descriptions (localized) -->
+    <string name="content_description_security">Security</string>
+    <string name="content_description_report_user">Report user</string>
+    <string name="content_description_profile_picture">Profile picture</string>
+    <string name="content_description_change_photo">Change photo</string>
+    <string name="content_description_key_icon">Key icon</string>
+    <string name="content_description_sign_in_google">Sign in with Google</string>
+    <string name="content_description_category">Category</string>
+    <string name="content_description_empty_state">Empty state graphic</string>
+    <string name="content_description_product">Product</string>
+    <string name="content_description_close_gallery">Close gallery</string>
+    <string name="content_description_clear_search">Clear search</string>
+    <string name="content_description_sort">Sort</string>
+    <string name="content_description_send">Send</string>
+    <string name="content_description_new_message">New message</string>
+    <string name="content_description_search">Search</string>
+    <string name="content_description_star_rating">Star rating</string>
+    <string name="content_description_view_profile">View profile</string>
+    <string name="content_description_watermark">Watermark</string>
+    <string name="content_description_qr_code">QR code</string>
+    <string name="content_description_info">Info</string>
+    <string name="content_description_cancel_report">Cancel report</string>
+    <string name="content_description_verified_seller">Verified seller</string>
+    <string name="content_description_profile">Profile</string>
+    <string name="content_description_add_to_favorites">Add to favorites</string>
+    <string name="home_empty_products">You haven\'t posted any listings yet. Tap + to add your first one!</string>
+
+    <!-- Notification permission rationale -->
+    <string name="notif_permission_title">Notifications</string>
+    <string name="notif_permission_message">Allow notifications so you never miss a message, offer, or listing update from your campus.</string>
+    <string name="notif_allow">Allow</string>
+    <string name="notif_not_now">Not now</string>
+    <string name="notif_open_settings">Open Settings</string>
 </resources>

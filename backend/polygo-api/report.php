@@ -17,5 +17,6 @@ try {
     $query->execute([$userId, $targetType, $targetId, $reason, $details]);
     respond(true, 'Report saved');
 } catch (Throwable $e) {
-    respond(true, 'Report received (stored locally if table is missing)');
+    error_log('[polygo-api] report save failed: ' . $e->getMessage());
+    respond(false, 'Could not save report');
 }

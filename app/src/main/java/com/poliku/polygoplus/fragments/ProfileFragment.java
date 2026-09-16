@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.biometric.BiometricManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -86,8 +86,8 @@ public class ProfileFragment extends Fragment {
 
             view.findViewById(R.id.ivLogout).setVisibility(View.VISIBLE);
         } else {
-            ((TextView)view.findViewById(R.id.tvUserName)).setText("Guest User");
-            ((TextView) view.findViewById(R.id.tvUserRole)).setText("Log in to access all features");
+            ((TextView)view.findViewById(R.id.tvUserName)).setText(getString(R.string.profile_guest_user));
+            ((TextView) view.findViewById(R.id.tvUserRole)).setText(getString(R.string.profile_login_to_access_features));
             view.findViewById(R.id.ivLogout).setVisibility(View.GONE);
         }
 
@@ -129,7 +129,7 @@ public class ProfileFragment extends Fragment {
             }
             
             if (AppDataStore.isBioLockEnabled(requireContext())) {
-                BioManager.authenticate(requireActivity(), "Verification Required", "Confirm identity to change password", new BioManager.AuthCallback() {
+                BioManager.authenticate(requireActivity(), getString(R.string.verification_required), getString(R.string.bio_prompt_change_password), new BioManager.AuthCallback() {
                     @Override
                     public void onSuccess() {
                         showChangePasswordDialog();
@@ -150,7 +150,7 @@ public class ProfileFragment extends Fragment {
         bioSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             HapticManager.lightTap(buttonView);
             if (isChecked) {
-                BioManager.authenticate(requireActivity(), "Enable Biometric Lock", "Verify to enable security layer", new BioManager.AuthCallback() {
+                BioManager.authenticate(requireActivity(), getString(R.string.bio_title_enable_biometric_lock), getString(R.string.bio_prompt_enable_lock), new BioManager.AuthCallback() {
                     @Override
                     public void onSuccess() {
                         AppDataStore.setBioLockEnabled(requireContext(), true);
@@ -247,13 +247,13 @@ public class ProfileFragment extends Fragment {
             String confirmation = second == null || second.getText() == null ? "" : second.getText().toString();
             if (password.length() < 6) {
                 if (first != null) {
-                    first.setError("Use at least 6 characters");
+                    first.setError(getString(R.string.error_password_min_length));
                 }
                 return;
             }
             if (!password.equals(confirmation)) {
                 if (second != null) {
-                    second.setError("Passwords do not match");
+                    second.setError(getString(R.string.error_password_mismatch));
                 }
                 return;
             }
@@ -264,16 +264,16 @@ public class ProfileFragment extends Fragment {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         dialog.dismiss();
                         HapticManager.success(requireContext());
-                        Toast.makeText(requireContext(), "Password changed", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), R.string.toast_password_changed, Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(requireContext(), "Failed to change password", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), R.string.toast_password_change_failed, Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(retrofit2.Call<BaseResponse> call, Throwable t) {
                     if (!isAdded()) return;
-                    Toast.makeText(requireContext(), "Could not reach server", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), R.string.toast_could_not_reach_server, Toast.LENGTH_SHORT).show();
                 }
             });
         }));
@@ -288,7 +288,7 @@ public class ProfileFragment extends Fragment {
         input.setText(AppDataStore.userBio(requireContext()));
         input.setSelection(input.getText().length());
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.bio_edit_title)
             .setView(input)
             .setNegativeButton(R.string.bio_edit_cancel, null)

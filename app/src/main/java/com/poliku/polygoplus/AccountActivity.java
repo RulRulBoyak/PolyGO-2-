@@ -9,7 +9,7 @@ import android.widget.Toast;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -125,7 +125,7 @@ public class AccountActivity extends AppCompatActivity {
             String bio = value(R.id.etBio);
 
             if (first.isEmpty() || last.isEmpty() || email.isEmpty()) {
-                Toast.makeText(this, "Complete your profile", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_complete_profile, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -135,7 +135,7 @@ public class AccountActivity extends AppCompatActivity {
 
             // If user picked a new LOCAL photo, upload it FIRST
             if (!selectedPhotoUri.isEmpty() && selectedPhotoUri.startsWith("content://")) {
-                Toast.makeText(this, "Uploading new profile picture...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_uploading_profile_picture, Toast.LENGTH_SHORT).show();
                 polyGoRepository.uploadImage(this, Uri.parse(selectedPhotoUri), new Callback<PolyGoApi.UploadResponse>() {
                     @Override
                     public void onResponse(Call<PolyGoApi.UploadResponse> call, Response<PolyGoApi.UploadResponse> response) {
@@ -144,14 +144,14 @@ public class AccountActivity extends AppCompatActivity {
                             saveProfile(v, userId, fullName, email, mobile, bio, body.url);
                         } else {
                             v.setEnabled(true);
-                            Toast.makeText(AccountActivity.this, "Upload failed", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(AccountActivity.this, R.string.toast_upload_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<PolyGoApi.UploadResponse> call, Throwable t) {
                         v.setEnabled(true);
-                        Toast.makeText(AccountActivity.this, "Upload failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AccountActivity.this, getString(R.string.toast_upload_failed_reason, t.getMessage()), Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
@@ -161,7 +161,7 @@ public class AccountActivity extends AppCompatActivity {
         });
         findViewById(R.id.btnDeleteAccount).setOnClickListener(v -> {
             HapticManager.heavyTap(v);
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.delete_account_title)
                 .setMessage(R.string.delete_account_warning)
                 .setNegativeButton(R.string.cancel, null)
@@ -216,7 +216,7 @@ public class AccountActivity extends AppCompatActivity {
                     export.add("data", body.data);
                     pendingExportJson = export.toString();
                     pendingExportCsv = exportToCsv(body.data);
-                    new AlertDialog.Builder(AccountActivity.this)
+                    new MaterialAlertDialogBuilder(AccountActivity.this)
                         .setTitle(R.string.export_format_title)
                         .setItems(new CharSequence[]{ getString(R.string.export_as_json), getString(R.string.export_as_csv) }, (d, which) -> {
                             boolean csv = which == 1;
@@ -326,12 +326,12 @@ public class AccountActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     HapticManager.success(AccountActivity.this);
                     AppDataStore.updateProfile(AccountActivity.this, name, email, mobile, photoUrl, bio);
-                    Toast.makeText(AccountActivity.this, "Profile saved", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AccountActivity.this, R.string.toast_profile_saved, Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
                     HapticManager.error(AccountActivity.this);
                     btn.setEnabled(true);
-                    Toast.makeText(AccountActivity.this, "Save error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AccountActivity.this, R.string.toast_save_error, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -339,7 +339,7 @@ public class AccountActivity extends AppCompatActivity {
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 HapticManager.error(AccountActivity.this);
                 btn.setEnabled(true);
-                Toast.makeText(AccountActivity.this, "Save error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(AccountActivity.this, getString(R.string.toast_save_error_reason, t.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }

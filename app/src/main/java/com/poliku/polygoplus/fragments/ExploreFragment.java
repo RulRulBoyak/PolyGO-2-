@@ -25,7 +25,6 @@ import com.google.android.material.tabs.TabLayout;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.CategoryBrowseActivity;
 import com.poliku.polygoplus.R;
-import com.poliku.polygoplus.ErrorStateActivity;
 import com.poliku.polygoplus.ProductDetailActivity;
 import com.poliku.polygoplus.ServicePortfolioActivity;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -168,7 +167,10 @@ public class ExploreFragment extends Fragment {
                     allChip.setCheckable(true);
                     allChip.setChecked(true);
                     allChip.setOnCheckedChangeListener((v, checked) -> {
-                        if (checked) viewModel.setMajor(null);
+                        if (checked) {
+                            viewModel.setMajor(null);
+                            AppDataStore.setPickedMajor(requireContext(), 0, "");
+                        }
                     });
                     chipGroupMajors.addView(allChip);
                     for (PolyGoApi.Major m : body.majors) {
@@ -176,7 +178,10 @@ public class ExploreFragment extends Fragment {
                         chip.setText(m.name);
                         chip.setCheckable(true);
                         chip.setOnCheckedChangeListener((v, checked) -> {
-                            if (checked) viewModel.setMajor(m.id);
+                            if (checked) {
+                                viewModel.setMajor(m.id);
+                                AppDataStore.setPickedMajor(requireContext(), m.id, m.name);
+                            }
                         });
                         chipGroupMajors.addView(chip);
                     }
@@ -235,12 +240,15 @@ public class ExploreFragment extends Fragment {
                             ((ShimmerFrameLayout) shimmer).stopShimmer();
                         }
                     }
-                    if (AppDataStore.getListings(requireContext()).isEmpty()) {
-                        startActivity(new Intent(requireContext(), ErrorStateActivity.class));
-                    } else {
-                        Snackbar.make(view,
-                            "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
+                    // Restore previously loaded content instead of a blank grid.
+                    if (rv != null && adapter != null && adapter.getItemCount() > 0) {
+                        rv.setVisibility(View.VISIBLE);
+                        if (empty != null) empty.setVisibility(View.GONE);
                     }
+                    // The global NetworkErrorHandler already surfaces the offline
+                    // screen; here we only note the failure for cached-data users.
+                    Snackbar.make(view,
+                        "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
                     break;
             }
         });

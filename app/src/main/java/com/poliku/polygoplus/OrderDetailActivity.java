@@ -46,7 +46,7 @@ public class OrderDetailActivity extends AppCompatActivity {
         // Fallback: fetch from server (Order History lists server transactions)
         String userId = AppDataStore.userId(this);
         if (userId == null || userId.isEmpty()) {
-            Toast.makeText(this, "Order not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -63,13 +63,13 @@ public class OrderDetailActivity extends AppCompatActivity {
                         }
                     }
                 }
-                Toast.makeText(OrderDetailActivity.this, "Order not found", Toast.LENGTH_SHORT).show();
+                Toast.makeText(OrderDetailActivity.this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
                 runOnUiThread(OrderDetailActivity.this::finish);
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
-                Toast.makeText(OrderDetailActivity.this, "Order not found", Toast.LENGTH_SHORT).show();
+                Toast.makeText(OrderDetailActivity.this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
@@ -80,7 +80,7 @@ public class OrderDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvOrderAmount)).setText(order.amount);
         ((TextView) findViewById(R.id.tvOrderStatus)).setText(order.status + "  •  " + order.seller);
         ((TextView) findViewById(R.id.tvOrderLocation)).setText(order.location);
-        ((TextView) findViewById(R.id.tvMapPin)).setText("📍\n" + order.location + "\nPKS campus landmark");
+        ((TextView) findViewById(R.id.tvMapPin)).setText(getString(R.string.map_pin_label, order.location));
 
         findViewById(R.id.btnCompleteDeal).setEnabled(!"Completed".equalsIgnoreCase(order.status));
         findViewById(R.id.btnCompleteDeal).setOnClickListener(v -> {
@@ -94,7 +94,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
-                        Toast.makeText(OrderDetailActivity.this, "Transaction completed!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(OrderDetailActivity.this, R.string.toast_transaction_completed, Toast.LENGTH_SHORT).show();
                         goToReview();
                     } else {
                         onFailure(call, new Throwable("Update failed"));
@@ -105,7 +105,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
                     // Local fallback
                     AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
-                    Toast.makeText(OrderDetailActivity.this, "Completed (Offline Mode)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OrderDetailActivity.this, R.string.toast_completed_offline, Toast.LENGTH_SHORT).show();
                     goToReview();
                 }
             });
@@ -123,7 +123,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
-                        Toast.makeText(OrderDetailActivity.this, "Deal accepted \u2014 meetup tracker is live in chat", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(OrderDetailActivity.this, R.string.toast_deal_accepted_tracker, Toast.LENGTH_SHORT).show();
                         renderOrder();
                     } else {
                         onFailure(call, new Throwable("Update failed"));
@@ -133,7 +133,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
                     AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
-                    Toast.makeText(OrderDetailActivity.this, "Accepted (Offline Mode)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OrderDetailActivity.this, R.string.toast_accepted_offline, Toast.LENGTH_SHORT).show();
                     renderOrder();
                 }
             });

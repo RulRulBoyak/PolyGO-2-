@@ -57,7 +57,11 @@ try {
         $body = 'Your PolyGo+ verification code is: ' . $otp
             . "\n\nIt expires in 10 minutes." . "\n\n"
             . 'If you did not request this, you can safely ignore this email.';
-        Mailer::send($email, 'PolyGo+ verification code', $body);
+        // Never report success when the email failed to actually send — the
+        // dev/log fallback returns true, so only a real SMTP failure surfaces.
+        if (!Mailer::send($email, 'PolyGo+ verification code', $body)) {
+            respond(false, 'Unable to send the verification email, please try again');
+        }
         respond(true, 'OTP sent successfully');
     }
 
@@ -65,6 +69,12 @@ try {
         $otp = (string)($input['otp'] ?? '');
         if ($otp === '') {
             respond(false, 'Please enter the verification code');
+        }
+
+        // Brute-force wall: a handful of wrong codes per email locks the flow
+        // for 15 minutes, independent of the per-IP limit above.
+        if (!rate_limit_check($pdo, 'otp_verify:' . $email, 5, 900)) {
+            respond(false, 'Too many attempts, please try again later');
         }
 
         $find = $pdo->prepare('SELECT code_hash, expires_at FROM verification_codes WHERE email = ? LIMIT 1');
@@ -80,6 +90,9 @@ try {
 
         $delete = $pdo->prepare('DELETE FROM verification_codes WHERE email = ?');
         $delete->execute([$email]);
+        // A successful verify resets the attempt counter for this email.
+        $reset = $pdo->prepare('DELETE FROM rate_limits WHERE bucket = ?');
+        $reset->execute(['otp_verify:' . $email]);
         respond(true, 'Email verified successfully');
     }
 

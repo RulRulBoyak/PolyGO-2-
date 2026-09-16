@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -152,7 +152,7 @@ public class EditProductActivity extends BaseActivity {
 
         findViewById(R.id.btnAiSuggest).setOnClickListener(v -> {
             if (selectedUris.isEmpty()) {
-                Toast.makeText(this, "Add a photo first for AI to analyze", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_add_photo_for_ai, Toast.LENGTH_SHORT).show();
                 return;
             }
             HapticManager.swell(this);
@@ -186,7 +186,7 @@ public class EditProductActivity extends BaseActivity {
 
         findViewById(R.id.btnFlagAiSuggestion).setOnClickListener(v -> {
             HapticManager.heavyTap(v);
-            new AlertDialog.Builder(this)
+            new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.flag_ai_suggestion)
                 .setMessage(R.string.flag_ai_suggestion_prompt)
                 .setNegativeButton(R.string.cancel, null)
@@ -311,6 +311,7 @@ public class EditProductActivity extends BaseActivity {
         if (category != null && !category.isEmpty()) {
             autoCompleteCategory.setText(category, false);
         }
+        syncCategoryChipsFromField();
     }
 
     private void observeViewModel() {
@@ -430,7 +431,7 @@ public class EditProductActivity extends BaseActivity {
                     autoCompleteCategory.getText().toString().trim(),
                     etPrice.getText().toString(), etDescription.getText().toString(), 
                     viewModel.imageUri.getValue(), selectedLocation());
-            Toast.makeText(this, "Draft saved", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_draft_saved, Toast.LENGTH_SHORT).show();
             finish();
         });
     }
@@ -445,6 +446,7 @@ public class EditProductActivity extends BaseActivity {
             autoCompleteLocation.setText(viewModel.getLocation(), false);
             etTags.setText(viewModel.getTags());
             restoreLocationUi(viewModel.getLocation(), viewModel.getCustomLocation());
+            syncCategoryChipsFromField();
             return;
         }
         JSONObject draft = AppDataStore.getDraft(this, draftId);
@@ -455,6 +457,7 @@ public class EditProductActivity extends BaseActivity {
         etDescription.setText(draft.optString("description"));
         restoreDraftLocation(draft.optString("location", "Near campus"));
         viewModel.setImageUri(draft.optString("imageUri"));
+        syncCategoryChipsFromField();
     }
 
     private void setupToolbar() {
@@ -486,27 +489,75 @@ public class EditProductActivity extends BaseActivity {
                     }
                 }
                 names.add("Others");
-
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(EditProductActivity.this, android.R.layout.simple_list_item_1, names);
-                autoCompleteCategory.setAdapter(adapter);
-
-                autoCompleteCategory.setOnItemClickListener((parent, view, position, id) -> {
-                    String selected = names.get(position);
-                    if ("Others".equalsIgnoreCase(selected)) {
-                        tilCustomCategory.setVisibility(View.VISIBLE);
-                    } else {
-                        tilCustomCategory.setVisibility(View.GONE);
-                        etCustomCategory.setText("");
-                    }
-                });
+                populateCategoryChips(names);
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable t) {
-                String[] fallback = {"Electronics", "Fashion", "Home", "Books", "Services", "Others"};
-                autoCompleteCategory.setAdapter(new ArrayAdapter<>(EditProductActivity.this, android.R.layout.simple_list_item_1, fallback));
+                populateCategoryChips(Arrays.asList("Electronics", "Fashion", "Home", "Books", "Services", "Others"));
             }
         });
+    }
+
+    private void populateCategoryChips(List<String> names) {
+        ChipGroup group = findViewById(R.id.chipGroupProductCategory);
+        if (group == null) return;
+        group.removeAllViews();
+        for (String name : names) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, group, false);
+            chip.setId(View.generateViewId());
+            chip.setText(name);
+            chip.setTag(name);
+            if (!"Others".equalsIgnoreCase(name)) {
+                chip.setChipIcon(getDrawable(iconForCategory(name)));
+            }
+            chip.setOnCheckedChangeListener((c, checked) -> {
+                if (!checked || c.getTag() == null) return;
+                autoCompleteCategory.setText(c.getTag().toString(), false);
+                if ("Others".equalsIgnoreCase(c.getTag().toString())) {
+                    tilCustomCategory.setVisibility(View.VISIBLE);
+                } else {
+                    tilCustomCategory.setVisibility(View.GONE);
+                    etCustomCategory.setText("");
+                }
+            });
+            group.addView(chip);
+        }
+        syncCategoryChipsFromField();
+    }
+
+    private void syncCategoryChipsFromField() {
+        ChipGroup group = findViewById(R.id.chipGroupProductCategory);
+        if (group == null || group.getChildCount() == 0) return;
+        String current = autoCompleteCategory.getText() == null ? "" : autoCompleteCategory.getText().toString().trim();
+        boolean matched = false;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            Chip chip = (Chip) group.getChildAt(i);
+            boolean isMatch = chip.getTag() != null && chip.getTag().toString().equalsIgnoreCase(current);
+            if (isMatch) {
+                chip.setChecked(true);
+                matched = true;
+            }
+        }
+        if (!matched && !current.isEmpty()) {
+            group.clearCheck();
+            tilCustomCategory.setVisibility(View.VISIBLE);
+        } else if (!matched) {
+            ((Chip) group.getChildAt(0)).setChecked(true);
+        }
+    }
+
+    private int iconForCategory(String name) {
+        if (name == null) return R.drawable.ic_category_tech;
+        String n = name.toLowerCase();
+        if (n.contains("food")) return R.drawable.ic_category_food;
+        if (n.contains("drink")) return R.drawable.ic_category_drink;
+        if (n.contains("tech") || n.contains("electron")) return R.drawable.ic_category_tech;
+        if (n.contains("book")) return R.drawable.ic_category_books;
+        if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("serv")) return R.drawable.ic_category_repair;
+        if (n.contains("fashion") || n.contains("cloth")) return R.drawable.ic_category_fashion;
+        if (n.contains("home")) return R.drawable.ic_category_home;
+        return R.drawable.ic_category_tech;
     }
 
     private void loadMajors() {
@@ -577,11 +628,11 @@ public class EditProductActivity extends BaseActivity {
             String tags = etTags.getText() == null ? "" : etTags.getText().toString().trim();
 
             if (selectedUris.isEmpty()) {
-                Toast.makeText(this, "Add at least one photo", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_add_at_least_one_photo, Toast.LENGTH_SHORT).show();
                 return;
             }
             if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
-                Toast.makeText(this, "Complete the listing details", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_complete_listing_details, Toast.LENGTH_SHORT).show();
                 return;
             }
             double parsedPrice;
@@ -591,7 +642,7 @@ public class EditProductActivity extends BaseActivity {
                 parsedPrice = -1;
             }
             if (parsedPrice < 0) {
-                Toast.makeText(this, "Enter a valid price", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_enter_valid_price, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -600,7 +651,7 @@ public class EditProductActivity extends BaseActivity {
             }
 
             v.setEnabled(false);
-            Toast.makeText(this, "Uploading images...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_uploading_images, Toast.LENGTH_SHORT).show();
 
             final String finalCategory = category;
             final String finalTags = tags;
@@ -608,7 +659,7 @@ public class EditProductActivity extends BaseActivity {
             String ownerId = AppDataStore.userId(this);
             if (ownerId == null) {
                 v.setEnabled(true);
-                Toast.makeText(this, "Please sign in first", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_please_sign_in_first, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -667,16 +718,16 @@ public class EditProductActivity extends BaseActivity {
                         // Sync with Room to ensure HomeFragment sees it
                         polyGoRepository.refreshListings(ownerId);
                         
-                        Toast.makeText(EditProductActivity.this, "Listing published!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(EditProductActivity.this, R.string.toast_listing_published, Toast.LENGTH_LONG).show();
                         new Handler(Looper.getMainLooper()).postDelayed(EditProductActivity.this::finish, 1500);
                     } else {
                         btn.setEnabled(true);
-                        Toast.makeText(EditProductActivity.this, "Listing error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditProductActivity.this, R.string.toast_listing_error, Toast.LENGTH_SHORT).show();
                     }
                 } else if (workInfo.getState() == WorkInfo.State.FAILED || workInfo.getState() == WorkInfo.State.CANCELLED) {
                     btn.setEnabled(true);
                     String error = workInfo.getOutputData().getString("error");
-                    Toast.makeText(EditProductActivity.this, error != null ? error : "Upload failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditProductActivity.this, error != null ? error : getString(R.string.toast_upload_failed), Toast.LENGTH_SHORT).show();
                 }
             });
         }

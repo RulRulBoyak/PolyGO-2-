@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -81,7 +81,7 @@ public class SellerProfileActivity extends AppCompatActivity {
 
         float rating = AppDataStore.averageRatingForSeller(this, sellerName);
         int sold = AppDataStore.countSoldBySeller(this, sellerName, sellerOwnerId);
-        ((TextView) findViewById(R.id.tvSellerRating)).setText(rating <= 0 ? "New" : String.format(Locale.US, "%.1f", rating));
+        ((TextView) findViewById(R.id.tvSellerRating)).setText(rating <= 0 ? getString(R.string.seller_new) : String.format(Locale.US, "%.1f", rating));
         ((TextView) findViewById(R.id.tvItemsSold)).setText(String.valueOf(Math.max(sold, 0)));
         ((TextView) findViewById(R.id.tvGreenImpact)).setText(getString(R.string.profile_top_15_percent));
         ((TextView) findViewById(R.id.tvListingsCount)).setText(String.valueOf(active.size()));
@@ -184,12 +184,12 @@ public class SellerProfileActivity extends AppCompatActivity {
 
     private void showReviewGate(String sellerName) {
         if (!AppDataStore.isLoggedIn(this)) {
-            Toast.makeText(this, "Please log in to leave a review", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_login_to_leave_review, Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
         if (sellerOwnerId != null && sellerOwnerId.equals(AppDataStore.userId(this))) {
-            Toast.makeText(this, "You cannot review yourself", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_cannot_review_yourself, Toast.LENGTH_SHORT).show();
             return;
         }
         AppDataStore.TransactionRecord tx = AppDataStore.getEligibleReviewTransaction(this, sellerName);
@@ -202,7 +202,7 @@ public class SellerProfileActivity extends AppCompatActivity {
             return;
         }
         HapticManager.error(this);
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.review_verified_buyer_title)
                 .setMessage(R.string.review_verified_buyer_message)
                 .setPositiveButton(android.R.string.ok, null)
