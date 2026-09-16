@@ -1,14 +1,15 @@
 package com.poliku.polygoplus;
 
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
+import android.view.View;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
@@ -40,14 +41,22 @@ public class ReportActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvReportTitle)).setText(listing ? getString(R.string.report_title_listing) : getString(R.string.report_title_user));
         ((TextView) findViewById(R.id.tvReportTarget)).setText(getString(R.string.report_target_label, name == null ? getString(R.string.report_this_account) : name));
 
-        Spinner spinner = findViewById(R.id.spinnerReason);
-        String[] reasons = listing
+        ChipGroup chipGroupReason = findViewById(R.id.chipGroupReason);
+        final String[] reasons = listing
                 ? new String[]{"Prohibited item", "Scam or misleading", "Wrong category", "Offensive content", "Other"}
                 : new String[]{"Scam behaviour", "Harassment", "Impersonation", "Spam", "Other"};
-        spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, reasons));
+        for (String reason : reasons) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, chipGroupReason, false);
+            chip.setId(View.generateViewId());
+            chip.setText(reason);
+            chipGroupReason.addView(chip);
+        }
+        ((Chip) chipGroupReason.getChildAt(0)).setChecked(true);
 
         findViewById(R.id.btnSubmitReport).setOnClickListener(v -> {
-            String reason = spinner.getSelectedItem().toString();
+            int checkedId = chipGroupReason.getCheckedChipId();
+            Chip checked = checkedId == View.NO_ID ? null : chipGroupReason.findViewById(checkedId);
+            String reason = checked == null ? reasons[0] : checked.getText().toString();
             String details = ((EditText) findViewById(R.id.etReportDetails)).getText().toString().trim();
             AppDataStore.addReport(this, listing ? "listing" : "user", id == null ? "" : id, name, reason, details);
             polyGoRepository.submitReport(AppDataStore.userId(this), listing ? "listing" : "user", id, reason, details, new Callback<BaseResponse>() {

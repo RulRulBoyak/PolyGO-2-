@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_landmark_tile"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:background="@drawable/selector_bg_landmark_tile"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackgroundBorderless"
+    android:minHeight="86dp"
+    android:padding="10dp">
+
+    <ImageView
+        android:id="@+id/ivLandmarkCheck"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_gravity="top|end"
+        android:contentDescription="Selected"
+        android:duplicateParentState="true"
+        android:padding="2dp"
+        android:src="@drawable/ic_check"
+        app:tint="@drawable/selector_landmark_check" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/ivLandmarkIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:duplicateParentState="true"
+            app:tint="@drawable/selector_landmark_icon" />
+
+        <TextView
+            android:id="@+id/tvLandmarkName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:duplicateParentState="true"
+            android:maxLines="1"
+            android:textColor="@drawable/selector_landmark_text"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvLandmarkSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:duplicateParentState="true"
+            android:maxLines="1"
+            android:textColor="@drawable/selector_landmark_text"
+            android:textSize="10sp" />
+    </LinearLayout>
+</FrameLayout>

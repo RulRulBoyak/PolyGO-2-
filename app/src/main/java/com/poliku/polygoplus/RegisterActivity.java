@@ -2,12 +2,14 @@ package com.poliku.polygoplus;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
+import android.text.TextUtils;
+import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.Toast;
-import android.text.TextUtils;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.textfield.TextInputEditText;
 import com.poliku.polygoplus.api.PolyGoApi;
@@ -59,7 +61,20 @@ public class RegisterActivity extends BaseActivity {
 
         String[] roles = {"Student", "Lecturer", "Staff", "Visitor"};
         AutoCompleteTextView autoCompleteRole = findViewById(R.id.autoCompleteRole);
-        autoCompleteRole.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, roles));
+        ChipGroup chipGroupRole = findViewById(R.id.chipGroupRole);
+        for (String role : roles) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, chipGroupRole, false);
+            chip.setId(View.generateViewId());
+            chip.setText(role);
+            chip.setTag(role);
+            chip.setOnCheckedChangeListener((c, checked) -> {
+                if (checked && c.getTag() != null) {
+                    autoCompleteRole.setText(c.getTag().toString(), false);
+                }
+            });
+            chipGroupRole.addView(chip);
+        }
+        ((Chip) chipGroupRole.getChildAt(0)).setChecked(true);
 
         setupValidation();
 

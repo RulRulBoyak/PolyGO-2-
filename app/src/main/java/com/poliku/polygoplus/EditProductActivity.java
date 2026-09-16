@@ -44,6 +44,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.LandmarkPickerSheet;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
 import com.poliku.polygoplus.ui.VerificationGate;
 import com.poliku.polygoplus.worker.PublishListingWorker;
@@ -346,15 +347,13 @@ public class EditProductActivity extends BaseActivity {
     }
 
     private void setupLocationPicker() {
-        List<String> sortedLandmarks = new ArrayList<>();
-        Collections.addAll(sortedLandmarks, AppDataStore.PKS_LANDMARKS);
-        Collections.sort(sortedLandmarks);
-
-        autoCompleteLocation.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, sortedLandmarks));
-        autoCompleteLocation.setOnItemClickListener((parent, view, position, id) -> {
-            String selected = sortedLandmarks.get(position);
-            toggleCustomLocation("Other".equalsIgnoreCase(selected));
-        });
+        autoCompleteLocation.setOnClickListener(v -> LandmarkPickerSheet.show(
+                EditProductActivity.this,
+                autoCompleteLocation.getText() == null ? "Near campus" : autoCompleteLocation.getText().toString(),
+                name -> {
+                    autoCompleteLocation.setText(name, false);
+                    toggleCustomLocation("Other".equalsIgnoreCase(name));
+                }));
 
         ChipGroup chips = findViewById(R.id.chipGroupMeetup);
         chips.setOnCheckedStateChangeListener((group, checkedIds) -> {
@@ -572,29 +571,34 @@ public class EditProductActivity extends BaseActivity {
                     for (PolyGoApi.Major m : majors) {
                         names.add(m.name);
                     }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(autoCompleteMajor.getContext(), android.R.layout.simple_list_item_1, names);
-                    autoCompleteMajor.setAdapter(adapter);
-                    autoCompleteMajor.setThreshold(0); // Show all options on click
-                    autoCompleteMajor.setOnClickListener(v -> autoCompleteMajor.showDropDown());
-                    autoCompleteMajor.setOnFocusChangeListener((v, hasFocus) -> {
-                        if (hasFocus) autoCompleteMajor.showDropDown();
-                    });
+                    populateMajorChips(names);
                 }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.MajorsResponse> call, Throwable t) {
-                String[] fallback = {"Accountancy", "Business Studies", "Civil Engineering", "Computer Science",
-                    "Electrical Engineering", "Graphic Design", "Hospitality & Tourism",
-                    "Information Technology", "Mechanical Engineering", "Software Engineering"};
-                autoCompleteMajor.setAdapter(new ArrayAdapter<>(autoCompleteMajor.getContext(), android.R.layout.simple_list_item_1, fallback));
-                autoCompleteMajor.setThreshold(0);
-                autoCompleteMajor.setOnClickListener(v -> autoCompleteMajor.showDropDown());
-                autoCompleteMajor.setOnFocusChangeListener((v, hasFocus) -> {
-                    if (hasFocus) autoCompleteMajor.showDropDown();
-                });
+                populateMajorChips(Arrays.asList("Accountancy", "Business Studies", "Civil Engineering", "Computer Science",
+                        "Electrical Engineering", "Graphic Design", "Hospitality & Tourism",
+                        "Information Technology", "Mechanical Engineering", "Software Engineering"));
             }
         });
+    }
+
+    private void populateMajorChips(List<String> names) {
+        ChipGroup group = findViewById(R.id.chipGroupProductMajor);
+        if (group == null) return;
+        group.removeAllViews();
+        for (String name : names) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, group, false);
+            chip.setId(View.generateViewId());
+            chip.setText(name);
+            chip.setTag(name);
+            chip.setOnCheckedChangeListener((c, checked) -> {
+                if (!checked || c.getTag() == null) return;
+                autoCompleteMajor.setText(c.getTag().toString(), false);
+            });
+            group.addView(chip);
+        }
     }
 
     private void setupPublishAction() {

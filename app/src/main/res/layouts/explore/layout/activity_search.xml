@@ -193,26 +193,24 @@
                 android:textStyle="bold"
                 tools:text="12 LISTINGS FOUND" />
 
-            <!-- Simulated M3 Exposed Dropdown for Category Spinner -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/grey_200"
-                app:strokeWidth="1.1dp">
+            <!-- Category Filter Chips (scrollable single row) -->
+            <HorizontalScrollView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:overScrollMode="never"
+                android:scrollbars="none">
 
-                <Spinner
-                    android:id="@+id/spinnerCategory"
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupCategory"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:backgroundTint="@color/airbnb_ink"
-                    android:paddingHorizontal="10dp"
-                    android:popupBackground="@color/white"
-                    android:spinnerMode="dropdown" />
-
-            </com.google.android.material.card.MaterialCardView>
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    app:chipSpacingHorizontal="6dp"
+                    app:singleSelection="true" />
+            </HorizontalScrollView>
 
         </LinearLayout>
     </LinearLayout>

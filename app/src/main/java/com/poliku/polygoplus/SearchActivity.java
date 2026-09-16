@@ -8,11 +8,9 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +41,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -55,7 +54,7 @@ public class SearchActivity extends BaseActivity {
     private final List<ListingEntity> all = new ArrayList<>();
     private ProductCardAdapter adapter;
     private EditText search;
-    private Spinner category;
+    private ChipGroup category;
     private TextView count;
     private View empty;
     private View suggestions;
@@ -70,7 +69,7 @@ public class SearchActivity extends BaseActivity {
         AppDataStore.initialize(this);
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         search = findViewById(R.id.etSearch);
-        category = findViewById(R.id.spinnerCategory);
+        category = findViewById(R.id.chipGroupCategory);
         count = findViewById(R.id.tvResultCount);
         empty = findViewById(R.id.tvEmptySearch);
         suggestions = findViewById(R.id.searchSuggestions);
@@ -128,12 +127,6 @@ public class SearchActivity extends BaseActivity {
                 return true;
             }
             return false;
-        });
-        category.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                filter();
-            }
-            public void onNothingSelected(AdapterView<?> p) {}
         });
     }
 
@@ -212,15 +205,15 @@ public class SearchActivity extends BaseActivity {
                         names.add(c.name);
                     }
                 }
-                
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, names);
-                category.setAdapter(adapter);
+
+                populateCategoryChips(names);
 
                 String initial = getIntent().getStringExtra(EXTRA_CATEGORY);
-                if (initial != null) {
-                    for (int i = 0; i < names.size(); i++) {
-                        if (names.get(i).equalsIgnoreCase(initial)) {
-                            category.setSelection(i);
+                if (initial != null && category != null) {
+                    for (int i = 0; i < category.getChildCount(); i++) {
+                        View chip = category.getChildAt(i);
+                        if (chip instanceof Chip && ((Chip) chip).getText().toString().equalsIgnoreCase(initial)) {
+                            ((Chip) chip).setChecked(true);
                             break;
                         }
                     }
@@ -229,10 +222,27 @@ public class SearchActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable t) {
-                String[] fallback = {"All categories", "Food", "Drink", "Tech", "Electronics", "Fashion", "Books", "Repair", "Home", "Services"};
-                category.setAdapter(new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, fallback));
+                populateCategoryChips(Arrays.asList("All categories", "Food", "Drink", "Tech", "Electronics", "Fashion", "Books", "Repair", "Home", "Services"));
             }
         });
+    }
+
+    private void populateCategoryChips(List<String> names) {
+        if (category == null) return;
+        category.removeAllViews();
+        for (String name : names) {
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_category_chip, category, false);
+            chip.setId(View.generateViewId());
+            chip.setText(name);
+            chip.setTag(name);
+            chip.setOnCheckedChangeListener((c, checked) -> {
+                if (checked && category.getCheckedChipId() != View.NO_ID) {
+                    HapticManager.selectionTick(SearchActivity.this);
+                }
+                filter();
+            });
+            category.addView(chip);
+        }
     }
 
     private void showSortDialog() {
@@ -261,7 +271,9 @@ public class SearchActivity extends BaseActivity {
     private void filter() {
         if (search == null || category == null) return;
         String q = search.getText().toString().trim().toLowerCase(Locale.ROOT);
-        String cat = category.getSelectedItem() == null ? "All categories" : category.getSelectedItem().toString();
+        int checkedId = category.getCheckedChipId();
+        Chip checked = checkedId == View.NO_ID ? null : category.findViewById(checkedId);
+        String cat = checked == null ? "All categories" : checked.getText().toString();
         List<ListingEntity> filtered = new ArrayList<>();
         for (ListingEntity p : all) {
             String searchable = nz(p.title) + " " + nz(p.seller) + " " + nz(p.description) + " " + nz(p.category) + " " + nz(p.distance);

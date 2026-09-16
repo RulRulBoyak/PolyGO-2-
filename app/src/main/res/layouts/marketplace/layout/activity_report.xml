@@ -130,23 +130,14 @@
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <!-- Simulated OutlinedBox for Spinner to prevent Java crash -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- Reason Selection (filter chips) -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupReason"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/grey_200"
-                app:strokeWidth="1.2dp">
-
-                <Spinner
-                    android:id="@+id/spinnerReason"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:backgroundTint="@color/airbnb_ink"
-                    android:paddingHorizontal="8dp" />
-            </com.google.android.material.card.MaterialCardView>
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="6dp"
+                app:singleSelection="true" />
 
             <!-- Detailed Explanation -->
             <TextView
