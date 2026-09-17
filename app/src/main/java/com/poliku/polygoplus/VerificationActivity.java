@@ -233,7 +233,7 @@ public class VerificationActivity extends AppCompatActivity {
             btnSimulate.setVisibility(View.GONE);
         } else if ("pending".equals(state)) {
             ivStatusIcon.setImageResource(R.drawable.ic_history);
-            ivStatusIcon.setColorFilter(getResources().getColor(R.color.pks_blue));
+            ivStatusIcon.setColorFilter(getResources().getColor(R.color.polygo_amber));
             tvStatus.setText(R.string.review_in_progress);
             layoutForm.setVisibility(View.GONE);
             btnSimulate.setVisibility(View.VISIBLE);

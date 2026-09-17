@@ -25,6 +25,16 @@
     <color name="soft_green">#E8F5E9</color>
     <color name="surface_variant_light">#F5F7FA</color>
 
+    <!-- Category pastel tints (containers) -->
+    <color name="soft_food">#FFF3E0</color>
+    <color name="soft_drink">#E3F2FD</color>
+    <color name="soft_tech">#EDE7F6</color>
+    <color name="soft_books">#EFEBE9</color>
+    <color name="soft_repair">#E8F5E9</color>
+    <color name="soft_fashion">#FCE4EC</color>
+    <color name="soft_home">#E0F2F1</color>
+    <color name="soft_service">#FBE9E7</color>
+
     <!-- Extended PolyGo Accent Palette -->
     <color name="polygo_purple">#7C4DFF</color>
     <color name="polygo_teal">#00897B</color>

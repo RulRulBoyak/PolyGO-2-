@@ -1,6 +1,7 @@
 package com.poliku.polygoplus;
 
 import android.net.Uri;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -510,6 +511,7 @@ public class EditProductActivity extends BaseActivity {
             chip.setTag(name);
             if (!"Others".equalsIgnoreCase(name)) {
                 chip.setChipIcon(getDrawable(UiUtils.categoryIcon(name)));
+                chip.setChipIconTint(ColorStateList.valueOf(getColor(UiUtils.categoryColor(name))));
             }
             chip.setOnCheckedChangeListener((c, checked) -> {
                 if (!checked || c.getTag() == null) return;

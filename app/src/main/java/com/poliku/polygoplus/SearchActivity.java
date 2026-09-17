@@ -1,6 +1,7 @@
 package com.poliku.polygoplus;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -32,6 +33,7 @@ import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -235,6 +237,10 @@ public class SearchActivity extends BaseActivity {
             chip.setId(View.generateViewId());
             chip.setText(name);
             chip.setTag(name);
+            if (!"All categories".equalsIgnoreCase(name)) {
+                chip.setChipIcon(getDrawable(UiUtils.categoryIcon(name)));
+                chip.setChipIconTint(ColorStateList.valueOf(getColor(UiUtils.categoryColor(name))));
+            }
             chip.setOnCheckedChangeListener((c, checked) -> {
                 if (checked && category.getCheckedChipId() != View.NO_ID) {
                     HapticManager.selectionTick(SearchActivity.this);

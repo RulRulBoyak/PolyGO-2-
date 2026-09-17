@@ -107,7 +107,7 @@ public class ExploreFragment extends Fragment {
         observeViewModel(view);
 
         SwipeRefreshLayout swipeRefresh = view.findViewById(R.id.swipeRefreshExplore);
-        swipeRefresh.setColorSchemeResources(R.color.pks_blue);
+        swipeRefresh.setColorSchemeResources(R.color.pks_blue, R.color.polygo_purple, R.color.polygo_teal, R.color.polygo_orange);
         swipeRefresh.setOnRefreshListener(() -> {
             HapticManager.mediumTap(swipeRefresh);
             viewModel.loadListings();

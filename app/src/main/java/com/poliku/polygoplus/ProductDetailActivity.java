@@ -398,25 +398,26 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         String category = p.category == null ? "" : p.category.trim();
         if (!category.isEmpty()) {
-            addMetaChip(group, category, UiUtils.categoryIcon(category));
+            addMetaChip(group, category, UiUtils.categoryIcon(category), UiUtils.categoryColor(category));
         }
         if (detailMajorName != null && !detailMajorName.trim().isEmpty()) {
-            addMetaChip(group, detailMajorName.trim(), R.drawable.ic_school);
+            addMetaChip(group, detailMajorName.trim(), R.drawable.ic_school, 0);
         }
         String location = p.distance == null ? "" : p.distance.trim();
         if (location.isEmpty() && p.location != null) location = p.location.trim();
         if (!location.isEmpty() && !location.equalsIgnoreCase(category)) {
-            addMetaChip(group, location, R.drawable.ic_location);
+            addMetaChip(group, location, R.drawable.ic_location, 0);
         }
         if (p.views > 0) {
-            addMetaChip(group, getString(R.string.product_views_count, p.views), R.drawable.ic_trending_up);
+            addMetaChip(group, getString(R.string.product_views_count, p.views), R.drawable.ic_trending_up, 0);
         }
     }
 
-    private void addMetaChip(ChipGroup group, String text, int iconRes) {
+    private void addMetaChip(ChipGroup group, String text, int iconRes, int colorRes) {
         Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_info_chip, group, false);
         chip.setId(View.generateViewId());
         if (iconRes != 0) chip.setChipIcon(getDrawable(iconRes));
+        if (colorRes != 0) chip.setChipIconTint(ColorStateList.valueOf(getColor(colorRes)));
         chip.setText(text);
         group.addView(chip);
     }

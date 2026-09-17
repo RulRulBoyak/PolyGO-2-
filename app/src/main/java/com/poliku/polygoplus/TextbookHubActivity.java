@@ -1,10 +1,12 @@
 package com.poliku.polygoplus;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -162,6 +164,8 @@ public class TextbookHubActivity extends AppCompatActivity {
             h.title.setText(d.code);
             h.subtitle.setText(d.name);
             h.icon.setImageResource(d.icon);
+            h.icon.setImageTintList(ColorStateList.valueOf(getColor(R.color.cat_books)));
+            h.badge.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.soft_books)));
             h.itemView.setOnClickListener(v -> {
                 HapticManager.lightTap(v);
                 Intent i = new Intent(TextbookHubActivity.this, SearchActivity.class);
@@ -178,11 +182,13 @@ public class TextbookHubActivity extends AppCompatActivity {
         class Holder extends RecyclerView.ViewHolder {
             TextView title, subtitle;
             ImageView icon;
+            FrameLayout badge;
             Holder(View v) {
                 super(v);
                 title = v.findViewById(R.id.tvCategory);
                 subtitle = v.findViewById(R.id.tvCategorySub);
                 icon = v.findViewById(R.id.imgCategory);
+                badge = v.findViewById(R.id.layoutIconBadge);
             }
         }
     }

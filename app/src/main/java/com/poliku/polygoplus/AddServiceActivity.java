@@ -1,6 +1,7 @@
 package com.poliku.polygoplus;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -47,6 +48,7 @@ import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.LandmarkPickerSheet;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
+import com.poliku.polygoplus.ui.UiUtils;
 import com.poliku.polygoplus.ui.VerificationGate;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -337,6 +339,7 @@ public class AddServiceActivity extends BaseActivity {
             chip.setTag(name);
             if (!"Others".equalsIgnoreCase(name)) {
                 chip.setChipIcon(getDrawable(iconForServiceCategory(name)));
+                chip.setChipIconTint(ColorStateList.valueOf(getColor(UiUtils.categoryColor(name))));
             }
             chip.setOnCheckedChangeListener((c, checked) -> {
                 if (!checked || c.getTag() == null) return;

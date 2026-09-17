@@ -76,7 +76,7 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
 
         if (mine) {
             binding.layoutMessageContainer.setGravity(Gravity.END);
-            binding.messageBubble.setCardBackgroundColor(ContextCompat.getColor(context, R.color.pks_blue));
+            binding.messageBubble.setCardBackgroundColor(ContextCompat.getColor(context, R.color.polygo_purple));
             binding.messageBody.setTextColor(ContextCompat.getColor(context, R.color.white));
             binding.messageTime.setTextColor(ContextCompat.getColor(context, R.color.white));
             

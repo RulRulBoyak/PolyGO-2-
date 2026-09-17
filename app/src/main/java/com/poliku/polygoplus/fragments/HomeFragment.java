@@ -2,6 +2,7 @@ package com.poliku.polygoplus.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,7 @@ import com.poliku.polygoplus.databinding.FragmentHomeBinding;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.HomeViewModel;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 import com.google.android.material.tabs.TabLayoutMediator;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager2.widget.ViewPager2;
@@ -96,7 +98,7 @@ public class HomeFragment extends Fragment {
         
         observeViewModel();
         
-        binding.swipeRefreshHome.setColorSchemeResources(R.color.pks_blue);
+        binding.swipeRefreshHome.setColorSchemeResources(R.color.pks_blue, R.color.polygo_purple, R.color.polygo_teal, R.color.polygo_orange);
         binding.swipeRefreshHome.setOnRefreshListener(() -> {
             HapticManager.mediumTap(binding.swipeRefreshHome);
             viewModel.loadProducts();
@@ -442,6 +444,8 @@ public class HomeFragment extends Fragment {
             holder.name.setText(c.name);
             ImageView icon = holder.itemView.findViewById(R.id.ivCategoryIcon);
             icon.setImageResource(resolveCategoryIcon(c.icon_res));
+            icon.setImageTintList(ColorStateList.valueOf(requireContext().getColor(UiUtils.categoryColor(c.name))));
+            icon.setBackgroundTintList(ColorStateList.valueOf(requireContext().getColor(UiUtils.categoryTint(c.name))));
             holder.itemView.setOnClickListener(v -> {
                 Context context = getContext();
                 if (context == null) return;
