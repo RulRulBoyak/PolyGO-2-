@@ -138,4 +138,13 @@
         <item name="rippleColor">?attr/colorPrimary</item>
     </style>
 
+    <style name="Widget.PolyGo.Chip.Tag" parent="Widget.PolyGo.Chip.Filter">
+        <item name="android:textColor">@color/airbnb_ink</item>
+        <item name="chipBackgroundColor">@color/surface_variant_light</item>
+        <item name="chipStrokeColor">@color/grey_200</item>
+        <item name="chipIconTint">@color/pks_blue</item>
+        <item name="chipIconSize">16dp</item>
+        <item name="chipMinHeight">34dp</item>
+    </style>
+
 </resources>

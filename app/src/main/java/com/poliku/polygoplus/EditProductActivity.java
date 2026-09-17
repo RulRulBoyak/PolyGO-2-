@@ -46,6 +46,7 @@ import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.LandmarkPickerSheet;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
+import com.poliku.polygoplus.ui.UiUtils;
 import com.poliku.polygoplus.ui.VerificationGate;
 import com.poliku.polygoplus.worker.PublishListingWorker;
 
@@ -508,7 +509,7 @@ public class EditProductActivity extends BaseActivity {
             chip.setText(name);
             chip.setTag(name);
             if (!"Others".equalsIgnoreCase(name)) {
-                chip.setChipIcon(getDrawable(iconForCategory(name)));
+                chip.setChipIcon(getDrawable(UiUtils.categoryIcon(name)));
             }
             chip.setOnCheckedChangeListener((c, checked) -> {
                 if (!checked || c.getTag() == null) return;
@@ -544,19 +545,6 @@ public class EditProductActivity extends BaseActivity {
         } else if (!matched) {
             ((Chip) group.getChildAt(0)).setChecked(true);
         }
-    }
-
-    private int iconForCategory(String name) {
-        if (name == null) return R.drawable.ic_category_tech;
-        String n = name.toLowerCase();
-        if (n.contains("food")) return R.drawable.ic_category_food;
-        if (n.contains("drink")) return R.drawable.ic_category_drink;
-        if (n.contains("tech") || n.contains("electron")) return R.drawable.ic_category_tech;
-        if (n.contains("book")) return R.drawable.ic_category_books;
-        if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("serv")) return R.drawable.ic_category_repair;
-        if (n.contains("fashion") || n.contains("cloth")) return R.drawable.ic_category_fashion;
-        if (n.contains("home")) return R.drawable.ic_category_home;
-        return R.drawable.ic_category_tech;
     }
 
     private void loadMajors() {

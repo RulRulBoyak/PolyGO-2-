@@ -685,6 +685,13 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="content_description_new_message">Mesej baharu</string>
     <string name="content_description_search">Cari</string>
     <string name="content_description_star_rating">Skor bintang</string>
+    <string name="content_description_sold">Barang terjual</string>
+    <string name="content_description_joined">Ahli sejak</string>
+
+    <string name="product_mark_sold">Tandai sebagai Terjual</string>
+    <string name="product_detail_trust_rating">Penilaian</string>
+    <string name="product_detail_trust_sold">Terjual</string>
+    <string name="product_detail_trust_joined">Ahli sejak</string>
     <string name="content_description_view_profile">Lihat profil</string>
     <string name="content_description_watermark">Tanda air</string>
     <string name="content_description_qr_code">Kod QR</string>

@@ -3,6 +3,7 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -12,16 +13,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 import com.poliku.polygoplus.api.PolyGoApi;
@@ -33,6 +39,7 @@ import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.CarouselAdapter;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.RelativeTimeFormatter;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -65,6 +72,10 @@ public class ProductDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+
         setContentView(R.layout.activity_product_detail);
 
         carousel = findViewById(R.id.productCarousel);
@@ -76,6 +87,33 @@ public class ProductDetailActivity extends AppCompatActivity {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
                 v.setPadding(systemBars.left, v.getPaddingTop(), systemBars.right, systemBars.bottom);
                 return insets;
+            });
+        }
+
+        LinearLayout mainBody = findViewById(R.id.mainBody);
+        if (productBottomBar != null && mainBody != null) {
+            productBottomBar.post(() -> {
+                float density = getResources().getDisplayMetrics().density;
+                int bottom = productBottomBar.getHeight() + productBottomBar.getPaddingBottom()
+                        + Math.round(24 * density);
+                mainBody.setPadding(mainBody.getPaddingLeft(), mainBody.getPaddingTop(),
+                        mainBody.getPaddingRight(), bottom);
+            });
+        }
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        AppBarLayout topBar = findViewById(R.id.topBar);
+        if (topBar != null) {
+            WindowInsetsControllerCompat insetsController =
+                    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            Drawable navIcon = toolbar != null ? toolbar.getNavigationIcon() : null;
+            topBar.addOnOffsetChangedListener((bar, verticalOffset) -> {
+                boolean collapsed = bar.getTotalScrollRange() > 0
+                        && Math.abs(verticalOffset) >= bar.getTotalScrollRange();
+                if (navIcon != null) {
+                    navIcon.setTint(collapsed ? getColor(R.color.airbnb_ink) : Color.WHITE);
+                }
+                insetsController.setAppearanceLightStatusBars(collapsed);
             });
         }
 
@@ -94,7 +132,6 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         View btnBack = findViewById(R.id.btnBack);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
 
         collapsingToolbar = findViewById(R.id.collapsingToolbar);
@@ -175,16 +212,23 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (product.reviewCount != null && !product.reviewCount.isEmpty() && !"0".equals(product.reviewCount)) {
             meta += " (" + product.reviewCount + ")";
         }
-        meta += "  •  " + product.distance + "  •  " + product.category;
-        String postedDetail = RelativeTimeFormatter.formatDetail(this, product.postedAt);
-        if (!postedDetail.isEmpty()) {
-            meta += "  •  " + postedDetail;
-        }
-        if (product.views > 0) {
-            meta += "  •  " + getString(R.string.product_views_count, product.views);
-        }
+        meta += "  •  " + product.distance;
         ((TextView) findViewById(R.id.productMeta)).setText(meta);
-        ((TextView) findViewById(R.id.productDescription)).setText(product.description);
+
+        String postedDetail = RelativeTimeFormatter.formatDetail(this, product.postedAt);
+        TextView postedView = findViewById(R.id.productPostedMeta);
+        if (postedView != null) {
+            if (postedDetail.isEmpty()) {
+                postedView.setVisibility(View.GONE);
+            } else {
+                postedView.setText(postedDetail);
+            }
+        }
+
+        populateMetaChips(product);
+
+        TextView descView = findViewById(R.id.productDescription);
+        if (descView != null) descView.setText(product.description);
 
         StringBuilder suffix = new StringBuilder();
         if (detailMajorName != null && !detailMajorName.isEmpty()) {
@@ -193,8 +237,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (detailFreeSlots != null && !detailFreeSlots.isEmpty()) {
             suffix.append(getString(R.string.product_free_slots_line, detailFreeSlots));
         }
-        if (suffix.length() > 0) {
-            TextView descView = findViewById(R.id.productDescription);
+        if (suffix.length() > 0 && descView != null) {
             descView.setText(descView.getText() + suffix.toString());
         }
 
@@ -233,6 +276,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (sellerMetaView != null) {
             sellerMetaView.setText(product.verified ? R.string.seller_verified_meta : R.string.seller_student_meta);
         }
+        TextView trustRating = findViewById(R.id.tvSellerRating);
+        if (trustRating != null) trustRating.setText(product.rating);
         findViewById(R.id.btnReportListing).setOnClickListener(v -> {
             Intent i = new Intent(this, ReportActivity.class);
             i.putExtra(ReportActivity.EXTRA_TARGET_TYPE, "listing");
@@ -261,9 +306,10 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         MaterialButton message = findViewById(R.id.btnMessageSeller);
         if (product.owner) {
-            message.setText(getString(R.string.product_this_is_your_listing));
-            message.setEnabled(false);
-            findViewById(R.id.btnMakeOffer).setEnabled(false);
+            View chat = findViewById(R.id.btnMessageSeller);
+            View offer = findViewById(R.id.btnMakeOffer);
+            if (chat != null) chat.setVisibility(View.GONE);
+            if (offer != null) offer.setVisibility(View.GONE);
             MaterialButton sold = findViewById(R.id.btnMarkSold);
             sold.setVisibility(View.VISIBLE);
             if (product.archived) {
@@ -345,6 +391,36 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
     }
 
+    private void populateMetaChips(AppDataStore.ProductRecord p) {
+        ChipGroup group = findViewById(R.id.chipGroupMeta);
+        if (group == null) return;
+        group.removeAllViews();
+
+        String category = p.category == null ? "" : p.category.trim();
+        if (!category.isEmpty()) {
+            addMetaChip(group, category, UiUtils.categoryIcon(category));
+        }
+        if (detailMajorName != null && !detailMajorName.trim().isEmpty()) {
+            addMetaChip(group, detailMajorName.trim(), R.drawable.ic_school);
+        }
+        String location = p.distance == null ? "" : p.distance.trim();
+        if (location.isEmpty() && p.location != null) location = p.location.trim();
+        if (!location.isEmpty() && !location.equalsIgnoreCase(category)) {
+            addMetaChip(group, location, R.drawable.ic_location);
+        }
+        if (p.views > 0) {
+            addMetaChip(group, getString(R.string.product_views_count, p.views), R.drawable.ic_trending_up);
+        }
+    }
+
+    private void addMetaChip(ChipGroup group, String text, int iconRes) {
+        Chip chip = (Chip) getLayoutInflater().inflate(R.layout.item_info_chip, group, false);
+        chip.setId(View.generateViewId());
+        if (iconRes != 0) chip.setChipIcon(getDrawable(iconRes));
+        chip.setText(text);
+        group.addView(chip);
+    }
+
     private void shareListing() {
         String url = "https://polygo.pks.edu.my/listing/" + product.id;
         Intent send = new Intent(Intent.ACTION_SEND);
@@ -419,16 +495,12 @@ public class ProductDetailActivity extends AppCompatActivity {
                     }
                 }
 
-                StringBuilder stats = new StringBuilder();
-                if (seller.reviews > 0) {
-                    stats.append(getString(R.string.seller_rating_segment, seller.rating, seller.reviews));
-                    stats.append(" • ");
+                TextView soldView = findViewById(R.id.tvSellerSold);
+                if (soldView != null) soldView.setText(String.valueOf(seller.sold));
+                TextView joinedView = findViewById(R.id.tvSellerJoined);
+                if (joinedView != null && seller.joined_at != null && !seller.joined_at.trim().isEmpty()) {
+                    joinedView.setText(formatJoined(seller.joined_at));
                 }
-                stats.append(getString(R.string.seller_sold_segment, seller.sold));
-                if (seller.joined_at != null && !seller.joined_at.trim().isEmpty()) {
-                    stats.append(" • ").append(getString(R.string.seller_joined_segment, formatJoined(seller.joined_at)));
-                }
-                meta.setText(stats.toString());
             }
 
             @Override
