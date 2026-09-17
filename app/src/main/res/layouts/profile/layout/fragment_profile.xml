@@ -161,7 +161,7 @@
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
                         android:background="@drawable/bg_category_circle"
-                        android:backgroundTint="#FFF0F0">
+                        android:backgroundTint="@color/surface_tint_danger">
 
                         <ImageView
                             android:id="@+id/ivLogout"
@@ -170,7 +170,7 @@
                             android:layout_gravity="center"
                             android:contentDescription="@string/profile_logout"
                             android:src="@drawable/ic_logout"
-                            app:tint="#D32F2F" />
+                            app:tint="@color/semantic_error" />
                     </FrameLayout>
 
                 </RelativeLayout>
@@ -999,7 +999,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
-                app:cardBackgroundColor="#F8FBFF"
+                app:cardBackgroundColor="@color/screen_background_alt"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeColor="#E3F2FD"

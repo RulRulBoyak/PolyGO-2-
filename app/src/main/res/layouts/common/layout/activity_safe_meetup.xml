@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            app:cardBackgroundColor="#E8F1FD"
+            app:cardBackgroundColor="@color/surface_tint_info"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:layout_constraintBottom_toTopOf="@id/bottomSheet"

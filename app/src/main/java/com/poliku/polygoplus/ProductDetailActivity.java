@@ -12,7 +12,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,6 +36,7 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.CarouselAdapter;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.RelativeTimeFormatter;
 import com.poliku.polygoplus.ui.UiUtils;
@@ -55,7 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @AndroidEntryPoint
-public class ProductDetailActivity extends AppCompatActivity {
+public class ProductDetailActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_LISTING_ID = "listing_id";
     public static final String RESULT_EXTRA_LISTING_ID = "result_listing_id_changed";

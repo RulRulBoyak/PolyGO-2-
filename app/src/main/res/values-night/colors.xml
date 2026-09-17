@@ -4,4 +4,14 @@
     <color name="nav_active_indicator">#381E88E5</color>
     <color name="nav_card">#D91E1E1E</color>
     <color name="glass_stroke">#24FFFFFF</color>
+
+    <!-- Semantic surfaces for dark mode (light values live in values/colors.xml) -->
+    <color name="screen_background">#0F0F0F</color>
+    <color name="screen_background_alt">#16181C</color>
+    <color name="surface_tint_info">#1E2A3B</color>
+    <color name="surface_tint_danger">#3B1E1E</color>
+    <color name="surface_tint_warning">#3B2E14</color>
+    <color name="surface_tint_success">#1E3A2E</color>
+    <color name="semantic_error">#EF5350</color>
+    <color name="semantic_success">#66BB6A</color>
 </resources>

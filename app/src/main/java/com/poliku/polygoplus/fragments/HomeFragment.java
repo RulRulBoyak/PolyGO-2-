@@ -13,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
+import android.view.animation.LayoutAnimationController;
 import android.widget.TextView;
 import android.widget.ImageView;
 
@@ -309,12 +311,21 @@ public class HomeFragment extends Fragment {
         binding.rvPicks.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
         PicksAdapter adapter = new PicksAdapter();
         binding.rvPicks.setAdapter(adapter);
+        animateListEntrance(binding.rvPicks);
     }
 
     private void setupCategoryRow() {
         binding.rvCategories.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
         CategoryRowAdapter adapter = new CategoryRowAdapter();
         binding.rvCategories.setAdapter(adapter);
+        animateListEntrance(binding.rvCategories);
+    }
+
+    private void animateListEntrance(RecyclerView list) {
+        if (list == null) return;
+        LayoutAnimationController controller = AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_cascade);
+        list.setLayoutAnimation(controller);
+        list.scheduleLayoutAnimation();
     }
 
     private void setupProducts() {

@@ -5,11 +5,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,8 +19,10 @@ import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.RelativeTimeFormatter;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class CampusPulseActivity extends AppCompatActivity {
+public class CampusPulseActivity extends BaseActivity {
 
     @Inject PolyGoRepository polyGoRepository;
 
@@ -78,13 +78,13 @@ public class CampusPulseActivity extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                     tvPulseEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
                 } else {
-                    Toast.makeText(CampusPulseActivity.this, R.string.pulse_load_failed, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_load_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.PulseResponse> call, Throwable t) {
-                Toast.makeText(CampusPulseActivity.this, R.string.pulse_load_failed, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_load_failed);
             }
         });
     }
@@ -102,7 +102,7 @@ public class CampusPulseActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.pulse_post_send, (d, w) -> {
                     int checkedId = chipTag.getCheckedChipId();
                     if (checkedId == View.NO_ID) {
-                        Toast.makeText(this, R.string.pulse_tag_required, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_tag_required);
                         return;
                     }
                     Chip tagChip = chipTag.findViewById(checkedId);
@@ -111,11 +111,11 @@ public class CampusPulseActivity extends AppCompatActivity {
                     String body = etBody.getText() == null ? "" : etBody.getText().toString().trim();
 
                     if (!AppDataStore.isLoggedIn(this)) {
-                        Toast.makeText(this, R.string.pulse_login_required, Toast.LENGTH_LONG).show();
+                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_login_required);
                         return;
                     }
                     if (title.isEmpty() || body.isEmpty()) {
-                        Toast.makeText(this, R.string.pulse_validation, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_validation);
                         return;
                     }
                     postPulse(tag, title, body);
@@ -129,18 +129,18 @@ public class CampusPulseActivity extends AppCompatActivity {
             public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     HapticManager.success(CampusPulseActivity.this);
-                    Toast.makeText(CampusPulseActivity.this, R.string.pulse_posted, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_posted);
                     refreshPulse();
                 } else if (response.code() == 401) {
-                    Toast.makeText(CampusPulseActivity.this, R.string.pulse_login_required, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_login_required);
                 } else {
-                    Toast.makeText(CampusPulseActivity.this, R.string.pulse_post_failed, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_post_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
-                Toast.makeText(CampusPulseActivity.this, R.string.pulse_post_failed, Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_post_failed);
             }
         });
     }

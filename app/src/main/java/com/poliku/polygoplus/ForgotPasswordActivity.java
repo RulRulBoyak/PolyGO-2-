@@ -5,7 +5,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
+
+import com.poliku.polygoplus.ui.BaseActivity;
 
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.PolyGoRepository;
@@ -18,7 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class ForgotPasswordActivity extends AppCompatActivity {
+public class ForgotPasswordActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     @Override
     protected void onCreate(Bundle savedInstanceState) {

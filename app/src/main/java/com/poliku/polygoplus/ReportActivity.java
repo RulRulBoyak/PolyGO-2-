@@ -4,15 +4,14 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -22,7 +21,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class ReportActivity extends AppCompatActivity {
+public class ReportActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_TARGET_TYPE = "target_type";
     public static final String EXTRA_TARGET_ID = "target_id";
@@ -63,7 +62,7 @@ public class ReportActivity extends AppCompatActivity {
                 @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) { }
                 @Override public void onFailure(Call<BaseResponse> call, Throwable t) { }
             });
-            Toast.makeText(this, R.string.toast_report_submitted, Toast.LENGTH_LONG).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_report_submitted);
             finish();
         });
     }

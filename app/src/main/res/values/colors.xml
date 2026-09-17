@@ -65,6 +65,16 @@
     <color name="grey_200">#EEEEEE</color>
     <color name="grey_700">#616161</color>
 
+    <!-- Semantic surfaces (dark-aware) -->
+    <color name="screen_background">#F8F9FA</color>
+    <color name="screen_background_alt">#F8FBFF</color>
+    <color name="surface_tint_info">#E8F1FD</color>
+    <color name="surface_tint_danger">#FFF0F0</color>
+    <color name="surface_tint_warning">#FFF8E1</color>
+    <color name="surface_tint_success">#E8F5E9</color>
+    <color name="semantic_error">#D32F2F</color>
+    <color name="semantic_success">#2E7D32</color>
+
     <!-- Transparent helpers -->
     <color name="glass_white">#99FFFFFF</color>
     <color name="glass_border">#33FFFFFF</color>

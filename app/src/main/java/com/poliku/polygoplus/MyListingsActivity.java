@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,6 +13,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 
 import org.json.JSONObject;
@@ -29,7 +29,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class MyListingsActivity extends AppCompatActivity {
+public class MyListingsActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     private ProductCardAdapter adapter;
     private View empty;

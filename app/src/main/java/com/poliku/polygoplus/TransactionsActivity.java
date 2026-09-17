@@ -7,14 +7,13 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.widget.Toast;
 
 import com.google.android.material.card.MaterialCardView;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 
 import javax.inject.Inject;
@@ -28,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AndroidEntryPoint
-public class TransactionsActivity extends AppCompatActivity {
+public class TransactionsActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     private LinearLayout listContainer;
     private View emptyView;
@@ -86,8 +85,8 @@ public class TransactionsActivity extends AppCompatActivity {
             ((TextView) view.findViewById(R.id.tvTransactionLocation)).setText(t.location);
             
             if ("Completed".equalsIgnoreCase(t.status)) {
-                status.setBackgroundTintList(ColorStateList.valueOf(0xFFE8F5E9));
-                status.setTextColor(0xFF2E7D32);
+                status.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.surface_tint_success)));
+                status.setTextColor(getColor(R.color.semantic_success));
             }
 
             view.setOnClickListener(v -> {

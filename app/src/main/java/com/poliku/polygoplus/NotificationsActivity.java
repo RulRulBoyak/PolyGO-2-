@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,6 +12,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.NotificationAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 
 import javax.inject.Inject;
 
@@ -22,7 +22,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class NotificationsActivity extends AppCompatActivity {
+public class NotificationsActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     private NotificationAdapter adapter;
     private View empty;

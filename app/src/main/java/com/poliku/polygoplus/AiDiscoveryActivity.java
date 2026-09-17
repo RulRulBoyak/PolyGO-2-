@@ -11,7 +11,6 @@ import android.widget.Toast;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -21,6 +20,7 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.network.AiHelper;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class AiDiscoveryActivity extends AppCompatActivity {
+public class AiDiscoveryActivity extends BaseActivity {
 
     @Inject PolyGoRepository polyGoRepository;
     private ImageView ivPreview;

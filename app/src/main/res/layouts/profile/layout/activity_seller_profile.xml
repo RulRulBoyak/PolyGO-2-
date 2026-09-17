@@ -384,7 +384,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="#F8FBFF"
+                app:cardBackgroundColor="@color/screen_background_alt"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/soft_blue"

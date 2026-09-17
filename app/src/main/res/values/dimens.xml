@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core spacing -->
+    <dimen name="screen_margin">20dp</dimen>
+    <dimen name="content_padding">16dp</dimen>
+    <dimen name="gap_small">8dp</dimen>
+    <dimen name="gap_medium">12dp</dimen>
+    <dimen name="gap_large">16dp</dimen>
+
+    <!-- Shape radii -->
+    <dimen name="radius_button">8dp</dimen>
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_sheet">24dp</dimen>
+    <dimen name="radius_pill">40dp</dimen>
+
+    <!-- Sizing -->
+    <dimen name="chip_height">40dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="icon_size_sm">14dp</dimen>
+    <dimen name="icon_size_md">18dp</dimen>
+    <dimen name="icon_size_lg">22dp</dimen>
+</resources>

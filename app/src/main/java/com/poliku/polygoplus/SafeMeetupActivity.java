@@ -9,13 +9,10 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.gms.location.CurrentLocationRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -35,7 +32,9 @@ import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -45,7 +44,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class SafeMeetupActivity extends BaseActivity implements OnMapReadyCallback {
 
     public static final String EXTRA_THREAD_ID = "thread_id";
     public static final String EXTRA_LISTING_ID = "listing_id";
@@ -120,7 +119,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         findViewById(R.id.btnCheckIn).setOnClickListener(v -> {
             HapticManager.success(this);
             if (!dealActive) {
-                Toast.makeText(this, getString(R.string.safe_meetup_location_off), Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), getString(R.string.safe_meetup_location_off));
                 return;
             }
             Intent result = new Intent();
@@ -133,7 +132,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         findViewById(R.id.btnShareLocation).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             if (!dealActive) {
-                Toast.makeText(this, getString(R.string.safe_meetup_location_off), Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), getString(R.string.safe_meetup_location_off));
                 return;
             }
             if (!hasLocationPermission()) {
@@ -213,7 +212,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         String safeLandmark = landmark == null || landmark.trim().isEmpty() ? "PKS Library" : landmark;
 
         if (userId == null || threadId == null || sellerId == null) {
-            Toast.makeText(this, R.string.safe_meetup_emergency_sent, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.safe_meetup_emergency_sent);
             return;
         }
 
@@ -233,11 +232,11 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
 
         polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, message, new Callback<PolyGoApi.SendMessageResponse>() {
             @Override public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
-                Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_emergency_sent, Toast.LENGTH_LONG).show();
+                UiUtils.snackbar(SafeMeetupActivity.this.findViewById(android.R.id.content), R.string.safe_meetup_emergency_sent);
             }
             @Override public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
                 AppDataStore.sendMessage(SafeMeetupActivity.this, threadId, message);
-                Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_emergency_sent, Toast.LENGTH_LONG).show();
+                UiUtils.snackbar(SafeMeetupActivity.this.findViewById(android.R.id.content), R.string.safe_meetup_emergency_sent);
             }
         });
 
@@ -253,7 +252,7 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
         String safeLandmark = landmark == null || landmark.trim().isEmpty() ? "PKS Library" : landmark;
 
         if (userId == null || threadId == null || sellerId == null) {
-            Toast.makeText(this, getString(R.string.safe_meetup_share_sent), Toast.LENGTH_LONG).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), getString(R.string.safe_meetup_share_sent));
             return;
         }
 
@@ -270,11 +269,11 @@ public class SafeMeetupActivity extends AppCompatActivity implements OnMapReadyC
 
             polyGoRepository.sendMessage(userId, threadId, listingId, sellerId, text, new Callback<PolyGoApi.SendMessageResponse>() {
                 @Override public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
-                    Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_share_sent, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbar(SafeMeetupActivity.this.findViewById(android.R.id.content), R.string.safe_meetup_share_sent);
                 }
                 @Override public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
                     AppDataStore.sendMessage(SafeMeetupActivity.this, threadId, text);
-                    Toast.makeText(SafeMeetupActivity.this, R.string.safe_meetup_share_sent, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbar(SafeMeetupActivity.this.findViewById(android.R.id.content), R.string.safe_meetup_share_sent);
                 }
             });
         });

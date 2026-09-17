@@ -177,7 +177,7 @@ app:tint="@color/airbnb_ink"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:background="@drawable/bg_category_circle"
-                        android:backgroundTint="#FFF0F0">
+                        android:backgroundTint="@color/surface_tint_danger">
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
@@ -348,7 +348,7 @@ app:tint="@color/airbnb_ink"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
-                app:cardBackgroundColor="#F8FBFF"
+                app:cardBackgroundColor="@color/screen_background_alt"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeColor="#E3F2FD"

@@ -24,7 +24,7 @@
         android:id="@+id/logoContainer"
         android:layout_width="140dp"
         android:layout_height="140dp"
-        app:cardBackgroundColor="#F8FBFF"
+        app:cardBackgroundColor="@color/screen_background_alt"
         app:cardCornerRadius="70dp"
         app:cardElevation="0dp"
         app:layout_constraintBottom_toTopOf="@+id/tvTitle"
@@ -42,7 +42,7 @@
             android:layout_height="100dp"
             android:layout_gravity="center"
             android:contentDescription="@string/logo_content_description"
-            android:src="@mipmap/ic_launcher_foreground"
+            android:src="@drawable/logo_polygo"
             tools:src="@drawable/ic_nav_explore" />
     </com.google.android.material.card.MaterialCardView>
 

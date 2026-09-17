@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Toast;
 import android.content.Intent;
 import android.transition.AutoTransition;
 import android.transition.TransitionManager;
@@ -100,7 +99,7 @@ public class EditProductActivity extends BaseActivity {
                     photoAdapter.updateData(selectedUris);
                     updateViewModelUris();
                 } else {
-                    Toast.makeText(this, R.string.no_photos_found, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(findViewById(android.R.id.content), R.string.no_photos_found);
                 }
             });
 
@@ -155,7 +154,7 @@ public class EditProductActivity extends BaseActivity {
 
         findViewById(R.id.btnAiSuggest).setOnClickListener(v -> {
             if (selectedUris.isEmpty()) {
-                Toast.makeText(this, R.string.toast_add_photo_for_ai, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_add_photo_for_ai);
                 return;
             }
             HapticManager.swell(this);
@@ -175,14 +174,14 @@ public class EditProductActivity extends BaseActivity {
                     ((MaterialButton) v).setText(R.string.ai_suggest_details);
                     findViewById(R.id.btnFlagAiSuggestion).setVisibility(View.VISIBLE);
                     HapticManager.success(EditProductActivity.this);
-                    Toast.makeText(EditProductActivity.this, R.string.ai_suggestions_applied, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(EditProductActivity.this.findViewById(android.R.id.content), R.string.ai_suggestions_applied);
                 }
 
                 @Override
                 public void onError(String error) {
                     v.setEnabled(true);
                     ((MaterialButton) v).setText(R.string.ai_suggest_details);
-                    Toast.makeText(EditProductActivity.this, error, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(EditProductActivity.this.findViewById(android.R.id.content), error);
                 }
             });
         });
@@ -212,13 +211,13 @@ public class EditProductActivity extends BaseActivity {
                                 @Override
                                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                                     HapticManager.success(EditProductActivity.this);
-                                    Toast.makeText(EditProductActivity.this, R.string.ai_flag_reported, Toast.LENGTH_SHORT).show();
+                                    UiUtils.snackbar(EditProductActivity.this.findViewById(android.R.id.content), R.string.ai_flag_reported);
                                     findViewById(R.id.btnFlagAiSuggestion).setVisibility(View.GONE);
                                 }
 
                                 @Override
                                 public void onFailure(Call<BaseResponse> call, Throwable t) {
-                                    Toast.makeText(EditProductActivity.this, R.string.ai_flag_failed, Toast.LENGTH_LONG).show();
+                                    UiUtils.snackbarError(EditProductActivity.this.findViewById(android.R.id.content), R.string.ai_flag_failed);
                                 }
                             });
                 }).show();
@@ -432,7 +431,7 @@ public class EditProductActivity extends BaseActivity {
                     autoCompleteCategory.getText().toString().trim(),
                     etPrice.getText().toString(), etDescription.getText().toString(), 
                     viewModel.imageUri.getValue(), selectedLocation());
-            Toast.makeText(this, R.string.toast_draft_saved, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_draft_saved);
             finish();
         });
     }
@@ -622,11 +621,11 @@ public class EditProductActivity extends BaseActivity {
             String tags = etTags.getText() == null ? "" : etTags.getText().toString().trim();
 
             if (selectedUris.isEmpty()) {
-                Toast.makeText(this, R.string.toast_add_at_least_one_photo, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_add_at_least_one_photo);
                 return;
             }
             if (title.isEmpty() || category.isEmpty() || price.isEmpty() || description.isEmpty()) {
-                Toast.makeText(this, R.string.toast_complete_listing_details, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_complete_listing_details);
                 return;
             }
             double parsedPrice;
@@ -636,7 +635,7 @@ public class EditProductActivity extends BaseActivity {
                 parsedPrice = -1;
             }
             if (parsedPrice < 0) {
-                Toast.makeText(this, R.string.toast_enter_valid_price, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_enter_valid_price);
                 return;
             }
 
@@ -645,7 +644,7 @@ public class EditProductActivity extends BaseActivity {
             }
 
             v.setEnabled(false);
-            Toast.makeText(this, R.string.toast_uploading_images, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_uploading_images);
 
             final String finalCategory = category;
             final String finalTags = tags;
@@ -653,7 +652,7 @@ public class EditProductActivity extends BaseActivity {
             String ownerId = AppDataStore.userId(this);
             if (ownerId == null) {
                 v.setEnabled(true);
-                Toast.makeText(this, R.string.toast_please_sign_in_first, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_please_sign_in_first);
                 return;
             }
 
@@ -712,16 +711,16 @@ public class EditProductActivity extends BaseActivity {
                         // Sync with Room to ensure HomeFragment sees it
                         polyGoRepository.refreshListings(ownerId);
                         
-                        Toast.makeText(EditProductActivity.this, R.string.toast_listing_published, Toast.LENGTH_LONG).show();
+                        UiUtils.snackbar(EditProductActivity.this.findViewById(android.R.id.content), R.string.toast_listing_published);
                         new Handler(Looper.getMainLooper()).postDelayed(EditProductActivity.this::finish, 1500);
                     } else {
                         btn.setEnabled(true);
-                        Toast.makeText(EditProductActivity.this, R.string.toast_listing_error, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbarError(EditProductActivity.this.findViewById(android.R.id.content), R.string.toast_listing_error);
                     }
                 } else if (workInfo.getState() == WorkInfo.State.FAILED || workInfo.getState() == WorkInfo.State.CANCELLED) {
                     btn.setEnabled(true);
                     String error = workInfo.getOutputData().getString("error");
-                    Toast.makeText(EditProductActivity.this, error != null ? error : getString(R.string.toast_upload_failed), Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(EditProductActivity.this.findViewById(android.R.id.content), error != null ? error : getString(R.string.toast_upload_failed));
                 }
             });
         }

@@ -9,8 +9,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -18,6 +16,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import javax.inject.Inject;
@@ -28,7 +27,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class BugReportActivity extends AppCompatActivity {
+public class BugReportActivity extends BaseActivity {
 
     @Inject PolyGoRepository polyGoRepository;
 

@@ -4,13 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 import com.poliku.polygoplus.api.PolyGoApi;
 
 import org.json.JSONObject;
@@ -71,7 +71,7 @@ public class OtpActivity extends BaseActivity {
     private void verify() {
         String otp = etOtp.getText().toString().trim();
         if (otp.length() < 6) {
-            Toast.makeText(this, R.string.toast_enter_valid_otp, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_enter_valid_otp);
             return;
         }
 
@@ -92,7 +92,7 @@ public class OtpActivity extends BaseActivity {
             }
 
             private void onError(String msg) {
-                Toast.makeText(OtpActivity.this, msg, Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), msg);
             }
         });
     }
@@ -106,15 +106,15 @@ public class OtpActivity extends BaseActivity {
                     if (BuildConfig.DEBUG && response.body().otp != null && !response.body().otp.isEmpty()) {
                         etOtp.setText(response.body().otp);
                     }
-                    Toast.makeText(OtpActivity.this, getString(R.string.toast_code_resent_to, email), Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(OtpActivity.this.findViewById(android.R.id.content), getString(R.string.toast_code_resent_to, email));
                 } else {
-                    Toast.makeText(OtpActivity.this, R.string.toast_failed_to_resend, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_failed_to_resend);
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<PolyGoApi.OtpSendResponse> call, Throwable t) {
-                Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), t.getMessage());
             }
         });
     }
@@ -149,13 +149,13 @@ public class OtpActivity extends BaseActivity {
                         finish();
                     }, 2000);
                 } else {
-                    Toast.makeText(OtpActivity.this, R.string.toast_registration_failed, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_registration_failed);
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<PolyGoApi.LoginResponse> call, Throwable t) {
-                Toast.makeText(OtpActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), t.getMessage());
             }
         });
     }

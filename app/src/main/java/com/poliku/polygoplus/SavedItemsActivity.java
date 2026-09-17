@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,6 +12,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
 
 import javax.inject.Inject;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AndroidEntryPoint
-public class SavedItemsActivity extends AppCompatActivity {
+public class SavedItemsActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     private ProductCardAdapter adapter;
     private View empty;

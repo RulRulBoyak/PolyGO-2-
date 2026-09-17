@@ -5,15 +5,14 @@ import android.os.Bundle;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -23,7 +22,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class OrderDetailActivity extends AppCompatActivity {
+public class OrderDetailActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_TRANSACTION_ID = "transaction_id";
     private AppDataStore.TransactionRecord order;
@@ -46,7 +45,7 @@ public class OrderDetailActivity extends AppCompatActivity {
         // Fallback: fetch from server (Order History lists server transactions)
         String userId = AppDataStore.userId(this);
         if (userId == null || userId.isEmpty()) {
-            Toast.makeText(this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_order_not_found);
             finish();
             return;
         }
@@ -63,13 +62,13 @@ public class OrderDetailActivity extends AppCompatActivity {
                         }
                     }
                 }
-                Toast.makeText(OrderDetailActivity.this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
                 runOnUiThread(OrderDetailActivity.this::finish);
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
-                Toast.makeText(OrderDetailActivity.this, R.string.toast_order_not_found, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
                 finish();
             }
         });
@@ -94,7 +93,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
-                        Toast.makeText(OrderDetailActivity.this, R.string.toast_transaction_completed, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_transaction_completed);
                         goToReview();
                     } else {
                         onFailure(call, new Throwable("Update failed"));
@@ -105,7 +104,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
                     // Local fallback
                     AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
-                    Toast.makeText(OrderDetailActivity.this, R.string.toast_completed_offline, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_completed_offline);
                     goToReview();
                 }
             });
@@ -123,7 +122,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
-                        Toast.makeText(OrderDetailActivity.this, R.string.toast_deal_accepted_tracker, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_deal_accepted_tracker);
                         renderOrder();
                     } else {
                         onFailure(call, new Throwable("Update failed"));
@@ -133,7 +132,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
                     AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
-                    Toast.makeText(OrderDetailActivity.this, R.string.toast_accepted_offline, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_accepted_offline);
                     renderOrder();
                 }
             });

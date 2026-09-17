@@ -7,7 +7,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -28,6 +27,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ChatMessageAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import retrofit2.Call;
@@ -234,7 +234,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
-                Toast.makeText(ChatActivity.this, getString(R.string.toast_chat_network_error, t.getMessage()), Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), getString(R.string.toast_chat_network_error, t.getMessage()));
                 if (threadId != null && !threadId.isEmpty()) {
                     AppDataStore.sendMessage(ChatActivity.this, threadId, text);
                     showLocalMessages();
@@ -347,15 +347,15 @@ public class ChatActivity extends AppCompatActivity {
                     isBlocked = true;
                     applyBlockedState();
                     loadMessages();
-                    Toast.makeText(ChatActivity.this, R.string.user_blocked, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(ChatActivity.this.findViewById(android.R.id.content), R.string.user_blocked);
                 } else {
-                    Toast.makeText(ChatActivity.this, R.string.blocked_update_failed, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), R.string.blocked_update_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
-                Toast.makeText(ChatActivity.this, R.string.blocked_update_failed, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), R.string.blocked_update_failed);
             }
         });
     }
@@ -379,15 +379,15 @@ public class ChatActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     isBlocked = false;
                     applyBlockedState();
-                    Toast.makeText(ChatActivity.this, R.string.user_unblocked, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(ChatActivity.this.findViewById(android.R.id.content), R.string.user_unblocked);
                 } else {
-                    Toast.makeText(ChatActivity.this, R.string.blocked_update_failed, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), R.string.blocked_update_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
-                Toast.makeText(ChatActivity.this, R.string.blocked_update_failed, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), R.string.blocked_update_failed);
             }
         });
     }

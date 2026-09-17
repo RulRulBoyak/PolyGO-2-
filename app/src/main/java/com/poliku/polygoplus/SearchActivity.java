@@ -252,7 +252,7 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void showSortDialog() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this, com.google.android.material.R.style.Theme_Design_BottomSheetDialog);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_sort, null);
         dialog.setContentView(view);
         

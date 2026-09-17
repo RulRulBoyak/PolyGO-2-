@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,6 +23,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -125,7 +125,7 @@ public class AccountActivity extends AppCompatActivity {
             String bio = value(R.id.etBio);
 
             if (first.isEmpty() || last.isEmpty() || email.isEmpty()) {
-                Toast.makeText(this, R.string.toast_complete_profile, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_complete_profile);
                 return;
             }
 
@@ -135,7 +135,7 @@ public class AccountActivity extends AppCompatActivity {
 
             // If user picked a new LOCAL photo, upload it FIRST
             if (!selectedPhotoUri.isEmpty() && selectedPhotoUri.startsWith("content://")) {
-                Toast.makeText(this, R.string.toast_uploading_profile_picture, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_uploading_profile_picture);
                 polyGoRepository.uploadImage(this, Uri.parse(selectedPhotoUri), new Callback<PolyGoApi.UploadResponse>() {
                     @Override
                     public void onResponse(Call<PolyGoApi.UploadResponse> call, Response<PolyGoApi.UploadResponse> response) {
@@ -144,14 +144,14 @@ public class AccountActivity extends AppCompatActivity {
                             saveProfile(v, userId, fullName, email, mobile, bio, body.url);
                         } else {
                             v.setEnabled(true);
-                            Toast.makeText(AccountActivity.this, R.string.toast_upload_failed, Toast.LENGTH_SHORT).show();
+                            UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.toast_upload_failed);
                         }
                     }
 
                     @Override
                     public void onFailure(Call<PolyGoApi.UploadResponse> call, Throwable t) {
                         v.setEnabled(true);
-                        Toast.makeText(AccountActivity.this, getString(R.string.toast_upload_failed_reason, t.getMessage()), Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), getString(R.string.toast_upload_failed_reason, t.getMessage()));
                     }
                 });
             } else {
@@ -178,7 +178,7 @@ public class AccountActivity extends AppCompatActivity {
     }
 
     private void deleteAccountNow() {
-        Toast.makeText(this, R.string.deleting_account, Toast.LENGTH_SHORT).show();
+        UiUtils.snackbar(findViewById(android.R.id.content), R.string.deleting_account);
         polyGoRepository.deleteAccount(new Callback<BaseResponse>() {
             @Override
             public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
@@ -190,20 +190,20 @@ public class AccountActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else {
                     HapticManager.error(AccountActivity.this);
-                    Toast.makeText(AccountActivity.this, R.string.delete_account_failed, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.delete_account_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 HapticManager.error(AccountActivity.this);
-                Toast.makeText(AccountActivity.this, R.string.delete_account_failed, Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.delete_account_failed);
             }
         });
     }
 
     private void downloadMyData(View trigger) {
-        Toast.makeText(this, R.string.preparing_data_export, Toast.LENGTH_SHORT).show();
+        UiUtils.snackbar(findViewById(android.R.id.content), R.string.preparing_data_export);
         trigger.setEnabled(false);
         polyGoRepository.exportData(new Callback<PolyGoApi.ExportDataResponse>() {
             @Override
@@ -227,14 +227,14 @@ public class AccountActivity extends AppCompatActivity {
                             documentLauncher.launch(intent);
                         }).show();
                 } else {
-                    Toast.makeText(AccountActivity.this, R.string.export_failed, Toast.LENGTH_LONG).show();
+                    UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.export_failed);
                 }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.ExportDataResponse> call, Throwable t) {
                 trigger.setEnabled(true);
-                Toast.makeText(AccountActivity.this, R.string.export_failed, Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.export_failed);
             }
         });
     }
@@ -245,9 +245,9 @@ public class AccountActivity extends AppCompatActivity {
         try {
             getContentResolver().openOutputStream(destination, "wt").write(
                     content.getBytes("UTF-8"));
-            Toast.makeText(this, R.string.export_saved, Toast.LENGTH_LONG).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.export_saved);
         } catch (Exception e) {
-            Toast.makeText(this, R.string.export_failed, Toast.LENGTH_LONG).show();
+            UiUtils.snackbarError(findViewById(android.R.id.content), R.string.export_failed);
         }
     }
 
@@ -326,12 +326,12 @@ public class AccountActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     HapticManager.success(AccountActivity.this);
                     AppDataStore.updateProfile(AccountActivity.this, name, email, mobile, photoUrl, bio);
-                    Toast.makeText(AccountActivity.this, R.string.toast_profile_saved, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(AccountActivity.this.findViewById(android.R.id.content), R.string.toast_profile_saved);
                     finish();
                 } else {
                     HapticManager.error(AccountActivity.this);
                     btn.setEnabled(true);
-                    Toast.makeText(AccountActivity.this, R.string.toast_save_error, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.toast_save_error);
                 }
             }
 
@@ -339,7 +339,7 @@ public class AccountActivity extends AppCompatActivity {
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 HapticManager.error(AccountActivity.this);
                 btn.setEnabled(true);
-                Toast.makeText(AccountActivity.this, getString(R.string.toast_save_error_reason, t.getMessage()), Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), getString(R.string.toast_save_error_reason, t.getMessage()));
             }
         });
     }
@@ -350,7 +350,7 @@ public class AccountActivity extends AppCompatActivity {
         AppDataStore.setAccountPrivacy(this, false);
         updatingPrivacy = false;
         HapticManager.error(this);
-        Toast.makeText(this, getString(R.string.account_private_error), Toast.LENGTH_SHORT).show();
+        UiUtils.snackbarError(findViewById(android.R.id.content), getString(R.string.account_private_error));
     }
 
     private String value(int id) {

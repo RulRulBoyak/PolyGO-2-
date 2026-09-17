@@ -76,7 +76,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:background="@drawable/bg_category_circle"
-                    android:backgroundTint="#F8FBFF">
+                    android:backgroundTint="@color/screen_background_alt">
 
                     <ImageView
                         android:layout_width="28dp"
@@ -144,7 +144,7 @@
                         android:layout_gravity="center"
                         android:contentDescription="@string/create_listing"
                         android:src="@drawable/ic_edit_square"
-                        app:tint="#2E7D32" />
+                        app:tint="@color/semantic_success" />
                 </FrameLayout>
 
                 <TextView

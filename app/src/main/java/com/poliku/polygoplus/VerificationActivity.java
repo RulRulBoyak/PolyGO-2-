@@ -5,13 +5,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
@@ -20,7 +17,9 @@ import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -30,7 +29,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class VerificationActivity extends AppCompatActivity {
+public class VerificationActivity extends BaseActivity {
 
     @Inject PolyGoRepository polyGoRepository;
 
@@ -133,7 +132,7 @@ public class VerificationActivity extends AppCompatActivity {
         btnSimulate.setOnClickListener(v -> {
             HapticManager.success(this);
             AppDataStore.approvePendingVerification(this);
-            Toast.makeText(this, R.string.toast_verification_approved_dev, Toast.LENGTH_SHORT).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_verification_approved_dev);
             render();
         });
         if (!BuildConfig.DEBUG) {
@@ -146,19 +145,19 @@ public class VerificationActivity extends AppCompatActivity {
         if (checkedId == R.id.chipStudent) {
             String matrix = etMatrixNo.getText().toString().trim();
             if (selectedImageUri == null && matrix.isEmpty()) {
-                Toast.makeText(this, R.string.toast_snap_card_or_enter_matrix, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_snap_card_or_enter_matrix);
                 return;
             }
         } else if (checkedId == R.id.chipAlumni) {
             String q1 = etAlumniQ1.getText().toString().trim();
             String q2 = etAlumniQ2.getText().toString().trim();
             if (q1.isEmpty() || q2.isEmpty()) {
-                Toast.makeText(this, R.string.toast_answer_alumni_questions, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_answer_alumni_questions);
                 return;
             }
             // Basic verification for alumni (Futuristic: would check against alumni DB)
             if (!q1.toLowerCase().contains("pks") && !q1.toLowerCase().contains("poliku")) {
-                Toast.makeText(this, R.string.toast_challenge_answer_incorrect, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_challenge_answer_incorrect);
                 return;
             }
         }
@@ -167,13 +166,13 @@ public class VerificationActivity extends AppCompatActivity {
             // No card photo (e.g. alumni challenge flow): keep the local simulation.
             AppDataStore.submitVerification(this);
             HapticManager.success(this);
-            Toast.makeText(this, getString(R.string.verification_submitted), Toast.LENGTH_LONG).show();
+            UiUtils.snackbar(findViewById(android.R.id.content), getString(R.string.verification_submitted));
             render();
             return;
         }
 
         btnSubmit.setEnabled(false);
-        Toast.makeText(this, getString(R.string.verification_uploading), Toast.LENGTH_SHORT).show();
+        UiUtils.snackbar(findViewById(android.R.id.content), getString(R.string.verification_uploading));
         polyGoRepository.uploadImage(this, selectedImageUri, new Callback<PolyGoApi.UploadResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.UploadResponse> call, Response<PolyGoApi.UploadResponse> response) {
@@ -200,9 +199,8 @@ public class VerificationActivity extends AppCompatActivity {
                 boolean ok = response.isSuccessful() && response.body() != null && response.body().isSuccess();
                 AppDataStore.submitVerification(VerificationActivity.this);
                 HapticManager.success(VerificationActivity.this);
-                Toast.makeText(VerificationActivity.this,
-                        ok ? R.string.verification_submitted : R.string.verification_server_failed,
-                        Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content),
+                        ok ? R.string.verification_submitted : R.string.verification_server_failed);
                 btnSubmit.setEnabled(true);
                 render();
             }
@@ -210,7 +208,7 @@ public class VerificationActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 AppDataStore.submitVerification(VerificationActivity.this);
-                Toast.makeText(VerificationActivity.this, R.string.verification_server_failed, Toast.LENGTH_LONG).show();
+                UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content), R.string.verification_server_failed);
                 btnSubmit.setEnabled(true);
                 render();
             }
@@ -219,7 +217,7 @@ public class VerificationActivity extends AppCompatActivity {
 
     private void finishUploadFailure() {
         btnSubmit.setEnabled(true);
-        Toast.makeText(this, R.string.verification_upload_failed, Toast.LENGTH_LONG).show();
+        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.verification_upload_failed);
     }
 
     private void render() {

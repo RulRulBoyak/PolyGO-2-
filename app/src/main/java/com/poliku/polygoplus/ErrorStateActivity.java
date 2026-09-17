@@ -3,11 +3,11 @@ package com.poliku.polygoplus;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
+
 import com.poliku.polygoplus.network.ConnectivityHelper;
 import com.poliku.polygoplus.network.NetworkErrorHandler;
 
@@ -19,7 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class ErrorStateActivity extends AppCompatActivity {
+public class ErrorStateActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_MODE = "mode";
 

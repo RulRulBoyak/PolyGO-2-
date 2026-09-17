@@ -80,14 +80,14 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@drawable/bg_category_circle"
-                android:backgroundTint="#FFF0F0">
+                android:backgroundTint="@color/surface_tint_danger">
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_alert"
-                    app:tint="#D32F2F" />
+                    app:tint="@color/semantic_error" />
             </FrameLayout>
 
             <!-- Report Headline -->
@@ -217,7 +217,7 @@
                 android:textColor="@color/white"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                app:backgroundTint="#D32F2F"
+                app:backgroundTint="@color/semantic_error"
                 app:cornerRadius="16dp"
                 app:elevation="0dp" />
 

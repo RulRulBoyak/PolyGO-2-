@@ -11,7 +11,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,6 +21,8 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.ui.BaseActivity;
+
 import com.poliku.polygoplus.ui.EmptyStates;
 import com.poliku.polygoplus.ui.HapticManager;
 
@@ -37,7 +38,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class SellerProfileActivity extends AppCompatActivity {
+public class SellerProfileActivity extends BaseActivity {
     public static final String EXTRA_SELLER_NAME = "seller_name";
     public static final String EXTRA_SELLER_ID = "seller_id";
     public static final String EXTRA_SCROLL_TO_REVIEWS = "scroll_to_reviews";

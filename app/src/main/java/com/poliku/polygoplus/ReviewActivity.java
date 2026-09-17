@@ -4,14 +4,13 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import javax.inject.Inject;
 
@@ -21,7 +20,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 @AndroidEntryPoint
-public class ReviewActivity extends AppCompatActivity {
+public class ReviewActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
     public static final String EXTRA_SELLER = "seller";
     public static final String EXTRA_TRANSACTION_ID = "transaction_id";
@@ -40,7 +39,7 @@ public class ReviewActivity extends AppCompatActivity {
             int stars = (int) ((RatingBar) findViewById(R.id.ratingBar)).getRating();
             String comment = ((EditText) findViewById(R.id.etReview)).getText().toString().trim();
             if (stars < 1) {
-                Toast.makeText(this, R.string.toast_choose_star_rating, Toast.LENGTH_SHORT).show();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_choose_star_rating);
                 return;
             }
             String sellerName = seller;
@@ -53,14 +52,14 @@ public class ReviewActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.addReview(ReviewActivity.this, sellerName, stars, comment);
                         if (txId != null) AppDataStore.markTransactionReviewed(ReviewActivity.this, txId);
-                        Toast.makeText(ReviewActivity.this, R.string.toast_thanks_for_review, Toast.LENGTH_SHORT).show();
+                        UiUtils.snackbar(ReviewActivity.this.findViewById(android.R.id.content), R.string.toast_thanks_for_review);
                         finish();
                     } else {
                         String msg = (response.body() != null && response.body().getMessage() != null)
                                 ? response.body().getMessage()
                                 : getString(R.string.review_verified_buyer_message);
                         HapticManager.error(ReviewActivity.this);
-                        Toast.makeText(ReviewActivity.this, msg, Toast.LENGTH_LONG).show();
+                        UiUtils.snackbarError(ReviewActivity.this.findViewById(android.R.id.content), msg);
                         v.setEnabled(true);
                     }
                 }
@@ -68,7 +67,7 @@ public class ReviewActivity extends AppCompatActivity {
                 @Override public void onFailure(Call<BaseResponse> call, Throwable t) {
                     AppDataStore.addReview(ReviewActivity.this, sellerName, stars, comment);
                     if (txId != null) AppDataStore.markTransactionReviewed(ReviewActivity.this, txId);
-                    Toast.makeText(ReviewActivity.this, R.string.review_saved_offline, Toast.LENGTH_SHORT).show();
+                    UiUtils.snackbar(ReviewActivity.this.findViewById(android.R.id.content), R.string.review_saved_offline);
                     finish();
                 }
             });
