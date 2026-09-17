@@ -22,6 +22,7 @@ public final class UiUtils {
         if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("serv")) return R.drawable.ic_category_repair;
         if (n.contains("fashion") || n.contains("cloth")) return R.drawable.ic_category_fashion;
         if (n.contains("home")) return R.drawable.ic_category_home;
+        if (n.contains("deliver") || n.contains("ship") || n.contains("courier")) return R.drawable.ic_category_delivery;
         return R.drawable.ic_category_tech;
     }
 

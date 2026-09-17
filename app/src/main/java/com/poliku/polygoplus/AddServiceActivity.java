@@ -382,7 +382,8 @@ public class AddServiceActivity extends BaseActivity {
         String n = name.toLowerCase();
         if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("clean")) return R.drawable.ic_category_repair;
         if (n.contains("less") || n.contains("tutor") || n.contains("study")) return R.drawable.ic_category_books;
-        if (n.contains("deliver") || n.contains("tech") || n.contains("phot")) return R.drawable.ic_category_tech;
+        if (n.contains("deliver")) return R.drawable.ic_category_delivery;
+        if (n.contains("tech") || n.contains("phot")) return R.drawable.ic_category_tech;
         if (n.contains("fashion") || n.contains("cloth") || n.contains("tailor")) return R.drawable.ic_category_fashion;
         if (n.contains("home") || n.contains("food")) return R.drawable.ic_category_home;
         return R.drawable.ic_category_tech;

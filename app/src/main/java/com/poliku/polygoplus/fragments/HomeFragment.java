@@ -443,7 +443,7 @@ public class HomeFragment extends Fragment {
             PolyGoApi.Category c = items.get(position);
             holder.name.setText(c.name);
             ImageView icon = holder.itemView.findViewById(R.id.ivCategoryIcon);
-            icon.setImageResource(resolveCategoryIcon(c.icon_res));
+            icon.setImageResource(resolveCategoryIcon(c.icon_res, c.name));
             icon.setImageTintList(ColorStateList.valueOf(requireContext().getColor(UiUtils.categoryColor(c.name))));
             icon.setBackgroundTintList(ColorStateList.valueOf(requireContext().getColor(UiUtils.categoryTint(c.name))));
             holder.itemView.setOnClickListener(v -> {
@@ -470,10 +470,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private int resolveCategoryIcon(String iconRes) {
-        if (iconRes == null || iconRes.isEmpty()) return R.drawable.ic_category_tech;
-        int id = getResources().getIdentifier(iconRes, "drawable", requireContext().getPackageName());
-        return id != 0 ? id : R.drawable.ic_category_tech;
+    private int resolveCategoryIcon(String iconRes, String name) {
+        if (iconRes != null && !iconRes.isEmpty()) {
+            int id = getResources().getIdentifier(iconRes, "drawable", requireContext().getPackageName());
+            if (id != 0) return id;
+        }
+        return UiUtils.categoryIcon(name);
     }
 
     private void openProduct(String listingId) {
