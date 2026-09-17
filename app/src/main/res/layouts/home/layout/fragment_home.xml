@@ -78,7 +78,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:layout_marginTop="18dp"
                 android:contentInsetStart="0dp"
                 android:contentInsetEnd="0dp"
                 app:contentInsetEnd="0dp"
@@ -88,6 +87,7 @@
                 app:layout_collapseMode="pin">
 
                 <LinearLayout
+                    android:id="@+id/llSearchContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
@@ -204,7 +204,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="200dp"
                         android:clipToPadding="false"
-                        android:paddingHorizontal="16dp" />
+                        android:paddingHorizontal="48dp" />
 
                     <com.google.android.material.tabs.TabLayout
                         android:id="@+id/carouselIndicator"
@@ -216,7 +216,7 @@
                         app:tabBackground="@drawable/selector_carousel_dot"
                         app:tabGravity="center"
                         app:tabIndicatorHeight="0dp"
-                        app:tabMaxWidth="12dp"
+                        app:tabMaxWidth="24dp"
                         app:tabMinWidth="0dp"
                         app:tabPaddingEnd="4dp"
                         app:tabPaddingStart="4dp"

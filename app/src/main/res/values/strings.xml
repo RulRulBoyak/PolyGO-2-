@@ -709,4 +709,9 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="notif_allow">Allow</string>
     <string name="notif_not_now">Not now</string>
     <string name="notif_open_settings">Open Settings</string>
+
+    <!-- Home event carousel -->
+    <string name="event_trending">Trending</string>
+    <string name="event_going_format">%1$s going</string>
+    <string name="event_see_details">See details</string>
 </resources>

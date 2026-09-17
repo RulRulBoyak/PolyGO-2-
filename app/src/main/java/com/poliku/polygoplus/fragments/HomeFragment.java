@@ -3,8 +3,14 @@ package com.poliku.polygoplus.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -23,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.AiDiscoveryActivity;
@@ -63,6 +70,29 @@ public class HomeFragment extends Fragment {
     private ActivityResultLauncher<Intent> detailLauncher;
     @Nullable private View lastProductSharedElement;
 
+    private static final long AUTO_ROTATE_MS = 4000L;
+    private final Handler autoRotateHandler = new Handler(Looper.getMainLooper());
+    private final Runnable autoRotateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            ViewPager2 pager = binding == null ? null : binding.eventCarousel;
+            if (pager != null && pager.getAdapter() != null && pager.getAdapter().getItemCount() > 1) {
+                int next = (pager.getCurrentItem() + 1) % pager.getAdapter().getItemCount();
+                pager.setCurrentItem(next, true);
+            }
+            startAutoRotate();
+        }
+    };
+
+    private void startAutoRotate() {
+        autoRotateHandler.removeCallbacks(autoRotateRunnable);
+        autoRotateHandler.postDelayed(autoRotateRunnable, AUTO_ROTATE_MS);
+    }
+
+    private void stopAutoRotate() {
+        autoRotateHandler.removeCallbacks(autoRotateRunnable);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -95,6 +125,7 @@ public class HomeFragment extends Fragment {
         setupCategoryRow();
         setupPicksRail();
         setupSearchActions();
+        setupScrollListener();
         
         observeViewModel();
         
@@ -117,6 +148,13 @@ public class HomeFragment extends Fragment {
         if (viewModel != null) {
             viewModel.loadProducts();
         }
+        startAutoRotate();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopAutoRotate();
     }
 
     private void observeViewModel() {
@@ -231,15 +269,31 @@ public class HomeFragment extends Fragment {
 
     private void setupEventCarousel() {
         List<Event> events = new ArrayList<>();
-        events.add(new Event("Digital Career Fair 2026", "Join the biggest tech event on campus", R.drawable.bg_home_header, "Career"));
-        events.add(new Event("Campus Night Market", "Support student entrepreneurs this Friday", R.drawable.bg_home_header, "Food"));
-        events.add(new Event("Book Exchange Program", "Swap your old textbooks for new ones", R.drawable.bg_home_header, "Education"));
+        events.add(new Event("Digital Career Fair 2026", "Career", "Fri 4 PM", "Main Hall", 124, true,
+                R.drawable.ic_category_tech, "#0D47A1", "#1E88E5"));
+        events.add(new Event("Campus Night Market", "Food", "Fri 7 PM", "Food Court", 89, false,
+                R.drawable.ic_category_food, "#E65100", "#FB8C00"));
+        events.add(new Event("Book Exchange Program", "Education", "Mon 10 AM", "Library", 42, false,
+                R.drawable.ic_category_books, "#4A148C", "#7C4DFF"));
 
         EventAdapter adapter = new EventAdapter(events);
         binding.eventCarousel.setAdapter(adapter);
-        
-        new TabLayoutMediator(binding.carouselIndicator, binding.eventCarousel, (tab, position) -> {}).attach();
-        
+
+        binding.eventCarousel.setPageTransformer(new ScalePageTransformer());
+
+        binding.eventCarousel.setOnTouchListener((v, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                stopAutoRotate();
+            } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                startAutoRotate();
+            }
+            return false;
+        });
+
+        new TabLayoutMediator(binding.carouselIndicator, binding.eventCarousel, (tab, position) -> {
+        }).attach();
+
         binding.eventCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -247,6 +301,8 @@ public class HomeFragment extends Fragment {
                 HapticManager.lightTap(binding.eventCarousel);
             }
         });
+
+        startAutoRotate();
     }
 
     private void setupPicksRail() {
@@ -319,21 +375,87 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    private void setupScrollListener() {
+        binding.appBar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            if (binding == null) return;
+            
+            float scrollRange = appBarLayout.getTotalScrollRange();
+            if (scrollRange == 0) return;
+            
+            float fraction = Math.abs((float) verticalOffset) / scrollRange;
+            
+            // 1. Smooth Scroll-Synced Fade for Header Text
+            float alpha = 1.0f - (fraction * 1.5f);
+            binding.tvGreeting.setAlpha(Math.max(0, alpha));
+            binding.tvGreetingSub.setAlpha(Math.max(0, alpha - 0.2f));
+
+            // 2. "Clear" Sticky State: Animate search bar container margins/padding
+            // Expanded: 20dp padding, Collapsed: 8dp
+            int expandedPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics());
+            int collapsedPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+            int currentPadding = (int) (expandedPx - (expandedPx - collapsedPx) * fraction);
+            binding.llSearchContainer.setPadding(currentPadding, 0, currentPadding, 0);
+
+            // 3. UI Cleanup: Adjust Search Card corner radius and elevation dynamically
+            float expandedRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 28, getResources().getDisplayMetrics());
+            float collapsedRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
+            binding.searchBarCard.setRadius(expandedRadius - (expandedRadius - collapsedRadius) * fraction);
+            
+            float expandedElev = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+            binding.searchBarCard.setCardElevation(expandedElev * (1 - fraction));
+            
+            // 4. Stable Transitions: Ensure profile pic scales down slightly without jumping
+            float scale = 1.0f - (fraction * 0.12f);
+            binding.ivProfilePic.setScaleX(scale);
+            binding.ivProfilePic.setScaleY(scale);
+        });
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        stopAutoRotate();
         binding = null;
     }
 
     public static class Event {
-        String title, subtitle, tag;
-        int imageRes;
+        String title, tag, time, location;
+        int attendeesCount;
+        boolean trending;
+        int iconRes;
+        String gradientStart, gradientEnd;
 
-        Event(String title, String subtitle, int imageRes, String tag) {
+        Event(String title, String tag, String time, String location, int attendeesCount,
+              boolean trending, int iconRes, String gradientStart, String gradientEnd) {
             this.title = title;
-            this.subtitle = subtitle;
-            this.imageRes = imageRes;
             this.tag = tag;
+            this.time = time;
+            this.location = location;
+            this.attendeesCount = attendeesCount;
+            this.trending = trending;
+            this.iconRes = iconRes;
+            this.gradientStart = gradientStart;
+            this.gradientEnd = gradientEnd;
+        }
+    }
+
+    private static class ScalePageTransformer implements ViewPager2.PageTransformer {
+        private static final float MIN_SCALE = 0.92f;
+        private static final float MIN_ALPHA = 0.65f;
+
+        @Override
+        public void transformPage(@NonNull View page, float position) {
+            if (position < -1f || position > 1f) {
+                page.setScaleX(MIN_SCALE);
+                page.setScaleY(MIN_SCALE);
+                page.setAlpha(MIN_ALPHA);
+                return;
+            }
+            float abs = Math.abs(position);
+            float scale = Math.max(MIN_SCALE, 1f - abs * 0.08f);
+            page.setScaleX(scale);
+            page.setScaleY(scale);
+            page.setAlpha(MIN_ALPHA + ((scale - MIN_SCALE) / (1f - MIN_SCALE)) * (1f - MIN_ALPHA));
         }
     }
 
@@ -353,9 +475,23 @@ public class HomeFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Event event = events.get(position);
-            ((TextView) holder.itemView.findViewById(R.id.tvEventTitle)).setText(event.title);
-            ((TextView) holder.itemView.findViewById(R.id.tvEventSubtitle)).setText(event.subtitle);
-            ((TextView) holder.itemView.findViewById(R.id.tvEventTag)).setText(event.tag);
+
+            holder.tvTitle.setText(event.title);
+            holder.tvTag.setText(event.tag);
+            holder.tvTime.setText(event.time);
+            holder.tvLocation.setText(event.location);
+            holder.tvAttendees.setText(holder.itemView.getContext()
+                    .getString(R.string.event_going_format, event.attendeesCount));
+            holder.tvTrending.setVisibility(event.trending ? View.VISIBLE : View.GONE);
+            holder.ivIcon.setImageResource(event.iconRes);
+
+            float radius = holder.bg.getContext().getResources().getDisplayMetrics().density * 24f;
+            GradientDrawable gradient = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    new int[]{Color.parseColor(event.gradientStart), Color.parseColor(event.gradientEnd)});
+            gradient.setCornerRadius(radius);
+            holder.bg.setBackground(gradient);
+
             holder.itemView.setOnClickListener(v -> {
                 HapticManager.swell(v.getContext());
                 v.getContext().startActivity(new Intent(v.getContext(), CampusPulseActivity.class));
@@ -368,8 +504,25 @@ public class HomeFragment extends Fragment {
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
+            final View bg;
+            final ImageView ivIcon;
+            final TextView tvTag;
+            final TextView tvTrending;
+            final TextView tvTitle;
+            final TextView tvTime;
+            final TextView tvLocation;
+            final TextView tvAttendees;
+
             ViewHolder(View itemView) {
                 super(itemView);
+                bg = itemView.findViewById(R.id.layoutEventBg);
+                ivIcon = itemView.findViewById(R.id.ivEventIcon);
+                tvTag = itemView.findViewById(R.id.tvEventTag);
+                tvTrending = itemView.findViewById(R.id.tvTrending);
+                tvTitle = itemView.findViewById(R.id.tvEventTitle);
+                tvTime = itemView.findViewById(R.id.tvEventTime);
+                tvLocation = itemView.findViewById(R.id.tvEventLocation);
+                tvAttendees = itemView.findViewById(R.id.tvEventAttendees);
             }
         }
     }
