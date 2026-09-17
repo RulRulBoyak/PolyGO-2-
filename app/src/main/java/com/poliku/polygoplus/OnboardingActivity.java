@@ -8,7 +8,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
@@ -16,7 +17,8 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.HapticManager;
 
-public class OnboardingActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class OnboardingActivity extends BaseActivity {
     private static final String[] TITLES = {
         "Exclusive to PKS",
         "Buy and sell on campus",

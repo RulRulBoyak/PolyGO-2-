@@ -4,11 +4,13 @@ import android.os.Bundle;
 import android.text.Html;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 
 import java.util.Locale;
 
-public class LegalActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class LegalActivity extends BaseActivity {
     public static final String EXTRA_PAGE = "page";
 
     private String page;

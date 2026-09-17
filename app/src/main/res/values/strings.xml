@@ -14,6 +14,8 @@
     <string name="onboarding_body_3">Message sellers instantly, agree a price, and keep the conversation in one place.</string>
     <string name="onboarding_title_4">Meet safely</string>
     <string name="onboarding_body_4">Meet at PKS landmarks like Block A or the cafeteria. Mark the deal complete and leave a review.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_skip">Skip</string>
 
     <!-- Home & Navigation -->
     <string name="greeting_morning">Good morning</string>
@@ -378,6 +380,7 @@
     <string name="similar_title">Similar listings</string>
     <string name="share_listing_label">Share</string>
     <string name="textbook_looking_up">Looking up ISBN: %1$s</string>
+    <string name="isbn_guide">Align ISBN Barcode inside the box</string>
     <string name="textbook_details_found">Book details found - review before publishing</string>
     <string name="textbook_not_found_title">No book details found</string>
     <string name="textbook_not_found">No book details found for ISBN %1$s. Search campus listings instead?</string>
@@ -533,6 +536,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="chat_error_write_message">Write a message</string>
     <string name="toast_chat_network_error">Network error: %1$s</string>
     <string name="chat_message_hint">Message...</string>
+    <string name="chat_no_messages">No messages yet</string>
 
     <!-- Deal Tracker -->
     <string name="deal_step_offer_sent">Offer Sent</string>

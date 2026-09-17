@@ -14,4 +14,45 @@
     <color name="surface_tint_success">#1E3A2E</color>
     <color name="semantic_error">#EF5350</color>
     <color name="semantic_success">#66BB6A</color>
+
+    <!-- Core text/border neutrals (light values live in values/colors.xml) -->
+    <color name="airbnb_ink">#E8E8E8</color>
+    <color name="airbnb_muted">#9A9A9A</color>
+    <color name="airbnb_border">#3A3A3A</color>
+    <color name="grey_200">#2E2E2E</color>
+    <color name="grey_700">#BDBDBD</color>
+
+    <!-- Root/section surface used by home, explore, edit & chat screens -->
+    <color name="surface_variant_light">#0F0F0F</color>
+
+    <!-- Tonal tint containers (icon chips, hero circles) -->
+    <color name="soft_blue">#1E2A3B</color>
+    <color name="soft_green">#1E3A2E</color>
+    <color name="soft_food">#3B2E14</color>
+    <color name="soft_drink">#1E2A3B</color>
+    <color name="soft_tech">#2A2438</color>
+    <color name="soft_books">#2C2A28</color>
+    <color name="soft_repair">#1E3A2E</color>
+    <color name="soft_fashion">#3A2230</color>
+    <color name="soft_home">#1E2E2C</color>
+    <color name="soft_service">#3A2A24</color>
+
+    <!-- Category accents (200-tone for contrast on dark tonal containers) -->
+    <color name="cat_food">#FFB74D</color>
+    <color name="cat_drink">#4FC3F7</color>
+    <color name="cat_tech">#B39DDB</color>
+    <color name="cat_books">#BCAAA4</color>
+    <color name="cat_repair">#81C784</color>
+    <color name="cat_fashion">#F06292</color>
+    <color name="cat_home">#4DB6AC</color>
+    <color name="cat_service">#FFA726</color>
+
+    <!-- Surface tokens for dark mode (light values live in values/colors.xml) -->
+    <color name="surface_card">#1E1E1E</color>
+    <color name="surface_sheet">#1E1E1E</color>
+    <color name="surface_tint_soft">#23252A</color>
+    <color name="surface_stroke">#2E2E2E</color>
+    <color name="surface_stroke_strong">#3A3A3A</color>
+    <color name="surface_skeleton">#222222</color>
+    <color name="text_secondary">#B0B0B0</color>
 </resources>

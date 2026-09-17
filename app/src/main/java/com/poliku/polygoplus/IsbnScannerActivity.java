@@ -9,7 +9,8 @@ import android.util.Size;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -30,7 +31,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class IsbnScannerActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class IsbnScannerActivity extends BaseActivity {
 
     private PreviewView previewView;
     private ExecutorService cameraExecutor;

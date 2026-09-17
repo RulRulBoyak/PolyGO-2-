@@ -7,13 +7,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 
 import com.poliku.polygoplus.ui.HapticManager;
 
 import java.util.Locale;
 
-public class DealTrackerActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class DealTrackerActivity extends BaseActivity {
 
     private TextView tvTimerClock;
     private CountDownTimer timer;

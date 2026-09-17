@@ -1,6 +1,5 @@
 package com.poliku.polygoplus.data;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +46,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         h.body.setText(n.body);
         h.time.setText(formatTime(n.time));
         h.dot.setVisibility(n.read ? View.INVISIBLE : View.VISIBLE);
-        h.title.setTextColor(Color.parseColor(n.read ? "#717171" : "#222222"));
+        h.title.setTextColor(h.title.getContext().getColor(n.read ? R.color.airbnb_muted : R.color.airbnb_ink));
         h.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onRead(n);

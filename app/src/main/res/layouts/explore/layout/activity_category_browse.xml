@@ -11,7 +11,7 @@
         android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/screen_background"
         app:elevation="0dp">
 
         <!-- Clean Top Navigation Bar -->
@@ -26,7 +26,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="@color/white"
+                android:background="@color/screen_background"
                 android:clickable="true"
                 android:contentDescription="@string/back"
                 android:focusable="true"

@@ -11,18 +11,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.ui.UiUtils;
 
-public class CategoryBrowseActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class CategoryBrowseActivity extends BaseActivity {
     private static final String[] NAMES = {"Food", "Drink", "Tech", "Books", "Repair", "Fashion", "Home", "Services"};
     private static final int[] ICONS = {
         R.drawable.ic_category_food, R.drawable.ic_category_drink, R.drawable.ic_category_tech,
         R.drawable.ic_category_books, R.drawable.ic_category_repair, R.drawable.ic_category_fashion,
-        R.drawable.ic_category_home, R.drawable.ic_category_tech
+        R.drawable.ic_category_home, R.drawable.ic_category_service
     };
 
     @Override

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/screen_background"
     android:fitsSystemWindows="true">
 
     <!-- Immersive Collapsing Toolbar App Bar -->
@@ -12,7 +12,7 @@
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/screen_background"
         android:fitsSystemWindows="true"
         app:elevation="0dp"
         app:liftOnScroll="true">
@@ -21,7 +21,7 @@
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:contentScrim="@color/white"
+            app:contentScrim="@color/surface_card"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:statusBarScrim="@android:color/transparent">
 
@@ -277,7 +277,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/white"
+                    app:cardBackgroundColor="@color/surface_card"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/grey_200"
@@ -399,7 +399,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/white"
+                    app:cardBackgroundColor="@color/surface_card"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/grey_200"
@@ -668,7 +668,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        app:cardBackgroundColor="@color/white"
+        app:cardBackgroundColor="@color/surface_card"
         app:cardCornerRadius="0dp"
         app:cardElevation="12dp"
         app:strokeColor="@color/grey_200"

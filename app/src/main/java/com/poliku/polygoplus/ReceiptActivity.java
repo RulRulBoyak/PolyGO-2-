@@ -4,14 +4,16 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 
 import com.poliku.polygoplus.data.AppDataStore;
 
 import java.text.DateFormat;
 import java.util.Date;
 
-public class ReceiptActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class ReceiptActivity extends BaseActivity {
     public static final String EXTRA_TRANSACTION_ID = "transaction_id";
 
     @Override

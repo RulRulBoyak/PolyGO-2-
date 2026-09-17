@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/screen_background"
     android:fitsSystemWindows="true">
 
     <!-- Edge-to-edge Swipeable Pager Area -->
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:letterSpacing="0.01"
-            android:text="Next"
+            android:text="@string/onboarding_next"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="15sp"
@@ -66,7 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="6dp"
-            android:text="Skip"
+            android:text="@string/onboarding_skip"
             android:textAllCaps="false"
             android:textColor="@color/airbnb_muted"
             android:textSize="14sp"

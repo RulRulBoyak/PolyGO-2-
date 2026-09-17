@@ -3,9 +3,11 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 
-public class HelpActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class HelpActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);

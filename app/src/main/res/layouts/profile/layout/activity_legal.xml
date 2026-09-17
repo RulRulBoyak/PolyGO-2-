@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/screen_background"
     android:fitsSystemWindows="true">
 
     <!-- Fixed Sticky Header for Navigation & Title -->
@@ -12,7 +12,7 @@
         android:id="@+id/legalAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/screen_background"
         app:elevation="0dp">
 
         <LinearLayout
@@ -26,7 +26,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="@color/white"
+                android:background="@color/screen_background"
                 android:clickable="true"
                 android:contentDescription="@string/back"
                 android:focusable="true"
@@ -104,7 +104,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="6dp"
-                android:textColor="#484848"
+                android:textColor="@color/text_secondary"
                 android:textSize="15.5sp"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n\nPhasellus imperdiet, nulla et dictum interdum, nisi lorem egestas vitae scel erisque enim ligula venenatis dolor. Maecenas nisl est, ultrices nec congue eget, auctor vitae massa." />
 

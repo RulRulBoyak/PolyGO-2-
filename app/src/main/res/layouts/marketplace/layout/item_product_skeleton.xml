@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
     app:strokeColor="#EAECEF"
@@ -21,7 +21,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="160dp"
-            android:background="#F2F4F7" />
+            android:background="@color/surface_skeleton" />
 
         <!-- Ghost Text Content Area -->
         <LinearLayout
@@ -36,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="16dp"
                 android:layout_marginEnd="24dp"
-                app:cardBackgroundColor="#F2F4F7"
+                app:cardBackgroundColor="@color/surface_skeleton"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp" />
@@ -47,7 +47,7 @@
                 android:layout_height="16dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginEnd="64dp"
-                app:cardBackgroundColor="#F2F4F7"
+                app:cardBackgroundColor="@color/surface_skeleton"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp" />
@@ -57,7 +57,7 @@
                 android:layout_width="80dp"
                 android:layout_height="12dp"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="#F2F4F7"
+                app:cardBackgroundColor="@color/surface_skeleton"
                 app:cardCornerRadius="6dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp" />
@@ -67,7 +67,7 @@
                 android:layout_width="90dp"
                 android:layout_height="22dp"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="#F2F4F7"
+                app:cardBackgroundColor="@color/surface_skeleton"
                 app:cardCornerRadius="11dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp" />

@@ -74,10 +74,10 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
         ThreadEntity thread = visible.get(position);
         holder.avatar.setText(initials(thread.name));
         holder.sender.setText(thread.name);
-        holder.preview.setText(thread.lastMessage == null || thread.lastMessage.isEmpty() ? "No messages yet" : thread.lastMessage);
+        holder.preview.setText(thread.lastMessage == null || thread.lastMessage.isEmpty() ? holder.preview.getContext().getString(R.string.chat_no_messages) : thread.lastMessage);
         holder.time.setText(formatTime(thread.lastMessageTime));
-        holder.sender.setTextColor(thread.unread ? 0xFF222222 : 0xFF717171);
-        holder.preview.setTextColor(thread.unread ? 0xFF222222 : 0xFF717171);
+        holder.sender.setTextColor(holder.sender.getContext().getColor(thread.unread ? R.color.airbnb_ink : R.color.airbnb_muted));
+        holder.preview.setTextColor(holder.preview.getContext().getColor(thread.unread ? R.color.airbnb_ink : R.color.airbnb_muted));
         holder.unread.setVisibility(thread.unread ? View.VISIBLE : View.GONE);
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {

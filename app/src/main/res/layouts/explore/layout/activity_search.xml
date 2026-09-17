@@ -5,7 +5,7 @@
     android:id="@+id/search_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/screen_background"
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
@@ -30,7 +30,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:background="@color/white"
+                android:background="@color/screen_background"
                 android:clickable="true"
                 android:contentDescription="@string/back"
                 android:focusable="true"
@@ -88,7 +88,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="10dp"
-                android:background="@color/white"
+                android:background="@color/screen_background"
                 android:clickable="true"
                 android:contentDescription="@string/content_description_sort"
                 android:focusable="true"

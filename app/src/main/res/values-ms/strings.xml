@@ -14,6 +14,8 @@
     <string name="onboarding_body_3">Berhubung dengan penjual terus, bincang harga, dan selesaikan urusan dalam satu tempat.</string>
     <string name="onboarding_title_4">Jumpa dengan Selamat</string>
     <string name="onboarding_body_4">Berjumpa di lokasi ikonik PKS seperti Blok A atau Kafeteria. Pastikan urusan selesai sebelum bayar.</string>
+    <string name="onboarding_next">Seterusnya</string>
+    <string name="onboarding_skip">Langkau</string>
 
     <!-- Home & Navigation -->
     <string name="greeting_morning">Selamat pagi</string>
@@ -252,6 +254,7 @@
     <string name="similar_title">Item serupa</string>
     <string name="share_listing_label">Kongsi</string>
     <string name="textbook_looking_up">Mencari ISBN: %1$s</string>
+    <string name="isbn_guide">Jajarkan Kod Bar ISBN di dalam kotak</string>
     <string name="textbook_details_found">Maklumat buku dijumpai - semak sebelum terbit</string>
     <string name="textbook_not_found_title">Tiada maklumat buku dijumpai</string>
     <string name="textbook_not_found">Tiada maklumat buku untuk ISBN %1$s. Cari penyenaraian kampus sebaliknya?</string>
@@ -532,6 +535,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="chat_error_write_message">Tulis mesej</string>
     <string name="toast_chat_network_error">Ralat rangkaian: %1$s</string>
     <string name="chat_message_hint">Mesej...</string>
+    <string name="chat_no_messages">Tiada mesej lagi</string>
 
     <!-- Deal Tracker -->
     <string name="deal_step_offer_sent">Tawaran Dihantar</string>

@@ -11,10 +11,10 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     android:stateListAnimator="@animator/press_scale"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="@color/surface_card"
     app:cardCornerRadius="20dp"
     app:cardElevation="4dp"
-    app:strokeColor="#F2F3F7"
+    app:strokeColor="@color/surface_stroke"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout

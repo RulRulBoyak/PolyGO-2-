@@ -15,7 +15,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,7 +27,8 @@ import com.poliku.polygoplus.ui.HapticManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextbookHubActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class TextbookHubActivity extends BaseActivity {
 
     private ActivityResultLauncher<Intent> scanLauncher;
 

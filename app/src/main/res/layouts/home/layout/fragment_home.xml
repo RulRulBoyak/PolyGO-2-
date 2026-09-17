@@ -104,7 +104,7 @@
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
                         android:transitionName="search_bar_hero"
-                        app:cardBackgroundColor="@color/white"
+                        app:cardBackgroundColor="@color/surface_card"
                         app:cardCornerRadius="28dp"
                         app:cardElevation="8dp"
                         app:strokeWidth="0dp">
@@ -356,7 +356,7 @@
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
                         android:stateListAnimator="@animator/press_scale"
-                        app:cardBackgroundColor="@color/white"
+                        app:cardBackgroundColor="@color/surface_card"
                         app:cardCornerRadius="20dp"
                         app:cardElevation="3dp"
                         app:strokeColor="@color/grey_200"

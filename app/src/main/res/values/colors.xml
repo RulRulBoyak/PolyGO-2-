@@ -75,6 +75,15 @@
     <color name="semantic_error">#D32F2F</color>
     <color name="semantic_success">#2E7D32</color>
 
+    <!-- Surface tokens (dark-aware; light values match current layout HEX) -->
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_sheet">#FFFFFF</color>
+    <color name="surface_tint_soft">#F5F6F8</color>
+    <color name="surface_stroke">#F2F3F7</color>
+    <color name="surface_stroke_strong">#D0D8E0</color>
+    <color name="surface_skeleton">#F2F4F7</color>
+    <color name="text_secondary">#484848</color>
+
     <!-- Transparent helpers -->
     <color name="glass_white">#99FFFFFF</color>
     <color name="glass_border">#33FFFFFF</color>

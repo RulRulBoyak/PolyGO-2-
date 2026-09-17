@@ -7,7 +7,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import com.poliku.polygoplus.ui.BaseActivity;
+import dagger.hilt.android.AndroidEntryPoint;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -16,7 +17,8 @@ import com.poliku.polygoplus.ui.HapticManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServicePortfolioActivity extends AppCompatActivity {
+@AndroidEntryPoint
+public class ServicePortfolioActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
