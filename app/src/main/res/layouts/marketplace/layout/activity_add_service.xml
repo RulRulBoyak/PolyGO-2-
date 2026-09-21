@@ -29,6 +29,37 @@
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium"
             app:titleTextColor="@color/white" />
 
+        <!-- Pinned AI Suggest (stays at top regardless of scroll) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/grey_200"
+            app:strokeWidth="1dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAiSuggest"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="#E8EAF6"
+                android:text="✨ AI: Suggest Service Details"
+                android:textAllCaps="false"
+                android:textColor="@color/pks_blue"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_trending_up"
+                app:iconPadding="10dp"
+                app:iconSize="20dp"
+                app:iconTint="@color/pks_blue" />
+        </com.google.android.material.card.MaterialCardView>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Main Scrollable Form Content -->
@@ -153,25 +184,6 @@
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- AI SUGGEST BUTTON -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAiSuggest"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginBottom="4dp"
-                android:backgroundTint="#E8EAF6"
-                android:text="✨ AI: Suggest Service Details"
-                android:textAllCaps="false"
-                android:textColor="@color/pks_blue"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="16dp"
-                app:icon="@drawable/ic_trending_up"
-                app:iconPadding="10dp"
-                app:iconSize="20dp"
-                app:iconTint="@color/pks_blue" />
 
             <!-- ================= SECTION 2: GENERAL INFORMATION ================= -->
             <com.google.android.material.card.MaterialCardView

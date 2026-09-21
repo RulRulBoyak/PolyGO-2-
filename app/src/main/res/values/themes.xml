@@ -14,6 +14,8 @@
         <item name="android:windowBackground">@color/white</item>
         <item name="android:textColorPrimary">@color/airbnb_ink</item>
         <item name="android:textColorSecondary">@color/airbnb_muted</item>
+        <item name="materialButtonStyle">@style/Widget.PolyGo.Button</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.PolyGo.MaterialAlertDialog</item>
     </style>
 
     <style name="Theme.PolyGo" parent="Base.Theme.PolyGo">
@@ -51,18 +53,52 @@
         <item name="android:insetBottom">0dp</item>
         <item name="android:textColor">@color/white</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
-        <item name="android:stateListAnimator">@animator/squishy_button</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
     </style>
 
     <style name="Widget.PolyGo.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
         <item name="strokeColor">@color/airbnb_ink</item>
         <item name="android:textColor">@color/airbnb_ink</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
-        <item name="android:stateListAnimator">@animator/press_scale</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.PolyGo.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.PolyGo.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.PolyGo.Button.Destructive" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@color/semantic_error</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="ThemeOverlay.PolyGo.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.PolyGo.Dialog</item>
+        <item name="colorSurface">@color/surface_sheet</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.PolyGo.Button.Text</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.PolyGo.Button.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.PolyGo.Button.Text</item>
     </style>
 
     <style name="ShapeAppearance.PolyGo.Button" parent="ShapeAppearance.Material3.MediumComponent">
-        <item name="cornerSize">8dp</item>
+        <item name="cornerSize">14dp</item>
+    </style>
+
+    <style name="ShapeAppearance.PolyGo.Dialog" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
     </style>
 
     <style name="Widget.PolyGo.BentoCard" parent="Widget.Material3.CardView.Filled">
@@ -79,6 +115,8 @@
         <item name="itemIconSize">22dp</item>
         <item name="itemPaddingTop">16dp</item>
         <item name="itemPaddingBottom">12dp</item>
+        <!-- This Material version has no enabled flag; a transparent indicator
+             avoids the extra rectangular selected layer. -->
         <item name="itemActiveIndicatorStyle">@style/Widget.PolyGo.BottomNavigation.ActiveIndicator</item>
         <item name="itemRippleColor">@android:color/transparent</item>
         <item name="itemIconTint">@color/nav_item_color</item>
@@ -97,11 +135,8 @@
     </style>
 
     <style name="Widget.PolyGo.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/nav_active_indicator</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.NavActiveIndicator</item>
+        <item name="android:color">@android:color/transparent</item>
     </style>
-
-    <style name="ShapeAppearance.PolyGo.NavActiveIndicator" parent="ShapeAppearance.Material3.Corner.Full" />
 
     <style name="ShapeAppearance.PolyGo.CardImage" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>

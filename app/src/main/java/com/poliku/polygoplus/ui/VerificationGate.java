@@ -27,15 +27,14 @@ public final class VerificationGate {
 
     private static void showGate(Activity activity) {
         BottomSheetDialog dialog = new BottomSheetDialog(activity);
-        View sheet = activity.getLayoutInflater().inflate(R.layout.bottom_sheet_verification_gate, null);
-        dialog.setContentView(sheet);
+        dialog.setContentView(R.layout.bottom_sheet_verification_gate);
 
         boolean pending = "pending".equals(AppDataStore.verificationStatus(activity));
 
-        TextView title = sheet.findViewById(R.id.tvVerifyTitle);
-        TextView subtitle = sheet.findViewById(R.id.tvVerifySubtitle);
-        View benefits = sheet.findViewById(R.id.llVerifyBenefits);
-        MaterialButton btnVerify = sheet.findViewById(R.id.btnVerifyNow);
+        TextView title = dialog.findViewById(R.id.tvVerifyTitle);
+        TextView subtitle = dialog.findViewById(R.id.tvVerifySubtitle);
+        View benefits = dialog.findViewById(R.id.llVerifyBenefits);
+        MaterialButton btnVerify = dialog.findViewById(R.id.btnVerifyNow);
 
         title.setText(pending ? R.string.verify_gate_pending_title : R.string.verify_gate_title);
         subtitle.setText(pending ? R.string.verify_gate_pending_subtitle : R.string.verify_gate_subtitle);
@@ -47,10 +46,13 @@ public final class VerificationGate {
             dialog.dismiss();
             activity.startActivity(new Intent(activity, VerificationActivity.class));
         });
-        sheet.findViewById(R.id.btnVerifyLater).setOnClickListener(v -> dialog.dismiss());
+        dialog.findViewById(R.id.btnVerifyLater).setOnClickListener(v -> dialog.dismiss());
 
         dialog.setOnShowListener(d -> {
-            sheet.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.fade_in_up));
+            View sheet = dialog.findViewById(android.R.id.content);
+            if (sheet != null) {
+                sheet.startAnimation(AnimationUtils.loadAnimation(activity, R.anim.fade_in_up));
+            }
             HapticManager.swell(activity);
         });
         dialog.show();

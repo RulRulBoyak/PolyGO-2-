@@ -6,10 +6,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
@@ -41,8 +55,13 @@ public class CampusPulseActivity extends BaseActivity {
     @Inject PolyGoRepository polyGoRepository;
 
     private final List<PolyGoApi.PulseAlert> items = new ArrayList<>();
+    private final List<PolyGoApi.PulseAlert> announcements = new ArrayList<>();
     private PulseAdapter adapter;
+    private PulseAdapter announcementAdapter;
     private TextView tvPulseEmpty;
+    private ActivityResultLauncher<Intent> createPulseLauncher;
+    private FirebaseFirestore db;
+    private ListenerRegistration pulseListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,17 +73,32 @@ public class CampusPulseActivity extends BaseActivity {
 
         tvPulseEmpty = findViewById(R.id.tvPulseEmpty);
 
+        createPulseLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK) {
+                refreshPulse();
+            }
+        });
+
         RecyclerView rv = findViewById(R.id.rvPulse);
         rv.setLayoutManager(new LinearLayoutManager(this));
+        announcementAdapter = new PulseAdapter(announcements);
         adapter = new PulseAdapter(items);
-        rv.setAdapter(adapter);
+        rv.setAdapter(new ConcatAdapter(
+                new HeaderAdapter(R.string.pulse_official_announcements),
+                announcementAdapter,
+                new HeaderAdapter(R.string.pulse_student_threads), adapter));
 
         findViewById(R.id.btnPostRequest).setOnClickListener(v -> {
             HapticManager.swell(this);
-            showPostDialog();
+            Intent intent = new Intent(this, CreatePulseActivity.class);
+            createPulseLauncher.launch(intent);
+            overridePendingTransition(R.anim.slide_in_up, R.anim.fade_out);
         });
 
         refreshPulse();
+        
+        db = FirebaseFirestore.getInstance();
+        startRealTimeListener();
     }
 
     private void refreshPulse() {
@@ -75,8 +109,12 @@ public class CampusPulseActivity extends BaseActivity {
                 if (response.isSuccessful() && body != null && body.alerts != null) {
                     items.clear();
                     items.addAll(body.alerts);
+                    announcements.clear();
+                    if (body.announcements != null) announcements.addAll(body.announcements);
                     adapter.notifyDataSetChanged();
-                    tvPulseEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    announcementAdapter.notifyDataSetChanged();
+                    tvPulseEmpty.setVisibility(items.isEmpty() && announcements.isEmpty()
+                            ? View.VISIBLE : View.GONE);
                 } else {
                     UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_load_failed);
                 }
@@ -89,61 +127,57 @@ public class CampusPulseActivity extends BaseActivity {
         });
     }
 
-    private void showPostDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_pulse_post, null);
-        ChipGroup chipTag = dialogView.findViewById(R.id.chipPulseTag);
-        TextInputEditText etTitle = dialogView.findViewById(R.id.etPulseTitle);
-        TextInputEditText etBody = dialogView.findViewById(R.id.etPulseBody);
+    private void startRealTimeListener() {
+        pulseListener = db.collection("pulse")
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null || value == null) return;
 
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.pulse_post_dialog_title)
-                .setView(dialogView)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.pulse_post_send, (d, w) -> {
-                    int checkedId = chipTag.getCheckedChipId();
-                    if (checkedId == View.NO_ID) {
-                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_tag_required);
-                        return;
-                    }
-                    Chip tagChip = chipTag.findViewById(checkedId);
-                    String tag = tagChip == null ? "REQUEST" : tagChip.getText().toString();
-                    String title = etTitle.getText() == null ? "" : etTitle.getText().toString().trim();
-                    String body = etBody.getText() == null ? "" : etBody.getText().toString().trim();
+                    for (DocumentChange dc : value.getDocumentChanges()) {
+                        if (dc.getType() == DocumentChange.Type.ADDED) {
+                            PolyGoApi.PulseAlert alert = new PolyGoApi.PulseAlert();
+                            alert.id = dc.getDocument().getId();
+                            alert.title = dc.getDocument().getString("title");
+                            alert.body = dc.getDocument().getString("body");
+                            alert.tag = dc.getDocument().getString("tag");
+                            alert.userName = dc.getDocument().getString("user_name");
+                            Boolean global = dc.getDocument().getBoolean("is_global");
+                            alert.global = Boolean.TRUE.equals(global)
+                                    || "PolyGo+ Admin".equals(alert.userName);
+                            Long ts = dc.getDocument().getLong("created_at");
+                            alert.createdAt = ts != null ? ts : System.currentTimeMillis() / 1000;
 
-                    if (!AppDataStore.isLoggedIn(this)) {
-                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_login_required);
-                        return;
+                            if (alert.title == null) continue;
+
+                            // Duplicate check
+                            boolean exists = false;
+                            List<PolyGoApi.PulseAlert> destination = alert.global
+                                    ? announcements : items;
+                            for (PolyGoApi.PulseAlert item : destination) {
+                                if (alert.title.equals(item.title) && Math.abs(alert.createdAt - item.createdAt) < 5) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!exists) {
+                                destination.add(0, alert);
+                                if (alert.global) announcementAdapter.notifyItemInserted(0);
+                                else adapter.notifyItemInserted(0);
+                                tvPulseEmpty.setVisibility(View.GONE);
+                            }
+                        }
                     }
-                    if (title.isEmpty() || body.isEmpty()) {
-                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_validation);
-                        return;
-                    }
-                    postPulse(tag, title, body);
-                })
-                .show();
+                });
     }
 
-    private void postPulse(String tag, String title, String body) {
-        polyGoRepository.postPulse(tag, title, body, new Callback<BaseResponse>() {
-            @Override
-            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    HapticManager.success(CampusPulseActivity.this);
-                    UiUtils.snackbar(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_posted);
-                    refreshPulse();
-                } else if (response.code() == 401) {
-                    UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_login_required);
-                } else {
-                    UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_post_failed);
-                }
-            }
-
-            @Override
-            public void onFailure(Call<BaseResponse> call, Throwable t) {
-                UiUtils.snackbarError(CampusPulseActivity.this.findViewById(android.R.id.content), R.string.pulse_post_failed);
-            }
-        });
+    @Override
+    protected void onDestroy() {
+        if (pulseListener != null) pulseListener.remove();
+        super.onDestroy();
     }
+
+
 
     private class PulseAdapter extends RecyclerView.Adapter<PulseAdapter.Holder> {
         private final List<PolyGoApi.PulseAlert> items;
@@ -183,6 +217,40 @@ public class CampusPulseActivity extends BaseActivity {
                 title = v.findViewById(R.id.tvPulseTitle);
                 body = v.findViewById(R.id.tvPulseBody);
                 time = v.findViewById(R.id.tvPulseTime);
+            }
+        }
+    }
+
+    private final class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.Holder> {
+        private final int titleRes;
+
+        HeaderAdapter(int titleRes) {
+            this.titleRes = titleRes;
+        }
+
+        @NonNull
+        @Override
+        public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new Holder(LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_pulse_section_header, parent, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull Holder holder, int position) {
+            holder.title.setText(titleRes);
+        }
+
+        @Override
+        public int getItemCount() {
+            return 1;
+        }
+
+        final class Holder extends RecyclerView.ViewHolder {
+            final TextView title;
+
+            Holder(View itemView) {
+                super(itemView);
+                title = itemView.findViewById(R.id.tvPulseSectionTitle);
             }
         }
     }

@@ -101,9 +101,6 @@ public class RegisterActivity extends BaseActivity {
                         intent.putExtra(OtpActivity.EXTRA_NAME, name);
                         intent.putExtra(OtpActivity.EXTRA_STUDENT_ID, studentId);
                         intent.putExtra(OtpActivity.EXTRA_PASSWORD, password);
-                        if (BuildConfig.DEBUG) {
-                            intent.putExtra(OtpActivity.EXTRA_DEV_OTP, response.body().otp);
-                        }
                         intent.putExtra(OtpActivity.EXTRA_CONSENT_AGREED, cbTerms.isChecked());
                         startActivity(intent);
                     } else {

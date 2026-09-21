@@ -47,18 +47,32 @@ public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageAdapter.
         messages.clear();
         if (source != null) {
             for (PolyGoApi.Message m : source) {
-                try {
-                    JSONObject o = new JSONObject();
-                    o.put("sender", m.sender);
-                    o.put("text", m.text);
-                    o.put("time", m.time);
-                    o.put("mine", m.mine);
-                    messages.add(o);
-                } catch (Exception ignored) {
-                }
+                addMessageInternal(m, false);
             }
         }
         notifyDataSetChanged();
+    }
+
+    public void addMessage(PolyGoApi.Message m) {
+        addMessageInternal(m, true);
+    }
+
+    private void addMessageInternal(PolyGoApi.Message m, boolean notify) {
+        if (m == null) return;
+        try {
+            JSONObject o = new JSONObject();
+            o.put("sender", m.sender);
+            o.put("text", m.text);
+            o.put("time", m.time);
+            o.put("mine", m.mine);
+            messages.add(o);
+            if (notify) notifyItemInserted(messages.size() - 1);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public List<JSONObject> getMessages() {
+        return messages;
     }
 
     @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

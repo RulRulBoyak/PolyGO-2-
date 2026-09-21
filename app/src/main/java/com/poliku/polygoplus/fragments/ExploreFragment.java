@@ -1,6 +1,7 @@
 package com.poliku.polygoplus.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -31,6 +32,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.databinding.FragmentExploreBinding;
 import com.poliku.polygoplus.util.Resource;
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.ExploreViewModel;
@@ -49,6 +51,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -60,17 +63,19 @@ public class ExploreFragment extends Fragment {
     private ExploreViewModel viewModel;
     private ActivityResultLauncher<Intent> detailLauncher;
     @Nullable private View lastProductSharedElement;
+    private FragmentExploreBinding binding;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_explore, container, false);
-        AppDataStore.initialize(requireContext());
+        binding = FragmentExploreBinding.inflate(inflater, container, false);
+        Context context = getContext();
+        if (context != null) {
+            AppDataStore.initialize(context);
+        }
         viewModel = new ViewModelProvider(this).get(ExploreViewModel.class);
-        RecyclerView list = view.findViewById(R.id.rvExplore);
-        TabLayout tabs = view.findViewById(R.id.exploreTabs);
 
-        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.explore_main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.exploreMain, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -83,43 +88,52 @@ public class ExploreFragment extends Fragment {
             }
         });
 
-        list.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+        if (getContext() != null) {
+            binding.rvExplore.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        }
         adapter = new ProductCardAdapter(new ArrayList<>(), (a, product, sharedView) -> {
             if (lastProductSharedElement != null) ViewCompat.setTransitionName(lastProductSharedElement, null);
             ViewCompat.setTransitionName(sharedView, "product_image_hero");
             lastProductSharedElement = sharedView;
 
-            Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
+            Context ctx = getContext();
+            if (ctx == null) return;
+            Intent intent = new Intent(ctx, ProductDetailActivity.class);
             intent.putExtra(ProductDetailActivity.EXTRA_LISTING_ID, product.id);
 
-            // Rule 3.1: Visual Clarity (Shared Element Transition)
+            if (getActivity() == null) return;
             ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    requireActivity(), sharedView, "product_image_hero"
+                    getActivity(), sharedView, "product_image_hero"
             );
             detailLauncher.launch(intent, options);
         });
-        list.setAdapter(adapter);
-        empty = view.findViewById(R.id.emptyExplore);
-        EmptyStates.bind(empty, R.drawable.ic_search, "Nothing to explore yet",
-                "Listings from PKS students will show up here.", "Browse categories",
-                v -> startActivity(new Intent(requireContext(), CategoryBrowseActivity.class)));
+        binding.rvExplore.setAdapter(adapter);
+        empty = binding.emptyExplore;
+        if (getContext() != null) {
+            EmptyStates.bind(empty, R.drawable.ic_search, "Nothing to explore yet",
+                    "Listings from PKS students will show up here.", "Browse categories",
+                    v -> {
+                        Context ctx = getContext();
+                        if (ctx != null) startActivity(new Intent(ctx, CategoryBrowseActivity.class));
+                    });
+        }
         
-        observeViewModel(view);
+        observeViewModel();
 
-        SwipeRefreshLayout swipeRefresh = view.findViewById(R.id.swipeRefreshExplore);
-        swipeRefresh.setColorSchemeResources(R.color.pks_blue, R.color.polygo_purple, R.color.polygo_teal, R.color.polygo_orange);
-        swipeRefresh.setOnRefreshListener(() -> {
-            HapticManager.mediumTap(swipeRefresh);
+        binding.swipeRefreshExplore.setColorSchemeResources(R.color.pks_blue, R.color.polygo_purple, R.color.polygo_teal, R.color.polygo_orange);
+        binding.swipeRefreshExplore.setOnRefreshListener(() -> {
+            HapticManager.mediumTap(binding.swipeRefreshExplore);
             viewModel.loadListings();
         });
 
-        view.findViewById(R.id.exploreAppBar).setOnClickListener(v -> {
-            // Secret entry to Student Creator Hub by tapping the app bar title area
-            HapticManager.swell(requireContext());
-            startActivity(new Intent(requireContext(), ServicePortfolioActivity.class));
+        binding.exploreAppBar.setOnClickListener(v -> {
+            Context ctx = getContext();
+            if (ctx == null) return;
+            HapticManager.swell(ctx);
+            startActivity(new Intent(ctx, ServicePortfolioActivity.class));
         });
 
-        tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        binding.exploreTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewModel.setTab(tab.getPosition());
@@ -130,7 +144,7 @@ public class ExploreFragment extends Fragment {
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        list.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.rvExplore.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0) { // Scrolling down
@@ -149,41 +163,46 @@ public class ExploreFragment extends Fragment {
         });
 
         viewModel.loadListings();
-        loadMajors(view);
-        return view;
+        loadMajors();
+        return binding.getRoot();
     }
 
-    private void loadMajors(View view) {
-        ChipGroup chipGroupMajors = view.findViewById(R.id.chipGroupMajors);
-        if (chipGroupMajors == null || repository == null) return;
-        repository.getMajors(new retrofit2.Callback<PolyGoApi.MajorsResponse>() {
+    private void loadMajors() {
+        if (binding == null || repository == null) return;
+        repository.getMajors(new Callback<PolyGoApi.MajorsResponse>() {
             @Override
             public void onResponse(@NonNull Call<PolyGoApi.MajorsResponse> call, @NonNull Response<PolyGoApi.MajorsResponse> response) {
+                if (!response.isSuccessful()) return;
                 PolyGoApi.MajorsResponse body = response.body();
-                if (body == null || body.majors == null || getContext() == null) return;
-                chipGroupMajors.post(() -> {
-                    Chip allChip = new Chip(requireContext());
+                if (body == null || body.majors == null || binding == null || getContext() == null) return;
+                binding.chipGroupMajors.post(() -> {
+                    if (binding == null || getContext() == null) return;
+                    Context ctx = getContext();
+                    Chip allChip = new Chip(ctx);
                     allChip.setText(R.string.explore_all_departments);
                     allChip.setCheckable(true);
                     allChip.setChecked(true);
                     allChip.setOnCheckedChangeListener((v, checked) -> {
                         if (checked) {
                             viewModel.setMajor(null);
-                            AppDataStore.setPickedMajor(requireContext(), 0, "");
+                            Context c = getContext();
+                            if (c != null) AppDataStore.setPickedMajor(c, 0, "");
                         }
                     });
-                    chipGroupMajors.addView(allChip);
+                    binding.chipGroupMajors.addView(allChip);
                     for (PolyGoApi.Major m : body.majors) {
-                        Chip chip = new Chip(requireContext());
+                        if (getContext() == null || binding == null) return;
+                        Chip chip = new Chip(getContext());
                         chip.setText(m.name);
                         chip.setCheckable(true);
                         chip.setOnCheckedChangeListener((v, checked) -> {
                             if (checked) {
                                 viewModel.setMajor(m.id);
-                                AppDataStore.setPickedMajor(requireContext(), m.id, m.name);
+                                Context c = getContext();
+                                if (c != null) AppDataStore.setPickedMajor(c, m.id, m.name);
                             }
                         });
-                        chipGroupMajors.addView(chip);
+                        binding.chipGroupMajors.addView(chip);
                     }
                 });
             }
@@ -194,63 +213,57 @@ public class ExploreFragment extends Fragment {
         });
     }
 
-    private void observeViewModel(View view) {
+    private void observeViewModel() {
         viewModel.listingsResource.observe(getViewLifecycleOwner(), resource -> {
-            RecyclerView rv = view.findViewById(R.id.rvExplore);
-            SwipeRefreshLayout swipeRefresh = view.findViewById(R.id.swipeRefreshExplore);
-            View shimmer = view.findViewById(R.id.shimmerExplore);
-
-            if (resource == null) return;
+            if (binding == null || resource == null) return;
 
             switch (resource.status) {
                 case LOADING:
-                    if (swipeRefresh != null && !swipeRefresh.isRefreshing()) {
-                        if (shimmer != null) {
-                            shimmer.setVisibility(View.VISIBLE);
-                            if (shimmer instanceof ShimmerFrameLayout) {
-                                ((ShimmerFrameLayout) shimmer).startShimmer();
-                            }
-                        }
-                        if (rv != null) rv.setVisibility(View.GONE);
+                    if (!binding.swipeRefreshExplore.isRefreshing()) {
+                        binding.shimmerExplore.shimmerView.setVisibility(View.VISIBLE);
+                        binding.shimmerExplore.shimmerView.startShimmer();
+                        binding.rvExplore.setVisibility(View.GONE);
                     }
                     break;
 
                 case SUCCESS:
-                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
-                    if (shimmer != null) {
-                        shimmer.setVisibility(View.GONE);
-                        if (shimmer instanceof ShimmerFrameLayout) {
-                            ((ShimmerFrameLayout) shimmer).stopShimmer();
-                        }
-                    }
+                    binding.swipeRefreshExplore.setRefreshing(false);
+                    binding.shimmerExplore.shimmerView.stopShimmer();
+                    binding.shimmerExplore.shimmerView.setVisibility(View.GONE);
 
                     List<ListingEntity> list = resource.data;
                     if (adapter != null && list != null) {
                         adapter.updateData(list);
-                        if (rv != null) rv.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
+                        binding.rvExplore.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
                         if (empty != null) empty.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                     break;
 
                 case ERROR:
-                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
-                    if (shimmer != null) {
-                        shimmer.setVisibility(View.GONE);
-                        if (shimmer instanceof ShimmerFrameLayout) {
-                            ((ShimmerFrameLayout) shimmer).stopShimmer();
-                        }
-                    }
+                    binding.swipeRefreshExplore.setRefreshing(false);
+                    binding.shimmerExplore.shimmerView.stopShimmer();
+                    binding.shimmerExplore.shimmerView.setVisibility(View.GONE);
                     // Restore previously loaded content instead of a blank grid.
-                    if (rv != null && adapter != null && adapter.getItemCount() > 0) {
-                        rv.setVisibility(View.VISIBLE);
+                    if (adapter != null && adapter.getItemCount() > 0) {
+                        binding.rvExplore.setVisibility(View.VISIBLE);
                         if (empty != null) empty.setVisibility(View.GONE);
                     }
                     // The global NetworkErrorHandler already surfaces the offline
                     // screen; here we only note the failure for cached-data users.
-                    Snackbar.make(view,
+                    Snackbar.make(binding.getRoot(),
                         "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
                     break;
             }
         });
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (lastProductSharedElement != null) {
+            ViewCompat.setTransitionName(lastProductSharedElement, null);
+            lastProductSharedElement = null;
+        }
+        binding = null;
+        super.onDestroyView();
     }
 }

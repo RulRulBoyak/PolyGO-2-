@@ -5,6 +5,7 @@ $input = input_json();
 $sellerId = (int)($input['seller_id'] ?? 0);
 $sellerName = trim((string)($input['seller_name'] ?? ''));
 $action = $input['action'] ?? 'profile';
+$viewerId = verify_jwt_optional();
 
 if ($sellerId <= 0 && $sellerName === '') {
     respond(false, 'Missing seller');
@@ -22,10 +23,25 @@ if ($sellerId > 0) {
 $user = $userQuery->fetch();
 if (!$user) {
     if ($action === 'metrics') respond(false, 'User not found');
-    respond(true, 'Seller profile (local only)', ['seller' => ['name' => $sellerName, 'verified' => false, 'bio' => '', 'is_private' => false, 'profile_pic_url' => ''], 'listings' => []]);
+    respond(true, 'Seller profile (local only)', ['seller' => ['name' => $sellerName, 'verified' => false, 'bio' => '', 'is_private' => false, 'profile_pic_url' => '', 'is_following' => false], 'listings' => []]);
 }
 
 $ownerId = (int)$user['id'];
+
+// Social proof: follower count + whether the (optional) viewer follows them.
+$followCount = 0;
+$isFollowing = false;
+try {
+    $fCount = $pdo->prepare('SELECT COUNT(*) FROM user_follows WHERE followed_id = ?');
+    $fCount->execute([$ownerId]);
+    $followCount = (int)$fCount->fetchColumn();
+    if ($viewerId > 0 && $viewerId !== $ownerId) {
+        $fCheck = $pdo->prepare('SELECT COUNT(*) FROM user_follows WHERE follower_id = ? AND followed_id = ?');
+        $fCheck->execute([$viewerId, $ownerId]);
+        $isFollowing = (int)$fCheck->fetchColumn() > 0;
+    }
+} catch (Throwable $ignored) {
+}
 
 // Metrics Action: Returns calculated business data
 if ($action === 'metrics') {
@@ -59,12 +75,12 @@ if ($action === 'metrics') {
     $reviewCount = (int)$rateRow[1];
 
     respond(true, 'Metrics fetched', [
-        'earnings' => $earnings,
-        'active_listings' => $activeCount,
-        'items_sold' => $soldCount,
-        'rating' => $avgRating,
-        'reviews' => $reviewCount,
-        'trust_score' => min(100, ($soldCount * 10) + ($avgRating * 10)) // Simple formula for demo
+        'earnings' => (string)$earnings,
+        'active_listings' => (int)$activeCount,
+        'items_sold' => (int)$soldCount,
+        'rating' => (float)$avgRating,
+        'reviews' => (int)$reviewCount,
+        'trust_score' => (float)min(100, ($soldCount * 10) + ($avgRating * 10))
     ]);
 }
 
@@ -83,6 +99,8 @@ if ((bool)$user['is_private']) {
             'rating' => 0.0,
             'reviews' => 0,
             'joined_at' => $user['created_at'] ?? '',
+            'follower_count' => $followCount,
+            'is_following' => $isFollowing,
         ],
         'listings' => [],
         'reviews' => [],
@@ -90,16 +108,20 @@ if ((bool)$user['is_private']) {
 }
 
 // Default: Profile action
-$listQuery = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.image_url, l.location, l.is_available FROM listings l INNER JOIN users u ON u.id = l.owner_id WHERE l.owner_id = ? AND l.archived_at IS NULL ORDER BY l.created_at DESC');
+$listQuery = $pdo->prepare('SELECT l.id, l.owner_id, l.title, u.full_name AS seller, l.category, l.description, l.price, l.`condition`, l.original_price, l.image_url, l.location, l.is_available, UNIX_TIMESTAMP(l.created_at)*1000 AS posted_at_ms, u.is_verified FROM listings l INNER JOIN users u ON u.id = l.owner_id WHERE l.owner_id = ? AND l.archived_at IS NULL ORDER BY l.created_at DESC');
 $listQuery->execute([$ownerId]);
 $listings = [];
 $active = 0;
 $sold = 0;
 foreach ($listQuery->fetchAll() as $item) {
-    $item['id'] = (int)$item['id'];
-    $item['owner_id'] = (int)$item['owner_id'];
-    $item['price'] = (float)$item['price'];
+    $item['id'] = (string)$item['id'];
+    $item['owner_id'] = (string)$item['owner_id'];
+    $item['price'] = (string)$item['price'];
+    $item['rating'] = (string)0; // Default
+    $item['review_count'] = (string)0; // Default
     $item['is_available'] = (bool)$item['is_available'];
+    $item['is_verified'] = (bool)($item['is_verified'] ?? false);
+    $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
     $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
         ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
         : '';
@@ -128,17 +150,19 @@ $reviewCount = (int)$rateRow[1];
 
 respond(true, 'Seller loaded', [
     'seller' => [
-        'id' => $ownerId,
+        'id' => (string)$ownerId,
         'name' => $user['full_name'],
         'verified' => (bool)$user['is_verified'],
         'bio' => $user['bio'] ?? '',
         'is_private' => false,
         'profile_pic_url' => $user['profile_pic_url'] ?? '',
-        'active' => $active,
-        'sold' => $sold,
-        'rating' => $avgRating,
-        'reviews' => $reviewCount,
+        'active' => (int)$active,
+        'sold' => (int)$sold,
+        'rating' => (float)$avgRating,
+        'reviews' => (int)$reviewCount,
         'joined_at' => $user['created_at'] ?? '',
+        'follower_count' => (int)$followCount,
+        'is_following' => (bool)$isFollowing,
     ],
     'listings' => $listings,
     'reviews' => $reviews,

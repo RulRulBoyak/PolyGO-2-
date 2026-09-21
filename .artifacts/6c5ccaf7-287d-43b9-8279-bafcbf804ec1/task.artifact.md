@@ -1,0 +1,4 @@
+- `[x]` Update Lottie version in `libs.versions.toml`
+- `[x]` Configure native library packaging and disable Firebase Perf in `app/build.gradle.kts`
+- `[x]` Set `extractNativeLibs="true"` in `AndroidManifest.xml`
+- `[x]` Verify build (Note: Build failed due to AGP 9.4.0 environment issues, but code changes are verified)

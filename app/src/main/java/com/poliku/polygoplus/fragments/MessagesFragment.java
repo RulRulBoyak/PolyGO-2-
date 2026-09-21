@@ -1,6 +1,7 @@
 package com.poliku.polygoplus.fragments;
 
 import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,6 +16,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -26,6 +28,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ConversationAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.local.entity.ThreadEntity;
+import com.poliku.polygoplus.databinding.FragmentMessagesBinding;
 import com.poliku.polygoplus.util.Resource;
 import com.poliku.polygoplus.viewmodel.MessagesViewModel;
 import com.poliku.polygoplus.ui.EmptyStates;
@@ -46,47 +49,56 @@ public class MessagesFragment extends Fragment {
     @Inject PolyGoRepository polyGoRepository;
     private ConversationAdapter adapter;
     private View empty;
-    private View shimmer;
     private MessagesViewModel viewModel;
     private TextWatcher searchWatcher;
+    private FragmentMessagesBinding binding;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_messages, container, false);
-        AppDataStore.initialize(requireContext());
+        binding = FragmentMessagesBinding.inflate(inflater, container, false);
+        Context context = getContext();
+        if (context != null) {
+            AppDataStore.initialize(context);
+        }
         viewModel = new ViewModelProvider(this).get(MessagesViewModel.class);
-        RecyclerView recyclerView = view.findViewById(R.id.rvMessages);
+        binding.rvMessages.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ConversationAdapter(thread -> polyGoRepository.markThreadRead(thread.id));
-        recyclerView.setAdapter(adapter);
-        empty = view.findViewById(R.id.tvEmptyMessages);
-        shimmer = view.findViewById(R.id.shimmerMessages);
-        EmptyStates.bind(empty, R.drawable.ic_mail_outline, "No messages yet",
-                "Message a seller from a listing to start a campus chat.", "Find a listing",
-                v -> startActivity(new Intent(requireContext(), SearchActivity.class)));
+        binding.rvMessages.setAdapter(adapter);
+        empty = binding.tvEmptyMessages;
+        if (getContext() != null) {
+            EmptyStates.bind(empty, R.drawable.ic_mail_outline, "No messages yet",
+                    "Message a seller from a listing to start a campus chat.", "Find a listing",
+                    v -> {
+                        Context ctx = getContext();
+                        if (ctx != null) startActivity(new Intent(ctx, SearchActivity.class));
+                    });
+        }
 
-        ViewCompat.setOnApplyWindowInsetsListener(view.findViewById(R.id.message_main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.messageMain, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        view.findViewById(R.id.buttonCompose).setOnClickListener(v -> startActivity(new Intent(requireContext(), SearchActivity.class)));
-        EditText search = view.findViewById(R.id.editTextMessageSearch);
+        binding.buttonCompose.setOnClickListener(v -> {
+            Context ctx = getContext();
+            if (ctx != null) startActivity(new Intent(ctx, SearchActivity.class));
+        });
         searchWatcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.setQuery(s.toString());
+                if (adapter != null) adapter.setQuery(s.toString());
                 updateEmpty();
             }
 
             @Override public void afterTextChanged(Editable s) { }
         };
-        search.addTextChangedListener(searchWatcher);
+        binding.editTextMessageSearch.addTextChangedListener(searchWatcher);
 
-        ChipGroup filters = view.findViewById(R.id.messageFilters);
-        filters.setOnCheckedChangeListener((group, checkedId) -> {
+        binding.messageFilters.setOnCheckedChangeListener((group, checkedId) -> {
+            if (adapter == null) return;
             if (checkedId == R.id.chipUnread) adapter.setFilter(ConversationAdapter.Filter.UNREAD);
             else if (checkedId == R.id.chipBuying) adapter.setFilter(ConversationAdapter.Filter.BUYING);
             else adapter.setFilter(ConversationAdapter.Filter.ALL);
@@ -95,47 +107,47 @@ public class MessagesFragment extends Fragment {
         
         observeViewModel();
         viewModel.loadThreads();
-        return view;
+        return binding.getRoot();
     }
 
     private void observeViewModel() {
         viewModel.threadsResource.observe(getViewLifecycleOwner(), resource -> {
-            if (resource == null) return;
+            if (binding == null || resource == null) return;
 
+            View shimmerView = binding.shimmerMessages.getRoot();
             switch (resource.status) {
                 case LOADING:
-                    if (shimmer != null) {
-                        shimmer.setVisibility(View.VISIBLE);
-                        if (shimmer instanceof ShimmerFrameLayout) {
-                            ((ShimmerFrameLayout) shimmer).startShimmer();
+                    if (shimmerView != null) {
+                        shimmerView.setVisibility(View.VISIBLE);
+                        if (shimmerView instanceof ShimmerFrameLayout) {
+                            ((ShimmerFrameLayout) shimmerView).startShimmer();
                         }
                     }
                     break;
 
                 case SUCCESS:
-                    if (shimmer != null) {
-                        if (shimmer instanceof ShimmerFrameLayout) {
-                            ((ShimmerFrameLayout) shimmer).stopShimmer();
+                    if (shimmerView != null) {
+                        if (shimmerView instanceof ShimmerFrameLayout) {
+                            ((ShimmerFrameLayout) shimmerView).stopShimmer();
                         }
-                        shimmer.setVisibility(View.GONE);
+                        shimmerView.setVisibility(View.GONE);
                     }
                     List<ThreadEntity> list = resource.data;
                     if (adapter != null && list != null) {
                         adapter.submit(list);
                         updateEmpty();
-                        View rv = getView() != null ? getView().findViewById(R.id.rvMessages) : null;
-                        if (rv != null) rv.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
+                        binding.rvMessages.setVisibility(list.isEmpty() ? View.GONE : View.VISIBLE);
                     }
                     break;
 
                 case ERROR:
-                    if (shimmer != null) {
-                        if (shimmer instanceof ShimmerFrameLayout) {
-                            ((ShimmerFrameLayout) shimmer).stopShimmer();
+                    if (shimmerView != null) {
+                        if (shimmerView instanceof ShimmerFrameLayout) {
+                            ((ShimmerFrameLayout) shimmerView).stopShimmer();
                         }
-                        shimmer.setVisibility(View.GONE);
+                        shimmerView.setVisibility(View.GONE);
                     }
-                    Snackbar.make(requireView(),
+                    Snackbar.make(binding.getRoot(),
                         "Error: " + resource.message, Snackbar.LENGTH_LONG).show();
                     break;
             }
@@ -148,21 +160,18 @@ public class MessagesFragment extends Fragment {
     }
 
     @Override public void onDestroyView() {
-        View view = getView();
-        if (view != null && searchWatcher != null) {
-            EditText search = view.findViewById(R.id.editTextMessageSearch);
-            if (search != null) search.removeTextChangedListener(searchWatcher);
-            searchWatcher = null;
+        if (binding != null && searchWatcher != null) {
+            binding.editTextMessageSearch.removeTextChangedListener(searchWatcher);
         }
+        searchWatcher = null;
+        binding = null;
         super.onDestroyView();
     }
 
     private void updateEmpty() {
-        if (empty != null) {
-            boolean isEmpty = adapter.getItemCount() == 0;
-            empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-            View rv = getView() != null ? getView().findViewById(R.id.rvMessages) : null;
-            if (rv != null && !isEmpty) rv.setVisibility(View.VISIBLE);
-        }
+        if (binding == null) return;
+        boolean isEmpty = adapter.getItemCount() == 0;
+        binding.tvEmptyMessages.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        if (!isEmpty) binding.rvMessages.setVisibility(View.VISIBLE);
     }
 }

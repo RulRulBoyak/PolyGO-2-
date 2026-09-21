@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:paddingHorizontal="24dp"
+    android:paddingTop="8dp">
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/timetable_course">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCourse"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:maxLength="100" android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" android:hint="@string/timetable_room">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etRoom"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:maxLength="80" android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <Spinner android:id="@+id/spinnerDay" android:layout_width="match_parent"
+        android:layout_height="52dp" android:layout_marginTop="10dp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:hint="@string/timetable_start">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etStart"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:hint="08:00" android:inputType="time" android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_marginStart="10dp" android:layout_weight="1"
+            android:hint="@string/timetable_end">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etEnd"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:hint="10:00" android:inputType="time" android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -104,6 +104,8 @@ function create_jwt(int $userId): string {
  * Professional Token Verification
  */
 function verify_jwt(bool $exitOnFailure = true): int {
+    global $pdo;
+
     // App Check gate for authenticated write endpoints. Enforcement is opt-in
     // via APP_CHECK_ENFORCE (see secrets.php); defaults to pass-through for dev.
     if ($exitOnFailure && defined('APP_CHECK_ENFORCE') && APP_CHECK_ENFORCE) {
@@ -142,7 +144,29 @@ function verify_jwt(bool $exitOnFailure = true): int {
         return 0;
     }
 
+    if (isUserBanned($pdo, (int) $data['user_id'])) {
+        if ($exitOnFailure) respond(false, 'Unauthorized: Your account has been suspended by an administrator.');
+        return 0;
+    }
+
     return (int)$data['user_id'];
+}
+
+/**
+ * Server-side ban check. The admin panel toggles `users.is_banned`; every
+ * authenticated API call re-checks it so a suspended user's token is rejected
+ * even before it expires. Guarded so the check is a no-op if the column or the
+ * user row does not exist.
+ */
+function isUserBanned(PDO $pdo, int $userId): bool {
+    try {
+        $stmt = $pdo->prepare('SELECT is_banned FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch(PDO::FETCH_NUM);
+        return $row !== false && (int) $row[0] === 1;
+    } catch (Throwable $e) {
+        return false; // column not migrated yet -> never block
+    }
 }
 
 /**

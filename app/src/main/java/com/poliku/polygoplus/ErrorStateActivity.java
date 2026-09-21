@@ -45,9 +45,21 @@ public class ErrorStateActivity extends BaseActivity {
         polyGoRepository.getStatus(new Callback<BaseResponse>() {
             @Override
             public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null) {
-                    // Assuming maintenance mode is handled globally or we check a custom field
-                    // Since BaseResponse doesn't have it, let's assume if it returns successfully, we can finish
+                    if (response.body().isMaintenance()) {
+                        // The kill switch is still up — stay locked and show the
+                        // admin's message verbatim (falls back to default copy).
+                        String msg = response.body().getMaintenanceMessage();
+                        AppDataStore.setMaintenanceMode(ErrorStateActivity.this, true);
+                        ((TextView) findViewById(R.id.tvErrorTitle)).setText("Still under maintenance");
+                        ((TextView) findViewById(R.id.tvErrorBody)).setText(
+                                msg != null && !msg.trim().isEmpty()
+                                        ? msg
+                                        : "PolyGo+ is in maintenance while the campus database is updated. Please try again shortly.");
+                        return;
+                    }
+                    AppDataStore.setMaintenanceMode(ErrorStateActivity.this, false);
                     NetworkErrorHandler.notifyServerOk();
                     finish();
                 } else {
@@ -57,6 +69,7 @@ public class ErrorStateActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
                 ((TextView) findViewById(R.id.tvErrorTitle)).setText("Server unreachable");
                 ((TextView) findViewById(R.id.tvErrorBody)).setText(t.getMessage());
             }

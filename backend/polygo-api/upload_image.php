@@ -52,7 +52,14 @@ try {
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? '10.0.2.2';
         // Trusted hosts only: blocks Host-header injection rewriting photo URLs.
-        if ($host !== '' && !in_array($host, ['localhost', '127.0.0.1', '10.0.2.2', 'polygo.pks.edu.my'], true)) {
+        // Private LAN IPs (RFC1918/loopback) are also allowed so debug builds on a
+        // physical device can upload; forged public hosts are still rejected.
+        $trustedHosts = ['localhost', '127.0.0.1', '10.0.2.2', 'polygo.pks.edu.my'];
+        $isPrivateIp = $host !== ''
+            && filter_var($host, FILTER_VALIDATE_IP) !== false
+            && filter_var($host, FILTER_VALIDATE_IP,
+                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        if (!$isPrivateIp && !in_array($host, $trustedHosts, true)) {
             respond(false, 'Upload failed');
         }
         $baseUrl = $scheme . '://' . $host . '/polygo-api/uploads/';

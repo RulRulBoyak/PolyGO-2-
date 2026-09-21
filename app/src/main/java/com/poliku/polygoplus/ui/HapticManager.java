@@ -40,11 +40,7 @@ public final class HapticManager {
      */
     public static void heavyTap(View view) {
         if (view == null) return;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
-        } else {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-        }
+        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
     }
 
     /**

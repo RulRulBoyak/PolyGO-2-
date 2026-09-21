@@ -20,5 +20,10 @@ public class HelpActivity extends BaseActivity {
         });
         findViewById(R.id.btnReportBug).setOnClickListener(v ->
                 startActivity(new Intent(this, BugReportActivity.class)));
+        findViewById(R.id.btnReplayTour).setOnClickListener(v -> {
+            Intent intent = new Intent(this, HomeActivity.class);
+            intent.putExtra(HomeActivity.EXTRA_REPLAY_TOUR, true);
+            startActivity(intent);
+        });
     }
 }

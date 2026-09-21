@@ -6,7 +6,8 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_bottom_sheet"
     android:orientation="vertical"
-    android:paddingHorizontal="24dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
     android:paddingTop="12dp"
     android:paddingBottom="48dp">
 
@@ -68,7 +69,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
                 android:paddingVertical="24dp">
 
                 <!-- Soft Blue Icon Container -->
@@ -128,7 +130,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
                 android:paddingVertical="24dp">
 
                 <!-- Soft Green Icon Container -->

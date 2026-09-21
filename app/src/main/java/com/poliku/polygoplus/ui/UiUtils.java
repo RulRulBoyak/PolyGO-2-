@@ -1,5 +1,6 @@
 package com.poliku.polygoplus.ui;
 
+import android.content.Context;
 import android.view.View;
 
 import androidx.annotation.ColorRes;
@@ -7,9 +8,17 @@ import androidx.annotation.DrawableRes;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.poliku.polygoplus.R;
+import com.poliku.polygoplus.api.PolyGoApi;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Static UI helpers shared across screens. */
 public final class UiUtils {
+    private static final Map<String, Integer> SERVER_CATEGORY_ICONS =
+            new ConcurrentHashMap<>();
 
     private UiUtils() {
     }
@@ -17,7 +26,9 @@ public final class UiUtils {
     @DrawableRes
     public static int categoryIcon(String name) {
         if (name == null) return R.drawable.ic_category_tech;
-        String n = name.toLowerCase();
+        Integer configured = SERVER_CATEGORY_ICONS.get(name.toLowerCase(Locale.ROOT));
+        if (configured != null) return configured;
+        String n = name.toLowerCase(Locale.ROOT);
         if (n.contains("food")) return R.drawable.ic_category_food;
         if (n.contains("drink")) return R.drawable.ic_category_drink;
         if (n.contains("tech") || n.contains("electron")) return R.drawable.ic_category_tech;
@@ -32,10 +43,40 @@ public final class UiUtils {
         return R.drawable.ic_category_tech;
     }
 
+    /** Maps the server's fixed icon catalogue without resolving arbitrary resources. */
+    @DrawableRes
+    public static int categoryIconKey(String key) {
+        if (key == null) return R.drawable.ic_category_tech;
+        switch (key) {
+            case "ic_category_food": return R.drawable.ic_category_food;
+            case "ic_category_drink": return R.drawable.ic_category_drink;
+            case "ic_category_fashion": return R.drawable.ic_category_fashion;
+            case "ic_category_books": return R.drawable.ic_category_books;
+            case "ic_category_repair": return R.drawable.ic_category_repair;
+            case "ic_category_home": return R.drawable.ic_category_home;
+            case "ic_category_laundry": return R.drawable.ic_category_laundry;
+            case "ic_category_delivery": return R.drawable.ic_category_delivery;
+            case "ic_category_service": return R.drawable.ic_category_service;
+            case "ic_category_printing": return R.drawable.ic_category_printing;
+            case "ic_category_tech": return R.drawable.ic_category_tech;
+            default: return R.drawable.ic_category_tech;
+        }
+    }
+
+    public static void rememberCategoryIcons(Context context,
+                                             List<PolyGoApi.Category> categories) {
+        if (context == null || categories == null) return;
+        for (PolyGoApi.Category category : categories) {
+            if (category == null || category.name == null || category.icon_res == null) continue;
+            SERVER_CATEGORY_ICONS.put(category.name.toLowerCase(Locale.ROOT),
+                    categoryIconKey(category.icon_res));
+        }
+    }
+
     @ColorRes
     public static int categoryColor(String name) {
         if (name == null) return R.color.pks_blue;
-        String n = name.toLowerCase();
+        String n = name.toLowerCase(Locale.ROOT);
         if (n.contains("food")) return R.color.cat_food;
         if (n.contains("drink") || n.contains("water") || n.contains("coffee")) return R.color.cat_drink;
         if (n.contains("tech") || n.contains("electron")) return R.color.cat_tech;
@@ -53,7 +94,7 @@ public final class UiUtils {
     @ColorRes
     public static int categoryTint(String name) {
         if (name == null) return R.color.soft_blue;
-        String n = name.toLowerCase();
+        String n = name.toLowerCase(Locale.ROOT);
         if (n.contains("food")) return R.color.soft_food;
         if (n.contains("drink") || n.contains("water") || n.contains("coffee")) return R.color.soft_drink;
         if (n.contains("tech") || n.contains("electron")) return R.color.soft_tech;

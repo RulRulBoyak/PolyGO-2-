@@ -6,20 +6,24 @@ $input  = input_json();
 $action = $input['action'] ?? 'status';
 
 // Lightweight status read used to reflect server-side verification state.
+// Strict auth: a suspended (banned) account gets HTTP 401 "suspended" here so
+// the Android client's 401 handler can route to the banned screen, and any
+// expired/missing token is bounced to login instead of a silent guest blob.
 if ($action === 'status') {
-    $userId = verify_jwt_optional();
+    $userId = verify_jwt();
     if ($userId > 0) {
-        $query = $pdo->prepare('SELECT verification_photo, verification_status FROM users WHERE id = ?');
+        $query = $pdo->prepare('SELECT verification_photo, verification_status, is_banned FROM users WHERE id = ?');
         $query->execute([$userId]);
         $row = $query->fetch();
         if ($row) {
             respond(true, 'OK', [
                 'verification_status' => $row['verification_status'] ?: 'unverified',
-                'verification_photo'  => $row['verification_photo'] ?: ''
+                'verification_photo'  => $row['verification_photo'] ?: '',
+                'is_banned'           => (int)($row['is_banned'] ?? 0) === 1
             ]);
         }
     }
-    respond(true, 'OK', ['verification_status' => 'unverified', 'verification_photo' => '']);
+    respond(true, 'OK', ['verification_status' => 'unverified', 'verification_photo' => '', 'is_banned' => false]);
 }
 
 // ADMIN ACTIONS: prefer the per-session token from the web admin page, and

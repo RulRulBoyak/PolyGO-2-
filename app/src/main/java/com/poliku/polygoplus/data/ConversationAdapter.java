@@ -55,8 +55,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     private void applyFilter() {
         visible.clear();
         for (ThreadEntity thread : all) {
+            String name = thread.name == null ? "" : thread.name;
             boolean textMatch = query.isEmpty()
-                    || thread.name.toLowerCase(Locale.ROOT).contains(query)
+                    || name.toLowerCase(Locale.ROOT).contains(query)
                     || (thread.lastMessage != null && thread.lastMessage.toLowerCase(Locale.ROOT).contains(query));
             boolean filterMatch = filter == Filter.ALL
                     || (filter == Filter.UNREAD && thread.unread)
@@ -72,8 +73,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
 
     @Override public void onBindViewHolder(@NonNull Holder holder, int position) {
         ThreadEntity thread = visible.get(position);
-        holder.avatar.setText(initials(thread.name));
-        holder.sender.setText(thread.name);
+        String name = thread.name == null ? "" : thread.name;
+        holder.avatar.setText(initials(name));
+        holder.sender.setText(name);
         holder.preview.setText(thread.lastMessage == null || thread.lastMessage.isEmpty() ? holder.preview.getContext().getString(R.string.chat_no_messages) : thread.lastMessage);
         holder.time.setText(formatTime(thread.lastMessageTime));
         holder.sender.setTextColor(holder.sender.getContext().getColor(thread.unread ? R.color.airbnb_ink : R.color.airbnb_muted));
@@ -85,7 +87,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             }
             Intent intent = new Intent(v.getContext(), ChatActivity.class);
             intent.putExtra(ChatActivity.EXTRA_THREAD_ID, thread.id);
-            intent.putExtra(ChatActivity.EXTRA_OTHER_NAME, thread.name);
+            intent.putExtra(ChatActivity.EXTRA_OTHER_NAME, name);
             v.getContext().startActivity(intent);
         });
     }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp" android:clickable="true" android:focusable="true"
+    android:foreground="?attr/selectableItemBackground" app:cardCornerRadius="16dp"
+    app:strokeColor="@color/grey_200" app:strokeWidth="1dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
+        <TextView android:id="@+id/tvClassDay" android:layout_width="54dp"
+            android:layout_height="wrap_content" android:gravity="center"
+            android:textColor="@color/pks_blue" android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/tvClassCourse" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tvClassDetails" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="3dp"
+                android:textColor="?attr/colorOnSurfaceVariant" android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

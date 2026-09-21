@@ -16,51 +16,59 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Floating Navigation Container: Glassmorphism Style -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/bottomAppBarContainer"
+    <!-- One bottom-area wrapper keeps the FAB centred over the bar edge. -->
+    <FrameLayout
+        android:id="@+id/bottomBarArea"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="28dp"
-        app:cardBackgroundColor="@color/nav_card"
-        app:cardCornerRadius="36dp"
-        app:cardElevation="12dp"
         android:clipChildren="false"
-        android:clipToPadding="false"
-        app:strokeColor="@color/glass_stroke"
-        app:strokeWidth="1.2dp">
+        android:clipToPadding="false">
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNavigationView"
-            style="@style/Widget.PolyGo.BottomNavigationView"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/bottomAppBarContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            app:elevation="0dp"
-            app:itemBackground="@null"
-            app:menu="@menu/bottom_nav_menu" />
+            android:layout_marginTop="32dp"
+            android:clipChildren="true"
+            android:clipToPadding="true"
+            app:cardBackgroundColor="@color/nav_card"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/glass_stroke"
+            app:strokeWidth="1dp">
 
-    </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottomNavigationView"
+                style="@style/Widget.PolyGo.BottomNavigationView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:clipChildren="true"
+                android:clipToPadding="true"
+                app:elevation="0dp"
+                app:itemBackground="@null"
+                app:menu="@menu/bottom_nav_menu" />
 
-    <!-- Futuristic Floating Action Button with Enhanced Glow -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddProduct"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:contentDescription="@string/content_description_add_product"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="@color/airbnb_coral"
-        app:elevation="20dp"
-        app:fabSize="normal"
-        app:layout_anchor="@id/bottomAppBarContainer"
-        app:layout_anchorGravity="top|center_horizontal"
-        app:maxImageSize="30dp"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-        app:tint="@color/white" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddProduct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:contentDescription="@string/content_description_add_product"
+            android:src="@drawable/ic_add"
+            app:backgroundTint="@color/airbnb_coral"
+            app:fabCustomSize="64dp"
+            app:elevation="10dp"
+            app:pressedTranslationZ="2dp"
+            app:maxImageSize="32dp"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+            app:tint="@color/white" />
+
+    </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

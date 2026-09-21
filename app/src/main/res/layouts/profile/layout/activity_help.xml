@@ -343,6 +343,16 @@ app:tint="@color/airbnb_ink"
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReplayTour"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:text="@string/tour_replay"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_school" />
+
             <!-- ================= CTA SUPPORT FOOTER ================= -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

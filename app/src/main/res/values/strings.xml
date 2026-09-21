@@ -1,4 +1,14 @@
 <resources>
+    <string name="channel_updates">PolyGo+ updates</string>
+    <string name="channel_updates_description">General updates from PolyGo+.</string>
+    <string name="channel_messages">Messages</string>
+    <string name="channel_messages_description">New messages and conversation replies.</string>
+    <string name="channel_campus_alerts">Campus alerts</string>
+    <string name="channel_campus_alerts_description">Important campus announcements and notices.</string>
+    <string name="channel_event_reminders">Event reminders</string>
+    <string name="channel_event_reminders_description">Reminders for campus events you follow.</string>
+    <string name="channel_marketplace">Marketplace</string>
+    <string name="channel_marketplace_description">Offers, orders, reviews, and listing updates.</string>
     <string name="app_name">PolyGo+</string>
     <string name="logo_content_description">PolyGo+ Logo</string>
     <string name="content_description_add_product">Add Product</string>
@@ -21,6 +31,7 @@
     <string name="greeting_morning">Good morning</string>
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Good night</string>
     <string name="explore_campus">Explore Campus</string>
     <string name="home_greeting_sub">What\'s happening on campus today?</string>
     <string name="recent_listings">Recent Listings</string>
@@ -338,6 +349,10 @@
     <string name="safe_meetup_emergency_title">Emergency Alert</string>
     <string name="safe_meetup_emergency_confirm">Send a safety alert to the other user and PKS Security?</string>
     <string name="safe_meetup_emergency_sent">Alert sent. PKS Security has been notified.</string>
+    <!-- Campus security hotline for the Safe Meetup SOS dialer. Placeholder: fill with the real number (e.g. +60 12 345 6789) or leave EMPTY to keep the dialer a safe no-op. -->
+    <string name="safe_meetup_campus_hotline"></string>
+    <string name="safe_meetup_dial_hotline_unavailable">No dialer available on this device</string>
+    <string name="safe_meetup_hotline_unconfigured">Campus hotline is not configured yet</string>
     <string name="safe_meetup_emergency_send">Send Alert</string>
 
     <!-- Blocking (UGC moderation) -->
@@ -368,6 +383,8 @@
     <string name="pulse_post_failed">Could not post. Please try again.</string>
     <string name="pulse_load_failed">Could not refresh Campus Pulse</string>
     <string name="pulse_empty">No pulse yet - be the first to post!</string>
+    <string name="pulse_official_announcements">Official announcements</string>
+    <string name="pulse_student_threads">Campus threads</string>
     <string name="pulse_time_just_now">Just now</string>
     <string name="pulse_time_m">%1$dm ago</string>
     <string name="pulse_time_h">%1$dh ago</string>
@@ -511,7 +528,9 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="seller_sold_segment">%1$d sold</string>
     <string name="seller_joined_segment">Member since %1$s</string>
     <string name="home_categories">Categories</string>
-    <string name="picks_for_you">Picks for You</string>
+    <string name="picks_for_you">🔥 Hot Picks for You</string>
+    <string name="home_campus_threads">Campus Threads</string>
+    <string name="home_campus_threads_desc">Join the conversation. What\'s happening in PKS?</string>
     <string name="picks_for_you_subtitle">Top-rated items for your department</string>
 
     <!-- Account -->
@@ -528,6 +547,12 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_service_draft_saved">Service draft saved</string>
     <string name="toast_fill_all_fields_photos">Please fill in all fields including photos</string>
     <string name="toast_uploading_images">Uploading images...</string>
+    <!-- Role-aware listing (Premium) -->
+    <string name="edit_product_visitor_title">Browse Listing</string>
+    <string name="edit_product_lecturer_title">Publish Academic Resource</string>
+    <string name="edit_product_free_for_students">Free resources for students</string>
+    <string name="edit_product_role_badge_suffix">&#8226; %1$s</string>
+
     <string name="toast_please_sign_in_first">Please sign in first</string>
     <string name="toast_service_posted_success">Service posted successfully!</string>
     <string name="toast_post_error">Post error</string>
@@ -562,6 +587,15 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_enter_valid_price">Enter a valid price</string>
     <string name="toast_listing_published">Listing published!</string>
     <string name="toast_listing_error">Listing error</string>
+    <string name="hint_original_price">Original Price (Optional)</string>
+    <string name="helper_original_price">To show a discount strike-through</string>
+    <string name="hint_condition">Condition</string>
+    <string name="condition_label">Condition: </string>
+    <string name="condition_new">New</string>
+    <string name="condition_used_like_new">Used - Like New</string>
+    <string name="condition_used_good">Used - Good</string>
+    <string name="condition_used_fair">Used - Fair</string>
+    <string name="listing_on_marketplace">Listing on PolyGo Marketplace</string>
 
     <!-- Auth: forgot password -->
     <string name="toast_enter_id_or_email">Enter your ID or email</string>
@@ -575,6 +609,21 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <!-- Home -->
     <string name="toast_press_back_again">Press back again to exit</string>
     <string name="toast_login_required_post">Login required to post listings</string>
+    <string name="create_thread_title">New Thread</string>
+    <string name="handle_format">\@%1$s_pks</string>
+    <string name="action_post">Post</string>
+    <string name="hint_thread_title">Thread Title</string>
+    <string name="hint_start_thread">Start a campus thread...</string>
+    <string name="tag_request">REQUEST</string>
+    <string name="tag_announcement">ANNOUNCEMENT</string>
+    <string name="tag_flash_sale">FLASH SALE</string>
+    <string name="tag_event">EVENT</string>
+    <string name="action_remove_photo">Remove photo</string>
+    <string name="action_pick_tag">Pick tag</string>
+    <string name="action_add_photo">Add photo</string>
+    <string name="action_schedule">Schedule</string>
+    <string name="action_save_draft">Save draft</string>
+    <string name="toast_visitor_cannot_post">Visitors cannot post listings. Please register as a Student or Lecturer.</string>
 
     <!-- Scanner -->
     <string name="toast_error_starting_camera">Error starting camera</string>
@@ -595,6 +644,11 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Auth: OTP -->
     <string name="otp_sent_subtitle">We\'ve sent a 6-digit code to %1$s</string>
+    <string name="otp_title">Verify your email</string>
+    <string name="otp_subtitle_placeholder">Enter the 6-digit code sent to your campus email.</string>
+    <string name="otp_code_hint">Verification code</string>
+    <string name="otp_verify_account">Verify account</string>
+    <string name="otp_resend">Didn\'t receive a code? Resend</string>
     <string name="toast_enter_valid_otp">Please enter a valid 6-digit code</string>
     <string name="toast_invalid_code">Invalid code</string>
     <string name="toast_code_resent_to">Code resent to %1$s</string>
@@ -694,6 +748,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="content_description_joined">Member since</string>
 
     <string name="product_mark_sold">Mark as Sold</string>
+    <string name="role_free_for_students">Free for students (Lecturer resource)</string>
     <string name="product_detail_trust_rating">Rating</string>
     <string name="product_detail_trust_sold">Sold</string>
     <string name="product_detail_trust_joined">Member since</string>
@@ -714,8 +769,157 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="notif_not_now">Not now</string>
     <string name="notif_open_settings">Open Settings</string>
 
-    <!-- Home event carousel -->
-    <string name="event_trending">Trending</string>
-    <string name="event_going_format">%1$s going</string>
-    <string name="event_see_details">See details</string>
+    <!-- Account suspension (admin ban) -->
+    <string name="banned_title">Account suspended</string>
+    <string name="banned_body">This account has been suspended by an administrator, usually for breaching the marketplace rules. Your listings are hidden and you can no longer sign in.</string>
+    <string name="banned_contact">You will not be able to use PolyGo+ until the suspension is reviewed</string>
+    <string name="banned_logout_button">Return to login</string>
+    <string name="banned_support_button">Contact support</string>
+    <string name="toast_account_suspended">Your account has been suspended by an administrator.</string>
+
+    <!-- Marketplace Pro: listing pickers & product detail -->
+    <string name="browse_all_categories">Browse all</string>
+    <string name="condition_picker_title">How used is it?</string>
+    <string name="condition_picker_subtitle">Be honest so buyers can trust your listing.</string>
+    <string name="condition_desc_new">Brand new, never used.</string>
+    <string name="condition_desc_like_new">Barely used, like brand new.</string>
+    <string name="condition_desc_good">Used but well kept.</string>
+    <string name="condition_desc_fair">Used with visible wear.</string>
+    <string name="category_picker_title">Browse categories</string>
+    <string name="category_picker_subtitle">Pick the closest match for your item.</string>
+    <string name="toast_categories_loading">Categories are still loading, try again in a moment.</string>
+    <string name="quick_message_hint">Is this still available?</string>
+    <string name="quick_message_send">Send message</string>
+    <string name="quick_message_default">Is this still available?</string>
+    <string name="toast_message_failed">Could not send the message. Please try again.</string>
+    <string name="product_alert">Get alerts for this listing</string>
+    <string name="product_alert_on">Alerts enabled for this listing</string>
+    <string name="toast_alert_on">You will be notified of price drops and availability.</string>
+    <string name="seller_followers_count">%1$d followers</string>
+    <string name="meetup_location_title">Meetup location</string>
+    <string name="meetup_map_caption">%1$s • Politeknik Kuching Sarawak</string>
+    <string name="location_near_campus">Near campus</string>
+    <string name="photo_count">%1$d/%2$d photos</string>
+    <string name="photo_tips">Clear photos sell faster. Add up to 9.</string>
+    <string name="auto_reply_label">Auto-reply to buyers</string>
+    <string name="auto_reply_helper">Instantly answers common questions for you.</string>
+    <string name="hide_from_friends_label">Hide from my friends</string>
+    <string name="hide_from_friends_helper">Keep this listing private from your follower network.</string>
+    <string name="toast_max_photos">You can add up to 9 photos.</string>
+    <string name="photo_tips_body">Clear, well-lit photos of your item from a few angles. Up to 9 photos. Buyers trust photos that show real condition.</string>
+    <string name="content_description_product_image">Product image</string>
+    <string name="save_changes">Save changes</string>
+    <string name="toast_loading_listing">Loading your listing…</string>
+    <string name="toast_listing_loaded">Listing loaded. Make your changes.</string>
+    <string name="toast_listing_updated">Changes saved.</string>
+    <string name="item_live">Live</string>
+    <string name="item_sold">Sold</string>
+    <string name="item_removed">Removed</string>
+    <string name="campus_seller">Campus seller</string>
+    <string name="thread_you_prefix">You: %1$s</string>
+    <string name="thread_open_to_chat">Tap to open chat</string>
+    <string name="home_marketplace_activity">Your Marketplace</string>
+    <string name="home_your_listings">Your Listings</string>
+    <string name="home_empty_my_listings">You haven\'t listed anything yet. Create a listing and it will appear here for quick editing.</string>
+    <string name="home_buying">Buying</string>
+    <string name="home_empty_buying">Messages about items you\'re buying will appear here.</string>
+    <string name="campus_hub">Campus Hub</string>
+    <string name="campus_hub_pulse">Campus Pulse</string>
+    <string name="campus_hub_pulse_desc">Requests and live campus updates</string>
+    <string name="campus_hub_ca">CA Calculator</string>
+    <string name="campus_hub_ca_desc">Estimate your CA and target final exam mark</string>
+    <string name="campus_hub_events">Events</string>
+    <string name="campus_hub_events_desc">See upcoming PKS activities</string>
+    <string name="campus_hub_timetable">Timetable</string>
+    <string name="campus_hub_timetable_desc">Your classes and next lesson</string>
+    <string name="ca_title">Continuous Assessment</string>
+    <string name="ca_intro">Enter each assessment score to estimate your CA contribution and the final-exam mark needed for your target.</string>
+    <string name="ca_subject">Subject name</string>
+    <string name="ca_weight">CA weight (%)</string>
+    <string name="fe_weight">FE weight (%)</string>
+    <string name="ca_target">Target (%)</string>
+    <string name="ca_components_heading">Assessment components</string>
+    <string name="ca_component_name">Component</string>
+    <string name="ca_default_quiz">Quiz / Test 1</string>
+    <string name="ca_default_lab">Assignment / Lab</string>
+    <string name="ca_obtained_short">Score</string>
+    <string name="ca_max_short">Max</string>
+    <string name="ca_weight_short">%</string>
+    <string name="ca_remove_component">Remove component</string>
+    <string name="ca_move_up">Move component up</string>
+    <string name="ca_move_down">Move component down</string>
+    <string name="ca_add_component">Add assessment row</string>
+    <string name="ca_calculate">Calculate CA and target FE</string>
+    <string name="ca_load_preset">Load saved subject</string>
+    <string name="ca_save_preset">Save subject preset</string>
+    <string name="ca_disclaimer">Estimate only. Your official result is determined by PKS examination rules and records.</string>
+    <string name="ca_no_final_exam">This subject has no final examination.</string>
+    <string name="ca_required_fe">Required raw FE mark: %1$.1f%%</string>
+    <string name="ca_impossible">This target cannot be reached with the remaining FE weight.</string>
+    <string name="ca_minimum_met">CA minimum is currently met.</string>
+    <string name="ca_minimum_not_met">CA minimum is not currently met.</string>
+    <string name="ca_result_format">CA contribution: %1$.1f / 100\nCA performance: %2$.1f%%\n%3$s\n%4$s</string>
+    <string name="ca_invalid_input">Check every score, maximum and weight. Component weights must equal the CA weight, and CA + FE must equal 100.</string>
+    <string name="ca_subject_required">Enter a subject name before saving.</string>
+    <string name="ca_preset_saved">Subject preset saved.</string>
+    <string name="ca_no_presets">No saved subjects yet.</string>
+    <string name="events_title">Campus Events</string>
+    <string name="events_empty">No upcoming campus events.</string>
+    <string name="event_remind_me">Remind me</string>
+    <string name="featured">Featured</string>
+    <string name="event_cancel_reminder">Cancel reminder</string>
+    <string name="event_reminder_set">Reminder scheduled for one hour before the event.</string>
+    <string name="event_reminder_cancelled">Reminder cancelled.</string>
+    <string name="event_reminder_too_late">This event has already started.</string>
+    <string name="event_detail_date_time">Date &amp; time</string>
+    <string name="event_detail_venue">Venue</string>
+    <string name="event_detail_organizer">Organizer</string>
+    <string name="event_capacity_spot">%1$d spot</string>
+    <string name="event_capacity_spots">%1$d spots</string>
+    <string name="event_action_register">Register</string>
+    <string name="event_action_directions">Get directions</string>
+    <string name="event_about">About this event</string>
+    <string name="timetable_title">My Timetable</string>
+    <string name="timetable_empty">No classes yet. Add your first class.</string>
+    <string name="timetable_no_next">No upcoming class in this timetable.</string>
+    <string name="timetable_add">Add class</string>
+    <string name="timetable_edit">Edit class</string>
+    <string name="timetable_course">Course</string>
+    <string name="timetable_room">Room</string>
+    <string name="timetable_start">Start</string>
+    <string name="timetable_end">End</string>
+    <string name="timetable_invalid">Enter a course, room and valid time range.</string>
+    <string name="timetable_overlap">This class overlaps another class on the same day.</string>
+    <string name="timetable_save_failed">Could not update the timetable.</string>
+    <string name="timetable_next_format">Next: %1$s · %2$s, %3$s</string>
+    <string name="timetable_detail_format">%1$s–%2$s · %3$s</string>
+    <string name="timetable_delete">Delete this class?</string>
+    <string name="delete">Delete</string>
+    <string-array name="weekdays">
+        <item>Monday</item><item>Tuesday</item><item>Wednesday</item>
+        <item>Thursday</item><item>Friday</item><item>Saturday</item><item>Sunday</item>
+    </string-array>
+    <string name="tour_back">Back</string>
+    <string name="tour_finish">Finish</string>
+    <string name="tour_replay">Replay the app tour</string>
+    <string-array name="tour_titles">
+        <item>Home</item><item>Explore</item><item>Add a listing</item>
+        <item>Inbox</item><item>Profile</item>
+    </string-array>
+    <string-array name="tour_bodies">
+        <item>See campus updates, categories and your useful student tools.</item>
+        <item>Browse products and services by category.</item>
+        <item>Use the centre button to sell an item or offer a service.</item>
+        <item>Keep offers and seller conversations in one place.</item>
+        <item>Manage verification, saved items and account settings.</item>
+    </string-array>
+    <string-array name="home_rotating_messages">
+        <item>What’s happening on campus today?</item>
+        <item>Your next great find is probably avoiding eye contact.</item>
+        <item>Study first. Browse responsibly. Probably.</item>
+        <item>One campus, many suspiciously good deals.</item>
+    </string-array>
+    <string name="impact_leaderboard_title">Green Impact leaderboard</string>
+    <string name="impact_leaderboard_empty">No completed sustainable deals yet.</string>
+    <string name="impact_leaderboard_failed">Could not load the leaderboard.</string>
 </resources>

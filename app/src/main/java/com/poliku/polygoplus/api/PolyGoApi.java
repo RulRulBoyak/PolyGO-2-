@@ -40,6 +40,9 @@ public interface PolyGoApi {
     @POST("categories.php")
     Call<MajorsResponse> getMajors(@Body BaseRequest request);
 
+    @POST("campus.php")
+    Call<CampusResponse> campus(@Body CampusRequest request);
+
     @POST("listings.php")
     Call<ListingsResponse> getListings(@Body ListingsRequest request);
 
@@ -58,11 +61,23 @@ public interface PolyGoApi {
     @POST("add_listing.php")
     Call<AddListingResponse> addListing(@Body AddListingRequest request);
 
+    @POST("add_listing.php")
+    Call<AddListingResponse> updateListing(@Body AddListingRequest request);
+
     @POST("favorites.php")
     Call<BaseResponse> toggleFavorite(@Body FavoriteRequest request);
 
     @POST("favorites.php")
     Call<ListingsResponse> getFavorites(@Body FavoriteRequest request);
+
+    @POST("follow.php")
+    Call<FollowResponse> followUser(@Body FollowRequest request);
+
+    @POST("alerts.php")
+    Call<BaseResponse> toggleAlert(@Body AlertRequest request);
+
+    @POST("alerts.php")
+    Call<AlertsResponse> getAlerts(@Body AlertRequest request);
 
     @POST("messages.php")
     Call<ThreadsResponse> getThreads(@Body MessageRequest request);
@@ -180,6 +195,36 @@ public interface PolyGoApi {
         public String otp;
     }
 
+    class CampusRequest {
+        public String action;
+        public String id, course;
+        public String room, day_of_week, starts_at, ends_at;
+        public CampusRequest(String action) {
+            this.action = action;
+        }
+    }
+
+    class CampusResponse extends BaseResponse {
+        public List<CampusEvent> events;
+        public List<TimetableEntry> timetable;
+    }
+
+    class CampusEvent {
+        public String id, title, description, venue, starts_at, ends_at;
+        public String theme = "default";
+        public String accent_color, emoji, label, cover_url;
+        @SerializedName("is_featured")
+        public int isFeatured = 0;
+        public String organizer_name, organizer_contact, registration_url, map_url;
+        @SerializedName("capacity")
+        public int capacity = 0;
+    }
+
+    class TimetableEntry {
+        public int id, day_of_week;
+        public String course, room, starts_at, ends_at;
+    }
+
     class LoginRequest {
         public String student_id;
         public String password;
@@ -245,7 +290,12 @@ public interface PolyGoApi {
 
     class AddListingRequest {
         public String owner_id, title, category, price, description, image_url, tags, location, free_slots;
+        public String condition, original_price, action, listing_id;
         public Integer major_id;
+        @SerializedName("auto_reply")
+        public boolean autoReply;
+        @SerializedName("hide_from_friends")
+        public boolean hideFromFriends;
     }
 
     class AddListingResponse extends BaseResponse {
@@ -281,6 +331,44 @@ public interface PolyGoApi {
         public String user_id, target_type, target_id, reason, details;
     }
 
+    class FollowRequest {
+        public String user_id;
+        public Integer followed_id;
+        public String action;
+        public FollowRequest(String userId, int followedId, String action) {
+            this.user_id = userId;
+            this.followed_id = followedId;
+            this.action = action;
+        }
+    }
+
+    class FollowResponse extends BaseResponse {
+        @SerializedName("follower_count")
+        public int followerCount;
+        @SerializedName("is_following")
+        public boolean following;
+    }
+
+    class AlertRequest {
+        public String user_id;
+        public String listing_id;
+        public String action;
+        public AlertRequest(String userId, String action) {
+            this.user_id = userId;
+            this.action = action;
+        }
+        public AlertRequest(String userId, String listingId, String action) {
+            this.user_id = userId;
+            this.listing_id = listingId;
+            this.action = action;
+        }
+    }
+
+    class AlertsResponse extends BaseResponse {
+        @SerializedName("listing_ids")
+        public List<Integer> listingIds;
+    }
+
     class BlockRequest {
         public String user_id, blocked_id, action;
 
@@ -312,6 +400,8 @@ public interface PolyGoApi {
 
     class PulseAlert {
         public String id, title, body, tag;
+        @SerializedName("is_global")
+        public boolean global;
         @SerializedName("user_name")
         public String userName;
         @SerializedName("created_at")
@@ -320,6 +410,7 @@ public interface PolyGoApi {
 
     class PulseResponse extends BaseResponse {
         public List<PulseAlert> alerts;
+        public List<PulseAlert> announcements;
     }
 
     class VerificationRequest {
@@ -390,6 +481,8 @@ public interface PolyGoApi {
         public String profile_pic_url;
         @SerializedName("is_verified")
         public boolean verified;
+        @SerializedName("is_banned")
+        public boolean banned;
         public int active, sold;
         @SerializedName("is_private")
         public boolean isPrivate;
@@ -397,6 +490,10 @@ public interface PolyGoApi {
         public String joined_at;
         public float rating;
         public int reviews;
+        @SerializedName("follower_count")
+        public int followerCount;
+        @SerializedName("is_following")
+        public boolean following;
     }
 
     class CategoryResponse extends BaseResponse {
@@ -422,7 +519,11 @@ public interface PolyGoApi {
     }
 
     class Listing {
-        public String id, title, seller, price, rating, review_count, distance, image_url, category, description, owner_id, free_slots, major_name, location;
+        public String id, title, seller, price, distance, image_url, category, description, owner_id, free_slots, major_name, location;
+        public String condition, original_price, tags;
+        public float rating;
+        @SerializedName("review_count")
+        public int reviewCount;
         @SerializedName("thumb_url")
         public String thumbUrl;
         @SerializedName("is_available")
@@ -435,6 +536,10 @@ public interface PolyGoApi {
         public long postedAt;
         @SerializedName("is_verified")
         public boolean verified;
+        @SerializedName("auto_reply")
+        public boolean autoReply;
+        @SerializedName("hide_from_friends")
+        public boolean hideFromFriends;
         public int views;
     }
 
@@ -492,7 +597,7 @@ public interface PolyGoApi {
 
     class SellerMetricsResponse extends BaseResponse {
         @SerializedName("earnings")
-        public String total_earnings;
+        public double total_earnings;
         public int items_sold, active_listings;
         @SerializedName("rating")
         public float avg_rating;
@@ -507,6 +612,7 @@ public interface PolyGoApi {
     class GreenMetrics {
         public double co2, water, paper, energy;
         public int count, rank;
+        public int tools_reused;
         public String tier;
     }
 

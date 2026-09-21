@@ -1,5 +1,6 @@
 package com.poliku.polygoplus;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
@@ -20,6 +22,8 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
+
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -58,6 +62,12 @@ public class VerificationActivity extends BaseActivity {
         });
         
         initViews();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                returnHome();
+            }
+        });
         setupListeners();
         render();
         syncServerStatus();
@@ -100,7 +110,14 @@ public class VerificationActivity extends BaseActivity {
         chipGroupRole = findViewById(R.id.chipGroupRole);
         
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> returnHome());
+    }
+
+    private void returnHome() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void setupListeners() {
@@ -156,7 +173,7 @@ public class VerificationActivity extends BaseActivity {
                 return;
             }
             // Basic verification for alumni (Futuristic: would check against alumni DB)
-            if (!q1.toLowerCase().contains("pks") && !q1.toLowerCase().contains("poliku")) {
+            if (!q1.toLowerCase(Locale.ROOT).contains("pks") && !q1.toLowerCase(Locale.ROOT).contains("poliku")) {
                 UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_challenge_answer_incorrect);
                 return;
             }
@@ -199,8 +216,13 @@ public class VerificationActivity extends BaseActivity {
                 boolean ok = response.isSuccessful() && response.body() != null && response.body().isSuccess();
                 AppDataStore.submitVerification(VerificationActivity.this);
                 HapticManager.success(VerificationActivity.this);
-                UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content),
-                        ok ? R.string.verification_submitted : R.string.verification_server_failed);
+                if (ok) {
+                    UiUtils.snackbar(VerificationActivity.this.findViewById(android.R.id.content),
+                            R.string.verification_submitted);
+                } else {
+                    UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content),
+                            R.string.verification_server_failed);
+                }
                 btnSubmit.setEnabled(true);
                 render();
             }

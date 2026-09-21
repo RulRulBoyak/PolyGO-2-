@@ -20,18 +20,20 @@ import com.poliku.polygoplus.ui.HapticManager;
 @AndroidEntryPoint
 public class OnboardingActivity extends BaseActivity {
     private static final String[] TITLES = {
-        "Exclusive to PKS",
-        "Buy and sell on campus",
-        "Real-time chat",
-        "Meet safely"
+        "Your PolyGo+ home",
+        "Explore by category",
+        "Add a listing",
+        "Keep conversations together",
+        "Your profile, your settings"
     };
     private static final String[] BODIES = {
-        "PolyGo+ is only for Politeknik Kuching Sarawak students and staff. Verified campus IDs keep the marketplace trusted.",
-        "Browse food, tech, books and more from people around you. No need to leave campus to complete a deal.",
-        "Message sellers instantly, agree a price, and keep the conversation in one place.",
-        "Meet at PKS landmarks like Block A or the cafeteria. Mark the deal complete and leave a review."
+        "Home keeps campus updates, categories, and useful tools in one calm place.",
+        "Use Explore to browse food, tech, books and more from people around PKS.",
+        "Tap the centre + button whenever you are ready to sell a product or offer a service.",
+        "Inbox keeps offers and seller chats together, so every deal has a clear record.",
+        "Profile is where you manage your account, verification, saved items, and settings."
     };
-    private static final String[] EMOJIS = { "🎓", "🛍️", "💬", "📍" };
+    private static final String[] EMOJIS = { "🏠", "🔎", "＋", "💬", "👤" };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

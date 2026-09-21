@@ -16,6 +16,7 @@ import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
+import androidx.credentials.exceptions.NoCredentialException;
 import androidx.core.content.ContextCompat;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -83,6 +84,8 @@ public class LoginActivity extends BaseActivity {
                 public void onResponse(Call<PolyGoApi.LoginResponse> call, Response<PolyGoApi.LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         handleLoginResponse(response.body());
+                    } else if (isSuspendedResponse(response)) {
+                        onError(getString(R.string.toast_account_suspended));
                     } else {
                         onError(getString(R.string.toast_login_failed));
                     }
@@ -118,7 +121,7 @@ public class LoginActivity extends BaseActivity {
     private void setupGoogleSignIn() {
         btnGoogle.setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            String webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
+            String webClientId = getString(R.string.default_web_client_id);
             if (webClientId == null || webClientId.isEmpty()) {
                 Toast.makeText(this, R.string.toast_google_sign_in_unavailable, Toast.LENGTH_LONG).show();
                 return;
@@ -128,9 +131,10 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void googleSignIn() {
+        String webClientId = getString(R.string.default_web_client_id);
         GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                .setServerClientId(webClientId)
                 .build();
         GetCredentialRequest request = new GetCredentialRequest.Builder()
                 .addCredentialOption(googleIdOption)
@@ -162,7 +166,8 @@ public class LoginActivity extends BaseActivity {
                     @Override
                     public void onError(GetCredentialException e) {
                         btnGoogle.setEnabled(true);
-                        boolean cancelled = e instanceof androidx.credentials.exceptions.GetCredentialCancellationException;
+                        boolean cancelled = e instanceof androidx.credentials.exceptions.GetCredentialCancellationException
+                                || e instanceof NoCredentialException;
                         onGoogleError(cancelled, e.getMessage());
                     }
                 });
@@ -196,6 +201,15 @@ public class LoginActivity extends BaseActivity {
         }
     }
 
+    private boolean isSuspendedResponse(Response<?> response) {
+        try {
+            if (response.errorBody() == null) return false;
+            return response.errorBody().string().contains("suspended");
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     private void handleLoginResponse(PolyGoApi.LoginResponse body) {
         HapticManager.success(LoginActivity.this);
         btnLogin.setEnabled(true);
@@ -209,12 +223,15 @@ public class LoginActivity extends BaseActivity {
             userJson.put("email", body.user.email);
             userJson.put("mobile", body.user.mobile);
             userJson.put("role", body.user.role);
+            userJson.put("is_banned", body.user.banned);
 
             AppDataStore.saveRemoteSession(LoginActivity.this, userJson, body.token);
         } catch (Exception ignored) {}
 
         syncFcmToken();
-        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+        Intent home = new Intent(LoginActivity.this, HomeActivity.class);
+        home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(home);
         finish();
     }
 

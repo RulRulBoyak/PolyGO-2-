@@ -108,18 +108,20 @@ final class ImpactEngine {
         self::refreshTiers($pdo, $buyerId, $sellerId);
     }
 
-    /** Recompute tier from the current stored CO2 totals. */
+    /** Recompute tier from the current stored CO2 totals (thresholds from the consts above). */
     public static function refreshTiers(PDO $pdo, int ...$userIds): void {
         $ids = implode(',', array_map('intval', $userIds));
         if ($ids === '') {
             return;
         }
-        $pdo->exec("UPDATE user_impact SET tier = CASE
-            WHEN co2_kg >= 500 THEN 'emerald'
-            WHEN co2_kg >= 200 THEN 'gold'
-            WHEN co2_kg >= 50 THEN 'silver'
+        $sql = sprintf("UPDATE user_impact SET tier = CASE
+            WHEN co2_kg >= %d THEN 'emerald'
+            WHEN co2_kg >= %d THEN 'gold'
+            WHEN co2_kg >= %d THEN 'silver'
             ELSE 'bronze' END
-            WHERE user_id IN ($ids)");
+            WHERE user_id IN (%s)",
+            (int) self::TIER_EMERALD, (int) self::TIER_GOLD, (int) self::TIER_SILVER, $ids);
+        $pdo->exec($sql);
     }
 
     /** Aggregated metrics + rank for a single user. */
@@ -135,7 +137,8 @@ final class ImpactEngine {
             'energy' => 0,
             'count' => 0,
             'tier' => 'bronze',
-            'rank' => 0
+            'rank' => 0,
+            'tools_reused' => 0
         ];
 
         if ($row) {
@@ -144,13 +147,62 @@ final class ImpactEngine {
             $metrics['paper'] = round((float)$row['paper_kg'], 2);
             $metrics['energy'] = round((float)$row['energy_kwh'], 1);
             $metrics['count'] = (int)$row['impact_count'];
-            $metrics['tier'] = !empty($row['tier']) ? $row['tier'] : self::tier((float)$row['co2_kg']);
+            $metrics['tools_reused'] = self::toolsReused($pdo, $userId);
 
             $rank = $pdo->prepare('SELECT COUNT(*) + 1 FROM user_impact WHERE co2_kg > ?');
             $rank->execute([(float)$row['co2_kg']]);
             $metrics['rank'] = (int)$rank->fetchColumn();
         }
         return $metrics;
+    }
+
+    /**
+     * Circular-economy counter for a Polytechnic (TVET): how many vocational
+     * tools/equipment (multimeters, wrenches, vernier callipers, PCB kits, ...)
+     * were successfully re-transacted on campus instead of being bought new.
+     *
+     * Defensible by construction: it counts DISTINCT listings from COMPLETED
+     * transactions in which the user was buyer or seller, and whose title or
+     * category carries a vocational-tool signal (constant set below). It is a
+     * strict lower bound — it never invents a sale. Zero is honest when the
+     * campus has nothing completed yet.
+     */
+    private const VOCATIONAL_TOOL_SIGNALS = [
+        'multimeter', 'oscilloscope', 'calliper', 'caliper', 'micrometer',
+        'vernier', 'soldering', 'solder', 'wrench', 'spanner', 'screwdriver',
+        'drill', 'pliers', 'tool', 'toolkit', 'equipment', 'pcb', 'breadboard',
+        'transistor', 'diode', 'relay', 'sensor', 'arduino', 'raspberry',
+        'laptop motherboard', 'power supply', 'bench', 'cloth', 'machining',
+        'workshop', 'lab kit', 'repair kit', 'measuring', 'gauge', 'meter'
+    ];
+
+    /**
+     * Distinct vocational tools/equipment successfully re-transacted on campus
+     * (buyer OR seller, status = completed), whose title or category carries a
+     * vocational-tool signal. Strict lower bound by construction — it counts
+     * DISTINCT listings from COMPLETED transactions only; it never invents a
+     * sale canvased. Zero is honest when the campus has nothing completed.
+     */
+    public static function toolsReused(PDO $pdo, int $userId): int {
+        $signals = self::VOCATIONAL_TOOL_SIGNALS;
+        $clauses = [];
+        $params = [];
+        foreach ($signals as $signal) {
+            $like = '%' . strtolower(trim(($signal))) . '%';
+            $clauses[] = '(LOWER(l.title) LIKE ? OR LOWER(l.category) LIKE ?)';
+            $params[] = $like;
+            $params[] = $like;
+        }
+        $where = implode(' OR ', $clauses);
+        $query = $pdo->prepare("SELECT COUNT(DISTINCT l.id)
+            FROM transactions t
+            JOIN listings l ON l.id = t.listing_id
+            WHERE t.status = 'completed'
+              AND (t.buyer_id = ? OR t.seller_id = ?)
+              AND ($where)");
+        $params = array_merge([$userId, $userId], $params);
+        $query->execute($params);
+        return (int)$query->fetchColumn();
     }
 
     /** Per-category breakdown for a user, most impactful first. */
@@ -170,7 +222,7 @@ final class ImpactEngine {
             ui.impact_count AS count, ui.tier
             FROM user_impact ui
             JOIN users u ON u.id = ui.user_id
-            WHERE ui.co2_kg > 0
+            WHERE ui.co2_kg > 0 AND u.is_banned = 0
             ORDER BY ui.co2_kg DESC, ui.impact_count DESC
             LIMIT ?');
         $query->execute([$limit]);

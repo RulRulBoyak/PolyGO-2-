@@ -2,6 +2,8 @@ package com.poliku.polygoplus.data;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
 
@@ -63,13 +65,18 @@ public final class PolyGoRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     executor.execute(() -> {
                         List<ListingEntity> entities = new ArrayList<>();
-                        for (PolyGoApi.Listing l : response.body().listings) {
+                        List<PolyGoApi.Listing> listings = response.body().listings;
+                        if (listings == null) {
+                            return;
+                        }
+                        for (PolyGoApi.Listing l : listings) {
                             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
-                            ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price, l.rating,
+                            ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price,
+                                    String.valueOf(l.rating),
                                     l.distance != null ? l.distance : (l.location == null ? "" : l.location), l.image_url,
                                     l.category, l.description, l.owner_id, l.available, isOwner, l.location,
                                     l.postedAt, l.views);
-                            entity.reviewCount = l.review_count;
+                            entity.reviewCount = String.valueOf(l.reviewCount);
                             entities.add(entity);
                         }
                         listingDao.insertListings(entities);
@@ -116,6 +123,28 @@ public final class PolyGoRepository {
 
     public void proposeCategory(String name, Callback<BaseResponse> callback) {
         api.proposeCategory(new PolyGoApi.ProposeCategoryRequest(name)).enqueue(callback);
+    }
+
+    public void campus(String action, Callback<PolyGoApi.CampusResponse> callback) {
+        api.campus(new PolyGoApi.CampusRequest(action)).enqueue(callback);
+    }
+
+    public void saveTimetable(String id, String course, String room, String day,
+                              String startsAt, String endsAt, Callback<PolyGoApi.CampusResponse> callback) {
+        PolyGoApi.CampusRequest request = new PolyGoApi.CampusRequest("save_timetable");
+        request.id = id;
+        request.course = course;
+        request.room = room;
+        request.day_of_week = day;
+        request.starts_at = startsAt;
+        request.ends_at = endsAt;
+        api.campus(request).enqueue(callback);
+    }
+
+    public void deleteTimetable(String id, Callback<PolyGoApi.CampusResponse> callback) {
+        PolyGoApi.CampusRequest request = new PolyGoApi.CampusRequest("delete_timetable");
+        request.id = id;
+        api.campus(request).enqueue(callback);
     }
 
     public void getListings(int offset, int limit, String sort, Callback<PolyGoApi.ListingsResponse> callback) {
@@ -209,10 +238,14 @@ public final class PolyGoRepository {
     }
 
     public void addListing(String ownerId, String title, String category, String price, String description, String image, String tags, String location, Callback<PolyGoApi.AddListingResponse> callback) {
-        addListing(ownerId, title, category, price, description, image, tags, location, null, null, callback);
+        addListing(ownerId, title, category, price, description, image, tags, location, null, null, null, null, false, false, callback);
     }
 
-    public void addListing(String ownerId, String title, String category, String price, String description, String image, String tags, String location, String freeSlots, Integer majorId, Callback<PolyGoApi.AddListingResponse> callback) {
+    public void addListing(String ownerId, String title, String category, String price, String description, String image, String tags, String location, String freeSlots, Integer majorId, String condition, String originalPrice, Callback<PolyGoApi.AddListingResponse> callback) {
+        addListing(ownerId, title, category, price, description, image, tags, location, freeSlots, majorId, condition, originalPrice, false, false, callback);
+    }
+
+    public void addListing(String ownerId, String title, String category, String price, String description, String image, String tags, String location, String freeSlots, Integer majorId, String condition, String originalPrice, boolean autoReply, boolean hideFromFriends, Callback<PolyGoApi.AddListingResponse> callback) {
         PolyGoApi.AddListingRequest req = new PolyGoApi.AddListingRequest();
         req.owner_id = ownerId;
         req.title = title;
@@ -224,7 +257,44 @@ public final class PolyGoRepository {
         req.location = location;
         req.free_slots = freeSlots;
         req.major_id = majorId;
+        req.condition = condition;
+        req.original_price = originalPrice;
+        req.autoReply = autoReply;
+        req.hideFromFriends = hideFromFriends;
         api.addListing(req).enqueue(callback);
+    }
+
+    public void updateListing(String listingId, String ownerId, String title, String category, String price, String description, String image, String tags, String location, String freeSlots, Integer majorId, String condition, String originalPrice, boolean autoReply, boolean hideFromFriends, Callback<PolyGoApi.AddListingResponse> callback) {
+        PolyGoApi.AddListingRequest req = new PolyGoApi.AddListingRequest();
+        req.action = "edit";
+        req.listing_id = listingId;
+        req.owner_id = ownerId;
+        req.title = title;
+        req.category = category;
+        req.price = price;
+        req.description = description;
+        req.image_url = image;
+        req.tags = tags;
+        req.location = location;
+        req.free_slots = freeSlots;
+        req.major_id = majorId;
+        req.condition = condition;
+        req.original_price = originalPrice;
+        req.autoReply = autoReply;
+        req.hideFromFriends = hideFromFriends;
+        api.updateListing(req).enqueue(callback);
+    }
+
+    public void followUser(String userId, int followedId, boolean follow, Callback<PolyGoApi.FollowResponse> callback) {
+        api.followUser(new PolyGoApi.FollowRequest(userId, followedId, follow ? "follow" : "unfollow")).enqueue(callback);
+    }
+
+    public void getAlerts(String userId, Callback<PolyGoApi.AlertsResponse> callback) {
+        api.getAlerts(new PolyGoApi.AlertRequest(userId, "list")).enqueue(callback);
+    }
+
+    public void toggleAlert(String userId, String listingId, Callback<BaseResponse> callback) {
+        api.toggleAlert(new PolyGoApi.AlertRequest(userId, listingId, "toggle")).enqueue(callback);
     }
 
     public void toggleFavorite(String userId, String listingId, Callback<BaseResponse> callback) {
@@ -449,7 +519,7 @@ public final class PolyGoRepository {
             try {
                 InputStream inputStream = context.getContentResolver().openInputStream(uri);
                 if (inputStream == null) {
-                    new android.os.Handler(android.os.Looper.getMainLooper())
+                    new Handler(Looper.getMainLooper())
                             .post(() -> callback.onFailure(null, new Throwable("Could not open input stream")));
                     return;
                 }
@@ -459,7 +529,7 @@ public final class PolyGoRepository {
                 MultipartBody.Part body = MultipartBody.Part.createFormData("image", "upload.jpg", requestFile);
                 api.aiSuggestImage(body).enqueue(callback);
             } catch (Exception e) {
-                new android.os.Handler(android.os.Looper.getMainLooper())
+                new Handler(Looper.getMainLooper())
                         .post(() -> callback.onFailure(null, e));
             }
         });
@@ -476,7 +546,7 @@ public final class PolyGoRepository {
     }
 
     private void postFailure(final Callback<PolyGoApi.UploadResponse> callback, final Throwable throwable) {
-        new android.os.Handler(android.os.Looper.getMainLooper())
+        new Handler(Looper.getMainLooper())
                 .post(() -> callback.onFailure(null, throwable));
     }
 

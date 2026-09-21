@@ -58,6 +58,29 @@ if ($action === 'send') {
     $query = $pdo->prepare('INSERT INTO messages (thread_id, sender_id, text) VALUES (?, ?, ?)');
     if ($query->execute([$threadId, $userId, $text])) {
 
+        // Marketplace Pro auto-reply: when the seller enabled auto_reply and a
+        // BUYER asks whether the item is still available, the seller instantly
+        // answers (canned) so the deal moves 5x faster.
+        try {
+            $auto = $pdo->prepare('SELECT t.listing_id, t.buyer_id, t.seller_id, l.auto_reply FROM threads t INNER JOIN listings l ON l.id = t.listing_id WHERE t.id = ?');
+            $auto->execute([$threadId]);
+            $autoRow = $auto->fetch();
+            if ($autoRow
+                && (int)$autoRow['auto_reply'] === 1
+                && (int)$autoRow['buyer_id'] === $userId
+                && preg_match('/(still available|available\?|available now|masih ada|cantik\?|available)/i', $text)
+            ) {
+                $reply = 'Yes, it is still available. Would you like to arrange a meetup on campus?';
+                $autoInsert = $pdo->prepare('INSERT INTO messages (thread_id, sender_id, text) VALUES (?, ?, ?)');
+                $autoInsert->execute([$threadId, (int)$autoRow['seller_id'], $reply]);
+                NotificationManager::sendToUser($pdo, $userId, 'Instant reply', $reply, [
+                    'type' => 'chat',
+                    'thread_id' => (string)$threadId
+                ]);
+            }
+        } catch (Throwable $ignored) {
+        }
+
         // Find recipient to send notification
         $tQuery = $pdo->prepare('SELECT buyer_id, seller_id FROM threads WHERE id = ?');
         $tQuery->execute([$threadId]);

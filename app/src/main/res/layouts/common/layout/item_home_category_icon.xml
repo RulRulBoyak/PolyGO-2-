@@ -10,15 +10,28 @@
     android:clickable="true"
     android:focusable="true">
 
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/ivCategoryIcon"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:background="@color/soft_blue"
-        android:contentDescription="@string/content_description_category"
-        android:padding="10dp"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-        app:tint="@color/pks_blue" />
+    <FrameLayout
+        android:layout_width="60dp"
+        android:layout_height="60dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivCategoryBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.15"
+            android:background="@color/pks_blue"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Large" />
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/content_description_category"
+            android:src="@drawable/ic_category_tech"
+            app:tint="@color/pks_blue" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tvCategoryName"

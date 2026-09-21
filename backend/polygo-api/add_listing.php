@@ -32,6 +32,16 @@ try {
     $majorId = (int)($input['major_id'] ?? 0);
     $majorId = $majorId > 0 ? $majorId : null;
 
+    // Marketplace Pro attributes.
+    $knownConditions = ['New', 'Used - Like New', 'Used - Good', 'Used - Fair'];
+    $conditionRaw = (string)($input['condition'] ?? 'New');
+    $condition = in_array($conditionRaw, $knownConditions, true) ? $conditionRaw : 'New';
+    $originalPrice = max(0, (float)($input['original_price'] ?? 0));
+    // Strike-through only makes sense when the original price is above the ask.
+    $originalPrice = $originalPrice > $price ? $originalPrice : 0;
+    $autoReply = !empty($input['auto_reply']) ? 1 : 0;
+    $hideFromFriends = !empty($input['hide_from_friends']) ? 1 : 0;
+
     if ($ownerId <= 0 || empty($title)) {
         respond(false, 'Missing required listing information');
     }
@@ -47,8 +57,31 @@ try {
         if (!$majorCheck->fetch()) respond(false, 'Invalid major selected');
     }
 
-    $query = $pdo->prepare('INSERT INTO listings (owner_id, title, category, description, price, image_url, tags, free_slots, major_id, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    if ($query->execute([$ownerId, $title, $category, $description, $price, $imageUrl, $tags, $freeSlots, $majorId, $location])) {
+    $action = strtolower((string)($input['action'] ?? ''));
+    if ($action === 'edit') {
+        $listingId = (string)($input['listing_id'] ?? '');
+        if ($listingId === '') respond(false, 'Missing listing id');
+
+        $check = $pdo->prepare('SELECT owner_id, is_available, archived_at FROM listings WHERE id = ? LIMIT 1');
+        $check->execute([$listingId]);
+        $row = $check->fetch();
+        if (!$row) respond(false, 'Listing not found');
+        if ((int)$row['owner_id'] !== (int)$ownerId) respond(false, 'You can only edit your own listings');
+        if ((int)$row['is_available'] === 0 || $row['archived_at'] !== null) {
+            respond(false, 'Sold or removed listings can no longer be edited');
+        }
+
+        $originalPriceDb = $originalPrice > 0 ? $originalPrice : null;
+        $update = $pdo->prepare('UPDATE listings SET title = ?, category = ?, description = ?, price = ?, `condition` = ?, original_price = ?, image_url = ?, tags = ?, free_slots = ?, major_id = ?, location = ?, auto_reply = ?, hide_from_friends = ? WHERE id = ? AND owner_id = ?');
+        if ($update->execute([$title, $category, $description, $price, $condition, $originalPriceDb, $imageUrl, $tags, $freeSlots, $majorId, $location, $autoReply, $hideFromFriends, $listingId, $ownerId])) {
+            respond(true, 'Listing updated successfully', ['id' => (string)$listingId]);
+        }
+        respond(false, 'Failed to update listing');
+    }
+
+    $query = $pdo->prepare('INSERT INTO listings (owner_id, title, category, description, price, `condition`, original_price, image_url, tags, free_slots, major_id, location, auto_reply, hide_from_friends) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $originalPriceDb = $originalPrice > 0 ? $originalPrice : null;
+    if ($query->execute([$ownerId, $title, $category, $description, $price, $condition, $originalPriceDb, $imageUrl, $tags, $freeSlots, $majorId, $location, $autoReply, $hideFromFriends])) {
         respond(true, 'Listing added successfully', ['id' => $pdo->lastInsertId()]);
     } else {
         respond(false, 'Failed to add listing');

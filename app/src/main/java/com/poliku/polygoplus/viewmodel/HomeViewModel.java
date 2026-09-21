@@ -60,10 +60,10 @@ public class HomeViewModel extends AndroidViewModel {
                         for (PolyGoApi.Listing l : body.listings) {
                             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
                             ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price,
-                                    l.rating, l.distance != null ? l.distance : (l.location == null ? "" : l.location),
+                                    String.valueOf(l.rating), l.distance != null ? l.distance : (l.location == null ? "" : l.location),
                                     l.image_url, l.category, l.description,
                                     l.owner_id, l.available, isOwner, l.location, l.postedAt, l.views);
-                            entity.reviewCount = l.review_count;
+                            entity.reviewCount = String.valueOf(l.reviewCount);
                             entity.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
                             list.add(entity);
                         }
@@ -101,10 +101,10 @@ public class HomeViewModel extends AndroidViewModel {
                         for (PolyGoApi.Listing l : body.listings) {
                             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
                             ListingEntity entity = new ListingEntity(l.id, l.title, l.seller, l.price,
-                                    l.rating, l.distance != null ? l.distance : (l.location == null ? "" : l.location),
+                                    String.valueOf(l.rating), l.distance != null ? l.distance : (l.location == null ? "" : l.location),
                                     l.image_url, l.category, l.description,
                                     l.owner_id, l.available, isOwner, l.location, l.postedAt, l.views);
-                            entity.reviewCount = l.review_count;
+                            entity.reviewCount = String.valueOf(l.reviewCount);
                             entity.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
                             list.add(entity);
                         }

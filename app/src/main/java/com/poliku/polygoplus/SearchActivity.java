@@ -203,6 +203,7 @@ public class SearchActivity extends BaseActivity {
                 List<String> names = new ArrayList<>();
                 names.add("All categories");
                 if (body != null && body.categories != null) {
+                    UiUtils.rememberCategoryIcons(SearchActivity.this, body.categories);
                     for (PolyGoApi.Category c : body.categories) {
                         names.add(c.name);
                     }
@@ -253,16 +254,15 @@ public class SearchActivity extends BaseActivity {
 
     private void showSortDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
-        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_sort, null);
-        dialog.setContentView(view);
+        dialog.setContentView(R.layout.bottom_sheet_sort);
         
-        RadioGroup group = view.findViewById(R.id.radioGroupSort);
+        RadioGroup group = dialog.findViewById(R.id.radioGroupSort);
         for (int i = 0; i < group.getChildCount(); i++) {
             RadioButton rb = (RadioButton) group.getChildAt(i);
             if (currentSort.equals(rb.getTag())) rb.setChecked(true);
         }
 
-        view.findViewById(R.id.btnApplySort).setOnClickListener(v -> {
+        dialog.findViewById(R.id.btnApplySort).setOnClickListener(v -> {
             HapticManager.mediumTap(v);
             int id = group.getCheckedRadioButtonId();
             if (id != View.NO_ID) {

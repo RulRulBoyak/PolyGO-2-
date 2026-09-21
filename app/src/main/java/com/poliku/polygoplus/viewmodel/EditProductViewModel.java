@@ -92,4 +92,20 @@ public class EditProductViewModel extends ViewModel {
     public String getTags() {
         return state.get("tags") != null ? state.get("tags") : "";
     }
+
+    public void setCondition(String val) {
+        state.set("condition", val);
+    }
+
+    public String getCondition() {
+        return state.get("condition") != null ? state.get("condition") : "New";
+    }
+
+    public void setOriginalPrice(String val) {
+        state.set("orig_price", val);
+    }
+
+    public String getOriginalPrice() {
+        return state.get("orig_price") != null ? state.get("orig_price") : "";
+    }
 }

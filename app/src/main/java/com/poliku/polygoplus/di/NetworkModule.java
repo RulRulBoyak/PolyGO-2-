@@ -111,7 +111,25 @@ public final class NetworkModule {
         Interceptor authResponseInterceptor = chain -> {
             Response response = chain.proceed(chain.request());
             if (response.code() == 401) {
-                AuthSessionHandler.onSessionExpired();
+                // Suspended accounts respond "Unauthorized: Your account has
+                // been suspended..." and must land on BannedActivity; every
+                // other 401 is a session expiry. peekBody is non-consuming so
+                // the Retrofit callback can still parse the real error body.
+                boolean suspended = false;
+                if (response.body() != null) {
+                    try {
+                        suspended = response.peekBody(512)
+                                .string()
+                                .contains("suspended");
+                    } catch (Exception ignored) {
+                        // Peek failed - treat as a plain session expiry.
+                    }
+                }
+                if (suspended) {
+                    AuthSessionHandler.onSuspended();
+                } else {
+                    AuthSessionHandler.onSessionExpired();
+                }
                 return response;
             }
             // Fallback for the pre-401 backend: JWT failures arrive as HTTP 200
@@ -142,7 +160,7 @@ public final class NetworkModule {
                 .build();
 
         return new Retrofit.Builder()
-                .baseUrl(BuildConfig.DEBUG ? "http://10.0.2.2/polygo-api/" : "https://polygo.pks.edu.my/polygo-api/")
+                .baseUrl(BuildConfig.DEBUG ? "http://192.168.100.152/polygo-api/" : "https://polygo.pks.edu.my/polygo-api/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build()

@@ -3,10 +3,13 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,6 +24,14 @@ import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -35,6 +46,7 @@ import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.ProductCardAdapter;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
+import com.poliku.polygoplus.network.CampusMapHelper;
 import com.poliku.polygoplus.ui.CarouselAdapter;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.HapticManager;
@@ -49,6 +61,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.text.SimpleDateFormat;
@@ -68,6 +81,14 @@ public class ProductDetailActivity extends BaseActivity {
     private String detailFreeSlots;
     private String detailMajorName;
     private Call<PolyGoApi.ListingsResponse> pendingFetch;
+    private AppBarLayout.OnOffsetChangedListener offsetChangedListener;
+    private MapView mapView;
+    private MaterialButton alertButton;
+    private MaterialButton followButton;
+    private TextInputEditText quickMessageInput;
+    private boolean isAlerted;
+    private boolean isFollowing;
+    private int followerCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,14 +128,15 @@ public class ProductDetailActivity extends BaseActivity {
             WindowInsetsControllerCompat insetsController =
                     WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
             Drawable navIcon = toolbar != null ? toolbar.getNavigationIcon() : null;
-            topBar.addOnOffsetChangedListener((bar, verticalOffset) -> {
+            offsetChangedListener = (bar, verticalOffset) -> {
                 boolean collapsed = bar.getTotalScrollRange() > 0
                         && Math.abs(verticalOffset) >= bar.getTotalScrollRange();
                 if (navIcon != null) {
                     navIcon.setTint(collapsed ? getColor(R.color.airbnb_ink) : Color.WHITE);
                 }
                 insetsController.setAppearanceLightStatusBars(collapsed);
-            });
+            };
+            topBar.addOnOffsetChangedListener(offsetChangedListener);
         }
 
         String id = getIntent().getStringExtra(EXTRA_LISTING_ID);
@@ -143,7 +165,35 @@ public class ProductDetailActivity extends BaseActivity {
 
         saveButton = findViewById(R.id.btnSave);
 
+        initMeetupMap(savedInstanceState);
+
         fetchProduct(id);
+    }
+
+    private void initMeetupMap(Bundle savedInstanceState) {
+        FrameLayout container = findViewById(R.id.mapMeetupContainer);
+        if (container == null) return;
+        try {
+            mapView = new MapView(this, new GoogleMapOptions().liteMode(true).mapType(GoogleMap.MAP_TYPE_NORMAL));
+            container.addView(mapView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+            mapView.onCreate(savedInstanceState);
+            mapView.getMapAsync(this::configureLiteMap);
+        } catch (Exception ignored) {
+            // Maps provider unavailable (e.g. missing key) — the card simply renders without a map.
+        }
+    }
+
+    private void configureLiteMap(GoogleMap map) {
+        if (map == null) return;
+        String landmark = product != null && product.location != null ? product.location : "Near campus";
+        LatLng center = CampusMapHelper.getCoordinates(landmark);
+        map.setIndoorEnabled(false);
+        map.getUiSettings().setAllGesturesEnabled(false);
+        map.getUiSettings().setMapToolbarEnabled(false);
+        map.addMarker(new MarkerOptions().position(center).title(landmark));
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(center, 15f));
     }
 
     private void fetchProduct(String id) {
@@ -151,6 +201,10 @@ public class ProductDetailActivity extends BaseActivity {
         pendingFetch.enqueue(new Callback<PolyGoApi.ListingsResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
+                if (!response.isSuccessful()) {
+                    tryLocalFallback(id);
+                    return;
+                }
                 PolyGoApi.ListingsResponse body = response.body();
                 if (body != null && body.listings != null && !body.listings.isEmpty()) {
                     PolyGoApi.Listing l = body.listings.get(0);
@@ -208,6 +262,21 @@ public class ProductDetailActivity extends BaseActivity {
         ((TextView) findViewById(R.id.productTitle)).setText(product.title);
         if (collapsingToolbar != null) collapsingToolbar.setTitle(product.title);
         ((TextView) findViewById(R.id.productPrice)).setText("RM " + product.price);
+
+        TextView origPrice = findViewById(R.id.productOriginalPrice);
+        if (product.originalPrice != null && !product.originalPrice.isEmpty()) {
+            origPrice.setText("RM " + product.originalPrice);
+            origPrice.setPaintFlags(origPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            origPrice.setVisibility(View.VISIBLE);
+        } else {
+            origPrice.setVisibility(View.GONE);
+        }
+
+        TextView condition = findViewById(R.id.productCondition);
+        if (condition != null) {
+            condition.setText(product.condition != null ? product.condition : "New");
+        }
+
         String meta = "★ " + product.rating;
         if (product.reviewCount != null && !product.reviewCount.isEmpty() && !"0".equals(product.reviewCount)) {
             meta += " (" + product.reviewCount + ")";
@@ -276,6 +345,12 @@ public class ProductDetailActivity extends BaseActivity {
         if (sellerMetaView != null) {
             sellerMetaView.setText(product.verified ? R.string.seller_verified_meta : R.string.seller_student_meta);
         }
+        TextView mapCaption = findViewById(R.id.tvMapCaption);
+        if (mapCaption != null) {
+            String location = product.location == null || product.location.trim().isEmpty()
+                    ? getString(R.string.location_near_campus) : product.location.trim();
+            mapCaption.setText(getString(R.string.meetup_map_caption, location));
+        }
         TextView trustRating = findViewById(R.id.tvSellerRating);
         if (trustRating != null) trustRating.setText(product.rating);
         findViewById(R.id.btnReportListing).setOnClickListener(v -> {
@@ -296,6 +371,22 @@ public class ProductDetailActivity extends BaseActivity {
             toggleFavorite();
         });
 
+        alertButton = findViewById(R.id.btnAlertListing);
+        if (alertButton != null) {
+            if (product.owner) {
+                alertButton.setVisibility(View.GONE);
+            } else {
+                updateAlertButton();
+                alertButton.setOnClickListener(v -> {
+                    HapticManager.lightTap(v);
+                    toggleAlert();
+                });
+            }
+        }
+
+        followButton = findViewById(R.id.btnFollowSeller);
+        setupSellerFollow();
+
         MaterialButton shareBtn = findViewById(R.id.btnShareListing);
         if (shareBtn != null) {
             shareBtn.setOnClickListener(v -> {
@@ -304,11 +395,26 @@ public class ProductDetailActivity extends BaseActivity {
             });
         }
 
-        MaterialButton message = findViewById(R.id.btnMessageSeller);
+        View composerInput = findViewById(R.id.tilQuickMessage);
+        View composerSend = findViewById(R.id.btnSendQuickMessage);
+        quickMessageInput = findViewById(R.id.etQuickMessage);
+        if (quickMessageInput != null) {
+            quickMessageInput.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    sendQuickMessage();
+                    return true;
+                }
+                return false;
+            });
+        }
+        if (composerSend != null) {
+            composerSend.setOnClickListener(v -> sendQuickMessage());
+        }
+
         if (product.owner) {
-            View chat = findViewById(R.id.btnMessageSeller);
+            if (composerInput != null) composerInput.setVisibility(View.GONE);
+            if (composerSend != null) composerSend.setVisibility(View.GONE);
             View offer = findViewById(R.id.btnMakeOffer);
-            if (chat != null) chat.setVisibility(View.GONE);
             if (offer != null) offer.setVisibility(View.GONE);
             MaterialButton sold = findViewById(R.id.btnMarkSold);
             sold.setVisibility(View.VISIBLE);
@@ -367,19 +473,6 @@ public class ProductDetailActivity extends BaseActivity {
             }
         }
 
-        message.setOnClickListener(v -> {
-            if (!AppDataStore.isLoggedIn(this)) {
-                Toast.makeText(this, R.string.toast_login_to_contact, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, LoginActivity.class));
-                return;
-            }
-            Intent i = new Intent(this, ChatActivity.class);
-            i.putExtra(ChatActivity.EXTRA_LISTING_ID, product.id);
-            i.putExtra(ChatActivity.EXTRA_SELLER_ID, product.ownerId);
-            i.putExtra(ChatActivity.EXTRA_OTHER_NAME, product.seller);
-            startActivity(i);
-        });
-
         findViewById(R.id.btnMakeOffer).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             if (!AppDataStore.isLoggedIn(this)) {
@@ -422,6 +515,184 @@ public class ProductDetailActivity extends BaseActivity {
         group.addView(chip);
     }
 
+    private void setupSellerFollow() {
+        if (followButton == null) return;
+        if (product.owner) {
+            followButton.setVisibility(View.GONE);
+            return;
+        }
+        followButton.setVisibility(View.VISIBLE);
+        applyFollowVisual();
+        followButton.setOnClickListener(v -> {
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, R.string.toast_login_required_save, Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+            int sellerId;
+            try {
+                sellerId = Integer.parseInt(product.ownerId.trim());
+            } catch (NumberFormatException e) {
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+                return;
+            }
+            boolean desired = !isFollowing;
+            isFollowing = desired;
+            applyFollowVisual();
+            polyGoRepository.followUser(AppDataStore.userId(this), sellerId, desired, new Callback<PolyGoApi.FollowResponse>() {
+                @Override
+                public void onResponse(Call<PolyGoApi.FollowResponse> call, Response<PolyGoApi.FollowResponse> response) {
+                    PolyGoApi.FollowResponse body = response.body();
+                    if (response.isSuccessful() && body != null && body.isSuccess()) {
+                        followerCount = body.followerCount;
+                        isFollowing = body.following;
+                        applyFollowVisual();
+                        TextView meta = findViewById(R.id.sellerMeta);
+                        if (meta != null) updateSellerMetaWithFollowers(meta);
+                    } else {
+                        isFollowing = !desired;
+                        applyFollowVisual();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<PolyGoApi.FollowResponse> call, Throwable t) {
+                    isFollowing = !desired;
+                    applyFollowVisual();
+                    UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+                }
+            });
+        });
+    }
+
+    private void updateSellerMetaWithFollowers(TextView metaView) {
+        String base = product.verified ? getString(R.string.seller_verified_meta) : getString(R.string.seller_student_meta);
+        if (followerCount > 0) {
+            metaView.setText(base + "  •  " + getString(R.string.seller_followers_count, followerCount));
+        } else {
+            metaView.setText(base);
+        }
+    }
+
+    private void applyFollowVisual() {
+        if (followButton == null) return;
+        if (isFollowing) {
+            followButton.setText(getString(R.string.seller_following));
+            followButton.setIconResource(R.drawable.ic_heart_filled);
+            followButton.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            followButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.soft_blue, getTheme())));
+            followButton.setTextColor(getResources().getColor(R.color.pks_blue, getTheme()));
+            followButton.setStrokeColor(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            followButton.setStrokeWidth(2);
+        } else {
+            followButton.setText(getString(R.string.seller_follow));
+            followButton.setIconResource(R.drawable.ic_heart_outline);
+            followButton.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            followButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            followButton.setTextColor(ColorStateList.valueOf(Color.WHITE));
+            followButton.setStrokeColor(ColorStateList.valueOf(Color.TRANSPARENT));
+            followButton.setStrokeWidth(0);
+        }
+    }
+
+    private void toggleAlert() {
+        if (product == null) return;
+        if (!AppDataStore.isLoggedIn(this)) {
+            Toast.makeText(this, R.string.toast_login_required_save, Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
+        boolean desired = !isAlerted;
+        isAlerted = desired;
+        updateAlertButton();
+        polyGoRepository.toggleAlert(AppDataStore.userId(this), product.id, new Callback<BaseResponse>() {
+            @Override
+            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                    isAlerted = !desired;
+                    updateAlertButton();
+                    return;
+                }
+                if (desired) {
+                    Toast.makeText(ProductDetailActivity.this, R.string.toast_alert_on, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BaseResponse> call, Throwable t) {
+                isAlerted = !desired;
+                updateAlertButton();
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+            }
+        });
+    }
+
+    private void updateAlertButton() {
+        if (alertButton == null) return;
+        alertButton.setSelected(isAlerted);
+        alertButton.setContentDescription(getString(isAlerted ? R.string.product_alert_on : R.string.product_alert));
+    }
+
+    private void sendQuickMessage() {
+        if (product == null) return;
+        if (!AppDataStore.isLoggedIn(this)) {
+            Toast.makeText(this, R.string.toast_login_to_contact, Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
+        String typed = quickMessageInput == null ? "" : quickMessageInput.getText().toString().trim();
+        String text = typed.isEmpty() ? getString(R.string.quick_message_default) : typed;
+
+        quickMessageInput.setEnabled(false);
+        findViewById(R.id.btnSendQuickMessage).setEnabled(false);
+        polyGoRepository.createSendMessageCall(AppDataStore.userId(this), null, product.id, product.ownerId, text)
+                .enqueue(new Callback<PolyGoApi.SendMessageResponse>() {
+                    @Override
+                    public void onResponse(Call<PolyGoApi.SendMessageResponse> call, Response<PolyGoApi.SendMessageResponse> response) {
+                        PolyGoApi.SendMessageResponse body = response.body();
+                        if (response.isSuccessful() && body != null && body.isSuccess() && body.threadId != null) {
+                            HapticManager.success(ProductDetailActivity.this);
+                            AppDataStore.rememberThread(ProductDetailActivity.this, body.threadId, product.id, product.seller);
+                            broadcastMessageToFirestore(body.threadId, text);
+                            openThread(body.threadId);
+                        } else {
+                            resetComposer();
+                            UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_message_failed);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<PolyGoApi.SendMessageResponse> call, Throwable t) {
+                        resetComposer();
+                        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+                    }
+                });
+    }
+
+    private void resetComposer() {
+        if (quickMessageInput != null) quickMessageInput.setEnabled(true);
+        View send = findViewById(R.id.btnSendQuickMessage);
+        if (send != null) send.setEnabled(true);
+    }
+
+    private void openThread(String threadId) {
+        Intent i = new Intent(this, ChatActivity.class);
+        i.putExtra(ChatActivity.EXTRA_THREAD_ID, threadId);
+        i.putExtra(ChatActivity.EXTRA_LISTING_ID, product.id);
+        i.putExtra(ChatActivity.EXTRA_SELLER_ID, product.ownerId);
+        i.putExtra(ChatActivity.EXTRA_OTHER_NAME, product.seller);
+        startActivity(i);
+    }
+
+    private void broadcastMessageToFirestore(String threadId, String text) {
+        if (threadId == null || threadId.isEmpty()) return;
+        java.util.Map<String, Object> data = new HashMap<>();
+        data.put("content", text);
+        data.put("sender_id", AppDataStore.userId(this));
+        data.put("timestamp", System.currentTimeMillis() / 1000);
+        FirebaseFirestore.getInstance().collection("chats").document(threadId).collection("messages").add(data);
+    }
+
     private void shareListing() {
         String url = "https://polygo.pks.edu.my/listing/" + product.id;
         Intent send = new Intent(Intent.ACTION_SEND);
@@ -447,12 +718,16 @@ public class ProductDetailActivity extends BaseActivity {
             @Override
             public void onResponse(Call<PolyGoApi.ListingsResponse> call, Response<PolyGoApi.ListingsResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
+                if (!response.isSuccessful()) {
+                    section.setVisibility(View.GONE);
+                    return;
+                }
                 List<ListingEntity> items = new ArrayList<>();
                 PolyGoApi.ListingsResponse body = response.body();
                 if (body != null && body.listings != null) {
                     String currentUserId = AppDataStore.userId(ProductDetailActivity.this);
                     for (PolyGoApi.Listing l : body.listings) {
-                        items.add(new ListingEntity(l.id, l.title, l.seller, l.price, l.rating,
+                        items.add(new ListingEntity(l.id, l.title, l.seller, l.price, String.valueOf(l.rating),
                                 l.distance != null ? l.distance : (l.location == null ? "" : l.location),
                                 l.image_url, l.category, l.description, l.owner_id, l.available,
                                 currentUserId != null && currentUserId.equals(l.owner_id),
@@ -476,12 +751,19 @@ public class ProductDetailActivity extends BaseActivity {
             @Override
             public void onResponse(Call<PolyGoApi.SellerResponse> call, Response<PolyGoApi.SellerResponse> response) {
                 if (isFinishing() || isDestroyed()) return;
+                if (!response.isSuccessful()) return;
                 PolyGoApi.SellerResponse body = response.body();
                 if (body == null || body.user == null || body.user.isPrivate) return;
 
                 TextView meta = findViewById(R.id.sellerMeta);
                 if (meta == null) return;
                 PolyGoApi.User seller = body.user;
+                isFollowing = seller.following;
+                followerCount = seller.followerCount;
+                if (followButton != null) {
+                    applyFollowVisual();
+                }
+                updateSellerMetaWithFollowers(meta);
                 String pic = seller.profile_pic_url == null ? "" : seller.profile_pic_url.trim();
                 if (!pic.isEmpty()) {
                     ShapeableImageView avatar = findViewById(R.id.sellerAvatar);
@@ -625,8 +907,32 @@ public class ProductDetailActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (mapView != null) mapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (mapView != null) mapView.onPause();
+        super.onPause();
+    }
+
+    @Override
+    public void onLowMemory() {
+        if (mapView != null) mapView.onLowMemory();
+        super.onLowMemory();
+    }
+
+    @Override
     protected void onDestroy() {
         if (pendingFetch != null) pendingFetch.cancel();
+        if (mapView != null) mapView.onDestroy();
+        AppBarLayout topBar = findViewById(R.id.topBar);
+        if (topBar != null && offsetChangedListener != null) {
+            topBar.removeOnOffsetChangedListener(offsetChangedListener);
+        }
+        offsetChangedListener = null;
         super.onDestroy();
     }
 

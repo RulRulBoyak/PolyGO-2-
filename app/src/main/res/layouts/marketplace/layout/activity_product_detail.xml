@@ -141,6 +141,30 @@
                         app:strokeColor="@color/save_stroke_selector"
                         app:strokeWidth="1.2dp" />
 
+                    <!-- Alerts / Price-watch Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAlertListing"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="@string/product_alert"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        app:cornerRadius="24dp"
+                        app:icon="@drawable/ic_bell"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="22dp"
+                        app:iconTint="@color/save_icon_selector"
+                        app:strokeColor="@color/save_stroke_selector"
+                        app:strokeWidth="1.2dp" />
+
                     <!-- Share Listing Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnShareListing"
@@ -167,16 +191,35 @@
                 </LinearLayout>
 
                 <!-- Product Price -->
-                <TextView
-                    android:id="@+id/productPrice"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-                    android:textColor="@color/pks_blue"
-                    android:textStyle="bold"
-                    tools:text="RM 45.00" />
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/productPrice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
+                        android:textColor="@color/pks_blue"
+                        android:textStyle="bold"
+                        tools:text="RM 45.00" />
+
+                    <TextView
+                        android:id="@+id/productOriginalPrice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginBottom="4dp"
+                        android:textColor="@color/airbnb_muted"
+                        android:textSize="15sp"
+                        android:visibility="gone"
+                        tools:text="RM 55.00"
+                        tools:visibility="visible" />
+                </LinearLayout>
 
                 <!-- Rating, Distance Meta -->
                 <TextView
@@ -239,6 +282,31 @@
                             android:textColor="@color/airbnb_ink"
                             android:textSize="17sp"
                             android:textStyle="bold" />
+
+                        <!-- Condition Info -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/condition_label"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/productCondition"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/airbnb_ink"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                tools:text="Used - Like New" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/productDescription"
@@ -381,6 +449,55 @@
                     android:layout_marginBottom="22dp"
                     android:background="@color/grey_200" />
 
+                <!-- Meetup Location Map (Google Maps Lite) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/grey_200"
+                    app:strokeWidth="1.2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="-0.01"
+                            android:text="@string/meetup_location_title"
+                            android:textColor="@color/airbnb_ink"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMapCaption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/airbnb_muted"
+                            android:textSize="12.5sp"
+                            tools:text="Near campus • Politeknik Kuching Sarawak" />
+
+                        <FrameLayout
+                            android:id="@+id/mapMeetupContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:layout_marginTop="12dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="22dp"
+                    android:layout_marginBottom="22dp"
+                    android:background="@color/grey_200" />
+
                 <!-- Seller Profile Snippet Card -->
                 <TextView
                     android:layout_width="wrap_content"
@@ -477,6 +594,32 @@
                                     android:textColor="@color/airbnb_muted"
                                     android:textSize="12.5sp" />
                             </LinearLayout>
+
+                            <!-- Follow Seller -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnFollowSeller"
+                                style="@style/Widget.PolyGo.Button.Outlined"
+                                android:layout_width="wrap_content"
+                                android:layout_height="34dp"
+                                android:layout_marginEnd="10dp"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:minWidth="0dp"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:text="@string/seller_follow"
+                                android:textAllCaps="false"
+                                android:textColor="@color/pks_blue"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                app:cornerRadius="17dp"
+                                app:icon="@drawable/ic_heart_outline"
+                                app:iconGravity="textStart"
+                                app:iconPadding="4dp"
+                                app:iconSize="14dp"
+                                app:iconTint="@color/pks_blue"
+                                app:strokeColor="@color/pks_blue"
+                                app:strokeWidth="1dp" />
 
                             <!-- Right Affordance Chevron -->
                             <ImageView
@@ -682,28 +825,53 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="12dp">
 
-            <!-- Buyer: Message Seller -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnMessageSeller"
-                style="@style/Widget.PolyGo.Button.Outlined"
+            <!-- Quick Message Composer (replaces the plain Chat button) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilQuickMessage"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="52dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:letterSpacing="0.01"
-                android:text="Chat"
-                android:textAllCaps="false"
-                android:textColor="@color/pks_blue"
-                android:textSize="14sp"
-                android:textStyle="bold"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1.4"
+                android:hint="@string/quick_message_hint"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
+                app:boxStrokeColor="@color/pks_blue"
+                app:hintTextColor="@color/pks_blue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etQuickMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:imeOptions="actionSend"
+                    android:inputType="textCapSentences"
+                    android:maxLines="1"
+                    android:textColor="@color/airbnb_ink"
+                    android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSendQuickMessage"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:contentDescription="@string/quick_message_send"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                app:backgroundTint="@color/soft_blue"
                 app:cornerRadius="14dp"
-                app:icon="@drawable/ic_email"
+                app:icon="@drawable/ic_send"
                 app:iconGravity="textStart"
-                app:iconPadding="6dp"
-                app:iconSize="18dp"
-                app:iconTint="@color/pks_blue"
-                app:strokeColor="@color/pks_blue"
-                app:strokeWidth="1.2dp" />
+                app:iconPadding="0dp"
+                app:iconSize="20dp"
+                app:iconTint="@color/pks_blue" />
 
             <!-- Buyer: Make Offer -->
             <com.google.android.material.button.MaterialButton
@@ -711,8 +879,8 @@
                 style="@style/Widget.PolyGo.Button"
                 android:layout_width="0dp"
                 android:layout_height="52dp"
-                android:layout_marginStart="4dp"
-                android:layout_weight="1.5"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1.4"
                 android:letterSpacing="0.01"
                 android:text="Make an Offer"
                 android:textAllCaps="false"

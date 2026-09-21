@@ -25,6 +25,8 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
+import java.io.OutputStream;
+
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -242,12 +244,22 @@ public class AccountActivity extends AppCompatActivity {
     private void writeExportFile(Uri destination) {
         String content = pendingExportCsv != null ? pendingExportCsv : pendingExportJson;
         if (content == null) return;
+        OutputStream out = null;
         try {
-            getContentResolver().openOutputStream(destination, "wt").write(
-                    content.getBytes("UTF-8"));
+            out = getContentResolver().openOutputStream(destination, "wt");
+            if (out != null) {
+                out.write(content.getBytes("UTF-8"));
+            }
             UiUtils.snackbar(findViewById(android.R.id.content), R.string.export_saved);
         } catch (Exception e) {
             UiUtils.snackbarError(findViewById(android.R.id.content), R.string.export_failed);
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 

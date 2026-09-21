@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etComponentName"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1.6"
+        android:background="@drawable/bg_input_field"
+        android:hint="@string/ca_component_name"
+        android:maxLines="1"
+        android:paddingHorizontal="10dp"
+        android:textSize="13sp" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etObtained"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="6dp"
+        android:layout_weight="0.8"
+        android:background="@drawable/bg_input_field"
+        android:gravity="center"
+        android:hint="@string/ca_obtained_short"
+        android:inputType="numberDecimal"
+        android:maxLines="1" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etMaximum"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="6dp"
+        android:layout_weight="0.8"
+        android:background="@drawable/bg_input_field"
+        android:gravity="center"
+        android:hint="@string/ca_max_short"
+        android:inputType="numberDecimal"
+        android:maxLines="1" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etComponentWeight"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="6dp"
+        android:layout_weight="0.7"
+        android:background="@drawable/bg_input_field"
+        android:gravity="center"
+        android:hint="@string/ca_weight_short"
+        android:inputType="numberDecimal"
+        android:maxLines="1" />
+
+    <ImageButton
+        android:id="@+id/btnMoveUp"
+        android:layout_width="32dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ca_move_up"
+        android:rotation="-90"
+        android:src="@drawable/ic_arrow_forward"
+        app:tint="?attr/colorOnSurfaceVariant" />
+
+    <ImageButton
+        android:id="@+id/btnMoveDown"
+        android:layout_width="32dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ca_move_down"
+        android:rotation="90"
+        android:src="@drawable/ic_arrow_forward"
+        app:tint="?attr/colorOnSurfaceVariant" />
+
+    <ImageButton
+        android:id="@+id/btnRemoveComponent"
+        android:layout_width="40dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ca_remove_component"
+        android:src="@drawable/ic_close"
+        app:tint="@color/semantic_error" />
+</LinearLayout>

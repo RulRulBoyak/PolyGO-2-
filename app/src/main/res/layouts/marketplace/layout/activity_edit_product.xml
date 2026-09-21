@@ -30,6 +30,71 @@
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium"
             app:titleTextColor="@color/white" />
 
+        <!-- Pinned AI Suggest block (stays at top regardless of scroll) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/grey_200"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAiSuggest"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:backgroundTint="#E8EAF6"
+                    android:text="@string/ai_suggest_details"
+                    android:textAllCaps="false"
+                    android:textColor="@color/pks_blue"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_trending_up"
+                    app:iconPadding="10dp"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/pks_blue" />
+
+                <TextView
+                    android:id="@+id/tvAiDisclosure"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/ai_disclosure_label"
+                    android:textColor="@color/airbnb_muted"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFlagAiSuggestion"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/flag_ai_suggestion"
+                    android:textAllCaps="false"
+                    android:textColor="@color/semantic_error"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_report"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/semantic_error"
+                    app:rippleColor="#20D32F2F" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Main Scrollable Form Body -->
@@ -84,6 +149,38 @@
                         android:text="Add clear photos so students know exactly what they are buying."
                         android:textColor="@color/airbnb_muted"
                         android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvPhotoCount"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/photo_count"
+                            android:textColor="@color/pks_blue"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPhotoTips"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:text="@string/photo_tips"
+                            android:textAllCaps="false"
+                            android:textColor="@color/pks_blue"
+                            android:textSize="13sp"
+                            app:icon="@drawable/ic_help_circle"
+                            app:iconPadding="6dp"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/pks_blue" />
+                    </LinearLayout>
 
                     <HorizontalScrollView
                         android:layout_width="match_parent"
@@ -156,52 +253,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- AI SUGGEST BUTTON -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAiSuggest"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginBottom="4dp"
-                android:backgroundTint="#E8EAF6"
-                android:text="@string/ai_suggest_details"
-                android:textAllCaps="false"
-                android:textColor="@color/pks_blue"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="16dp"
-                app:icon="@drawable/ic_trending_up"
-                app:iconPadding="10dp"
-                app:iconSize="20dp"
-                app:iconTint="@color/pks_blue" />
-
-            <TextView
-                android:id="@+id/tvAiDisclosure"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="4dp"
-                android:layout_marginBottom="4dp"
-                android:text="@string/ai_disclosure_label"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFlagAiSuggestion"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:text="@string/flag_ai_suggestion"
-                android:textAllCaps="false"
-                android:textColor="@color/semantic_error"
-                android:textSize="13sp"
-                android:visibility="gone"
-                app:icon="@drawable/ic_report"
-                app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                app:iconSize="18dp"
-                app:iconTint="@color/semantic_error"
-                app:rippleColor="#20D32F2F" />
-
             <!-- ================= SECTION 2: LISTING DETAILS ================= -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Outlined"
@@ -219,6 +270,48 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="20dp">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ivUserAvatar"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_user_line"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                            app:strokeColor="@color/grey_200"
+                            app:strokeWidth="1dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvUserName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/airbnb_ink"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                tools:text="Bot Sembang" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/listing_on_marketplace"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -331,8 +424,67 @@
                                 app:iconTint="@color/airbnb_ink"
                                 app:strokeColor="@color/grey_200" />
                         </LinearLayout>
-
                     </LinearLayout>
+
+                    <!-- Original Price (Optional Strike-through support) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="@string/hint_original_price"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxStrokeColor="@color/pks_blue"
+                        app:helperText="@string/helper_original_price"
+                        app:hintTextColor="@color/pks_blue"
+                        app:prefixText="RM "
+                        app:prefixTextAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        app:prefixTextColor="@color/airbnb_muted">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etOriginalPrice"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:textColor="@color/airbnb_muted"
+                            android:textSize="15sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Condition Trigger (opens bottom sheet) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilCondition"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="@string/hint_condition"
+                        app:boxBackgroundColor="@color/soft_blue"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxStrokeColor="@color/pks_blue"
+                        app:endIconDrawable="@drawable/ic_chevron_down"
+                        app:endIconMode="custom"
+                        app:endIconTint="@color/pks_blue"
+                        app:hintTextColor="@color/pks_blue">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/autoCompleteCondition"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:cursorVisible="false"
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:inputType="none"
+                            android:text="@string/condition_new"
+                            android:textColor="@color/airbnb_ink"
+                            android:textSize="15sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Category -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -360,14 +512,42 @@
                             android:textSize="15sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
-                        android:text="Pick a category"
-                        android:textColor="@color/airbnb_ink"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvCategorySectionTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Pick a category"
+                            android:textColor="@color/airbnb_ink"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBrowseCategories"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:minWidth="0dp"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:text="@string/browse_all_categories"
+                            android:textAllCaps="false"
+                            android:textColor="@color/pks_blue"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            app:icon="@drawable/ic_chevron_down"
+                            app:iconGravity="textEnd"
+                            app:iconPadding="2dp"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/pks_blue" />
+                    </LinearLayout>
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/chipGroupProductCategory"
@@ -544,6 +724,84 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="true"
+                            app:thumbTint="@color/switch_thumb_selector"
+                            app:trackTint="@color/switch_track_selector"
+                            app:trackDecorationTint="@color/switch_outline_selector" />
+                    </LinearLayout>
+
+                    <!-- Auto-reply to availability questions -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/auto_reply_label"
+                                android:textColor="@color/airbnb_ink"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/auto_reply_helper"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchAutoReply"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            app:thumbTint="@color/switch_thumb_selector"
+                            app:trackTint="@color/switch_track_selector"
+                            app:trackDecorationTint="@color/switch_outline_selector" />
+                    </LinearLayout>
+
+                    <!-- Hide from campus friends -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/hide_from_friends_label"
+                                android:textColor="@color/airbnb_ink"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/hide_from_friends_helper"
+                                android:textColor="@color/airbnb_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchHideFromFriends"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false"
                             app:thumbTint="@color/switch_thumb_selector"
                             app:trackTint="@color/switch_track_selector"
                             app:trackDecorationTint="@color/switch_outline_selector" />
@@ -778,6 +1036,17 @@
             android:orientation="horizontal"
             android:paddingHorizontal="8dp"
             android:paddingVertical="8dp">
+
+            <!-- Role-aware: lecturers can waive fees for TVET resources -->
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/chkFreeForStudents"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/role_free_for_students"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <!-- Secondary: Save Draft -->
             <com.google.android.material.button.MaterialButton

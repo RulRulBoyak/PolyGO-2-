@@ -49,6 +49,7 @@ public final class AppDataStore {
     private static final String KEY_TRANSACTIONS = "transactions";
     private static final String KEY_VERIFICATION = "verification";
     private static final String KEY_VERIFICATION_STATUS = "verification_status";
+    private static final String KEY_BANNED = "is_banned";
     private static final String KEY_SEEDED = "seeded";
     private static final String KEY_REVIEWS = "reviews";
     private static final String KEY_REPORTS = "reports";
@@ -62,6 +63,7 @@ public final class AppDataStore {
     private static final String KEY_PICKED_MAJOR_ID = "picked_major_id";
     private static final String KEY_PICKED_MAJOR_NAME = "picked_major_name";
     private static final String KEY_FCM_TOKEN = "fcm_token";
+    private static final String KEY_CA_PRESETS_PREFIX = "ca_presets_";
 
     public static final String[] PKS_LANDMARKS = {
         "Block A", "Block B", "Block C", "Cafeteria", "Library",
@@ -161,32 +163,31 @@ public final class AppDataStore {
 
     public static void saveRemoteSession(Context context, JSONObject user, String token) {
         if (user == null) return;
-        DISK_EXECUTOR.execute(() -> {
-            try {
-                // Normalize key naming across login flows (login/register/OTP used
-                // full_name; google_login used name) so every getter reads the same shape.
-                JSONObject normalized = new JSONObject();
-                normalized.put("id", user.optString("id", "0"));
-                String name = user.optString("full_name", "");
-                if (name.isEmpty()) name = user.optString("name", "");
-                normalized.put("name", name);
-                String studentId = user.optString("student_id", "");
-                if (studentId.isEmpty()) studentId = user.optString("studentId", "");
-                normalized.put("student_id", studentId);
-                normalized.put("email", user.optString("email", ""));
-                normalized.put("mobile", user.optString("mobile", ""));
-                normalized.put("role", user.optString("role", "Student"));
-                normalized.put("profile_pic_url", user.optString("profile_pic_url", ""));
-                normalized.put("bio", user.optString("bio", ""));
-                normalized.put("is_private", user.optBoolean("is_private", false));
-                normalized.put("verified", user.optBoolean("verified", false));
-                prefs(context).edit()
-                    .putString(KEY_USER, normalized.toString())
-                    .putString("user_token", token)
-                    .putBoolean("loggedIn", true)
-                    .apply();
-            } catch (JSONException ignored) {}
-        });
+        try {
+            // SharedPreferences.apply() updates memory immediately, so Home can
+            // safely read the new session on the very next activity launch.
+            JSONObject normalized = new JSONObject();
+            normalized.put("id", user.optString("id", "0"));
+            String name = user.optString("full_name", "");
+            if (name.isEmpty()) name = user.optString("name", "");
+            normalized.put("name", name);
+            String studentId = user.optString("student_id", "");
+            if (studentId.isEmpty()) studentId = user.optString("studentId", "");
+            normalized.put("student_id", studentId);
+            normalized.put("email", user.optString("email", ""));
+            normalized.put("mobile", user.optString("mobile", ""));
+            normalized.put("role", user.optString("role", "Student"));
+            normalized.put("profile_pic_url", user.optString("profile_pic_url", ""));
+            normalized.put("bio", user.optString("bio", ""));
+            normalized.put("is_private", user.optBoolean("is_private", false));
+            normalized.put("verified", user.optBoolean("verified", false));
+            prefs(context).edit()
+                .putString(KEY_USER, normalized.toString())
+                .putString("user_token", token)
+                .putBoolean("loggedIn", true)
+                .putBoolean(KEY_BANNED, false)
+                .apply();
+        } catch (JSONException ignored) {}
     }
 
     public static String userToken(Context context) {
@@ -205,6 +206,14 @@ public final class AppDataStore {
 
     public static String pendingFcmToken(Context context) {
         return prefs(context).getString(KEY_FCM_TOKEN, "");
+    }
+
+    public static String caPresetsJson(Context context) {
+        return prefs(context).getString(KEY_CA_PRESETS_PREFIX + userId(context), "[]");
+    }
+
+    public static void saveCaPresetsJson(Context context, String json) {
+        prefs(context).edit().putString(KEY_CA_PRESETS_PREFIX + userId(context), json).apply();
     }
 
     public static String userId(Context context) {
@@ -928,6 +937,10 @@ public final class AppDataStore {
         DISK_EXECUTOR.execute(() -> prefs(context).edit().putBoolean(KEY_MAINTENANCE, on).apply()); 
     }
 
+    public static boolean isMaintenanceMode(Context context) {
+        return prefs(context).getBoolean(KEY_MAINTENANCE, false);
+    }
+
     public static boolean isBioLockEnabled(Context context) {
         return prefs(context).getBoolean(KEY_BIO_LOCK, false);
     }
@@ -954,6 +967,20 @@ public final class AppDataStore {
 
     public static String verificationStatus(Context context) {
         return prefs(context).getString(KEY_VERIFICATION_STATUS, "unverified");
+    }
+
+    /**
+     * Ban state cached from the "suspended" 401 body seen by NetworkModule's
+     * auth-response interceptor. Cleared on every successful login/OTP session
+     * (see {@link #saveRemoteSession}).
+     */
+    public static boolean isBanned(Context context) {
+        return prefs(context).getBoolean(KEY_BANNED, false);
+    }
+
+    /** Persist a ban detected mid-session so cold starts route to BannedActivity. */
+    public static void markBanned(Context context) {
+        prefs(context).edit().putBoolean(KEY_BANNED, true).apply();
     }
 
     public static void saveVerificationStatus(Context context, String status) {
@@ -1012,7 +1039,7 @@ public final class AppDataStore {
         public boolean archived;
         public long postedAt;
         public int views;
-        public String location;
+        public String location, condition, originalPrice;
         public boolean verified;
 
         public ProductRecord(@NonNull String id, @NonNull String title, @NonNull String seller, @NonNull String price, @NonNull String rating, @NonNull String reviewCount, @NonNull String distance, int imageRes, @NonNull String imageUri, @NonNull String category, @NonNull String description, boolean owner, boolean available, @NonNull String ownerId) {
@@ -1025,6 +1052,8 @@ public final class AppDataStore {
             rec.postedAt = postedAt;
             rec.views = views;
             rec.location = location;
+            rec.condition = condition;
+            rec.originalPrice = originalPrice;
             rec.verified = verified;
             return rec;
         }
@@ -1052,6 +1081,7 @@ public final class AppDataStore {
         public JSONObject toJson() throws JSONException {
             JSONObject o = new JSONObject();
             o.put("id", id); o.put("title", title); o.put("seller", seller); o.put("price", price); o.put("rating", rating); o.put("review_count", reviewCount); o.put("distance", distance); o.put("imageRes", imageRes); o.put("imageUri", imageUri); o.put("category", category); o.put("description", description); o.put("owner", owner); o.put("available", available); o.put("owner_id", ownerId); o.put("archived", archived); o.put("posted_at_ms", postedAt); o.put("views", views); o.put("location", location); o.put("verified", verified);
+            o.put("condition", condition); o.put("original_price", originalPrice);
             return o;
         }
 
@@ -1063,6 +1093,8 @@ public final class AppDataStore {
             rec.postedAt = o.optLong("posted_at_ms", 0);
             rec.views = o.optInt("views", 0);
             rec.location = o.optString("location", "");
+            rec.condition = o.optString("condition", "New");
+            rec.originalPrice = o.optString("original_price", "");
             rec.verified = o.optBoolean("verified", false);
             return rec;
         }
@@ -1073,11 +1105,13 @@ public final class AppDataStore {
             boolean isOwner = currentUserId != null && currentUserId.equals(l.owner_id);
             String imageUri = l.image_url == null ? "" : l.image_url;
             String distance = l.distance == null ? (l.location == null || l.location.isEmpty() ? "Near" : l.location) : l.distance;
-            ProductRecord rec = new ProductRecord(l.id, l.title, l.seller, price, l.rating, l.review_count, distance, R.drawable.bg_product_home, imageUri, l.category, l.description, isOwner, l.available, l.owner_id);
+            ProductRecord rec = new ProductRecord(l.id, l.title, l.seller, price, String.valueOf(l.rating), String.valueOf(l.reviewCount), distance, R.drawable.bg_product_home, imageUri, l.category, l.description, isOwner, l.available, l.owner_id);
             rec.archived = l.archivedAt != null && !l.archivedAt.isEmpty();
             rec.postedAt = l.postedAt;
             rec.views = l.views;
             rec.location = l.location;
+            rec.condition = l.condition;
+            rec.originalPrice = l.original_price;
             rec.verified = l.verified;
             return rec;
         }

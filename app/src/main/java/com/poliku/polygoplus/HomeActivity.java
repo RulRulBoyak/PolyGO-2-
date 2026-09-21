@@ -3,6 +3,7 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -31,8 +32,11 @@ import android.provider.Settings;
 import com.poliku.polygoplus.fragments.ExploreFragment;
 import com.poliku.polygoplus.fragments.MessagesFragment;
 import com.poliku.polygoplus.fragments.ProfileFragment;
+import com.poliku.polygoplus.network.AuthSessionHandler;
 import com.poliku.polygoplus.network.ConnectivityHelper;
+import com.poliku.polygoplus.network.NetworkErrorHandler;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.GuidedTourOverlay;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.api.model.BaseResponse;
 
@@ -44,6 +48,7 @@ import retrofit2.Response;
 
 @AndroidEntryPoint
 public class HomeActivity extends AppCompatActivity {
+    public static final String EXTRA_REPLAY_TOUR = "replay_tour";
     @Inject PolyGoRepository polyGoRepository;
     private int previousTabIndex = 0;
     private Fragment homeFragment, exploreFragment, messagesFragment, profileFragment;
@@ -84,6 +89,7 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         if (navView != null) {
+            navView.setItemActiveIndicatorEnabled(false);
             navView.setOnItemSelectedListener(item -> {
                 int index = indexForId(item.getItemId());
                 if (index < 0) return false;
@@ -105,9 +111,29 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         checkCampusService();
-        requestNotificationPermission();
+        boolean replayTour = getIntent().getBooleanExtra(EXTRA_REPLAY_TOUR, false);
+        if (replayTour || !AppDataStore.hasSeenOnboarding(this)) {
+            getWindow().getDecorView().post(() -> showGuidedTour(nav, fab, replayTour));
+        } else {
+            requestNotificationPermission();
+        }
         setupBackPress();
         handleNotificationIntent(getIntent());
+    }
+
+    private void showGuidedTour(NavigationBarView nav, View fab, boolean replay) {
+        if (nav == null || fab == null || isFinishing()) return;
+        View[] targets = {nav.findViewById(R.id.nav_home), nav.findViewById(R.id.nav_explore),
+            fab, nav.findViewById(R.id.nav_messages), nav.findViewById(R.id.nav_profile)};
+        for (View target : targets) if (target == null) return;
+        String[] titles = getResources().getStringArray(R.array.tour_titles);
+        String[] bodies = getResources().getStringArray(R.array.tour_bodies);
+        GuidedTourOverlay overlay = new GuidedTourOverlay(this, targets, titles, bodies, () -> {
+            AppDataStore.setOnboardingSeen(this);
+            if (!replay) requestNotificationPermission();
+        });
+        addContentView(overlay, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     @Override
@@ -286,33 +312,83 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void showListingTypeChoice() {
-        if (!AppDataStore.isLoggedIn(this)) {
-            Toast.makeText(this, R.string.toast_login_required_post, Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, LoginActivity.class));
-            return;
+        try {
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, R.string.toast_login_required_post, Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+
+            BottomSheetDialog dialog = new BottomSheetDialog(this);
+            // Safter inflation: use the dialog's context
+            View content = View.inflate(dialog.getContext(), R.layout.layout_listing_type_choice, null);
+            dialog.setContentView(content);
+
+            View product = content.findViewById(R.id.choiceProduct);
+            View service = content.findViewById(R.id.choiceService);
+
+            if (product != null) {
+                product.setOnClickListener(view -> {
+                    try {
+                        HapticManager.lightTap(view);
+                        dialog.dismiss();
+                        Intent intent = new Intent(HomeActivity.this, EditProductActivity.class);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    } catch (Exception e) {
+                        Toast.makeText(HomeActivity.this, "Err: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            if (service != null) {
+                service.setOnClickListener(view -> {
+                    try {
+                        HapticManager.lightTap(view);
+                        dialog.dismiss();
+                        Intent intent = new Intent(HomeActivity.this, AddServiceActivity.class);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    } catch (Exception e) {
+                        Toast.makeText(HomeActivity.this, "Err: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            dialog.show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Layout Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        dialog.setContentView(R.layout.layout_listing_type_choice);
-        dialog.findViewById(R.id.choiceProduct).setOnClickListener(view -> {
-            HapticManager.lightTap(view);
-            dialog.dismiss();
-            startActivity(new Intent(this, EditProductActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        });
-        dialog.findViewById(R.id.choiceService).setOnClickListener(view -> {
-            HapticManager.lightTap(view);
-            dialog.dismiss();
-            startActivity(new Intent(this, AddServiceActivity.class));
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        });
-        dialog.show();
     }
 
     private void checkCampusService() {
         if (!ConnectivityHelper.isOnline(this)) return;
         polyGoRepository.getStatus(new Callback<BaseResponse>() {
-            @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {}
-            @Override public void onFailure(Call<BaseResponse> call, Throwable t) {}
+            @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean maintenance = response.body().isMaintenance();
+                    AppDataStore.setMaintenanceMode(HomeActivity.this, maintenance);
+                    if (maintenance) {
+                        if (!(AuthSessionHandler.getTopActivity() instanceof ErrorStateActivity)) {
+                            Intent intent = new Intent(HomeActivity.this, ErrorStateActivity.class)
+                                    .putExtra(ErrorStateActivity.EXTRA_MODE, "maintenance")
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            try {
+                                startActivity(intent);
+                            } catch (Exception ignored) {
+                                // Activity is leaving - the next Splash launch will gate.
+                            }
+                        }
+                    } else {
+                        NetworkErrorHandler.notifyServerOk();
+                    }
+                }
+            }
+            @Override public void onFailure(Call<BaseResponse> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
+                NetworkErrorHandler.notifyServerOk();
+            }
         });
     }
 

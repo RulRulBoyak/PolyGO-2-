@@ -25,13 +25,13 @@ public class OtpActivity extends BaseActivity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_STUDENT_ID = "student_id";
     public static final String EXTRA_PASSWORD = "password";
-    public static final String EXTRA_DEV_OTP = "dev_otp";
     public static final String EXTRA_CONSENT_AGREED = "consent_agreed";
 
     @Inject PolyGoApi api;
 
     private String email, name, studentId, password;
     private boolean consentAgreed = true;
+    private boolean submitting;
     private EditText etOtp;
 
     @Override
@@ -59,16 +59,10 @@ public class OtpActivity extends BaseActivity {
 
         ((TextView) findViewById(R.id.tvOtpSubtitle)).setText(getString(R.string.otp_sent_subtitle, email));
 
-        // Dev-only: the backend may echo the OTP back on debug builds; never auto-fill in release.
-        if (BuildConfig.DEBUG) {
-            String devOtp = getIntent().getStringExtra(EXTRA_DEV_OTP);
-            if (devOtp != null && !devOtp.isEmpty()) {
-                etOtp.setText(devOtp);
-            }
-        }
     }
 
     private void verify() {
+        if (submitting) return;
         String otp = etOtp.getText().toString().trim();
         if (otp.length() < 6) {
             UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_enter_valid_otp);
@@ -76,6 +70,7 @@ public class OtpActivity extends BaseActivity {
         }
 
         HapticManager.mediumTap(etOtp);
+        setSubmitting(true);
         api.verifyOtp(new PolyGoApi.OtpRequest(email, otp)).enqueue(new retrofit2.Callback<com.poliku.polygoplus.api.model.BaseResponse>() {
             @Override
             public void onResponse(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, retrofit2.Response<com.poliku.polygoplus.api.model.BaseResponse> response) {
@@ -92,6 +87,7 @@ public class OtpActivity extends BaseActivity {
             }
 
             private void onError(String msg) {
+                setSubmitting(false);
                 UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), msg);
             }
         });
@@ -103,9 +99,6 @@ public class OtpActivity extends BaseActivity {
             @Override
             public void onResponse(retrofit2.Call<PolyGoApi.OtpSendResponse> call, retrofit2.Response<PolyGoApi.OtpSendResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    if (BuildConfig.DEBUG && response.body().otp != null && !response.body().otp.isEmpty()) {
-                        etOtp.setText(response.body().otp);
-                    }
                     UiUtils.snackbar(OtpActivity.this.findViewById(android.R.id.content), getString(R.string.toast_code_resent_to, email));
                 } else {
                     UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_failed_to_resend);
@@ -136,6 +129,7 @@ public class OtpActivity extends BaseActivity {
                         userJson.put("email", body.user.email);
                         userJson.put("mobile", body.user.mobile);
                         userJson.put("role", body.user.role);
+                        userJson.put("is_banned", body.user.banned);
                         
                         AppDataStore.saveRemoteSession(OtpActivity.this, userJson, body.token);
                     } catch (Exception ignored) {}
@@ -149,15 +143,23 @@ public class OtpActivity extends BaseActivity {
                         finish();
                     }, 2000);
                 } else {
+                    setSubmitting(false);
                     UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_registration_failed);
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<PolyGoApi.LoginResponse> call, Throwable t) {
+                setSubmitting(false);
                 UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), t.getMessage());
             }
         });
+    }
+
+    private void setSubmitting(boolean value) {
+        submitting = value;
+        findViewById(R.id.btnVerify).setEnabled(!value);
+        findViewById(R.id.tvResend).setEnabled(!value);
     }
 
     private void syncFcmToken() {

@@ -99,21 +99,17 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <!-- Role / Verification Badge -->
+                        <!-- Quiet account context; verification remains a separate status. -->
                         <TextView
                             android:id="@+id/tvUserRole"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_role_chip"
                             android:includeFontPadding="false"
-                            android:letterSpacing="0.04"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="3.5dp"
+                            android:letterSpacing="0.01"
                             android:text="@string/profile_student"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp" />
 
                         <!-- Bio -->
                         <LinearLayout
@@ -185,24 +181,32 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Scrollable Menu Content -->
-    <androidx.core.widget.NestedScrollView
+    <!-- Main Scrollable Body with Pull-to-Refresh -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshProfile"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:overScrollMode="never"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <!-- Scrollable Menu Content -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/profileScroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="18dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="100dp">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="18dp"
+                android:paddingTop="0dp"
+                android:paddingBottom="100dp">
 
             <!-- ================= SELLER DASHBOARD (PHASE 5) ================= -->
             <LinearLayout
+                android:id="@+id/sellerDashboardHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -233,6 +237,7 @@
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/sellerDashboardCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/surface_card"
@@ -417,6 +422,7 @@
 
             <!-- ================= GROUP 1: ACCOUNT & SECURITY ================= -->
             <TextView
+                android:id="@+id/accountSecurityHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -428,6 +434,7 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/accountSecurityCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/surface_card"
@@ -653,12 +660,14 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"
                 android:letterSpacing="0.05"
+                android:id="@+id/marketplaceHeader"
                 android:text="@string/profile_marketplace_orders"
                 android:textColor="@color/airbnb_muted"
                 android:textSize="11.5sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/marketplaceCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/surface_card"
@@ -1055,6 +1064,7 @@
                 android:textSize="11.5sp" />
 
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

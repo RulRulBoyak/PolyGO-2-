@@ -6,6 +6,8 @@ import android.animation.PropertyValuesHolder;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.ActivityNotFoundException;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -216,10 +218,33 @@ public class SafeMeetupActivity extends BaseActivity implements OnMapReadyCallba
             return;
         }
 
+        dialCampusSecurityHotline();
+
         if (hasLocationPermission()) {
             requestCurrentLocation((lat, lng) -> dispatchEmergencyAlert(userId, listingId, safeLandmark, lat, lng));
         } else {
             dispatchEmergencyAlert(userId, listingId, safeLandmark, null, null);
+        }
+    }
+
+    /**
+     * Opens the dialer to the campus security hotline before the SOS alert is
+     * dispatched, so PKS Security can answer a live voice request immediately.
+     * The dialer is a safe NO-OP until {@code safe_meetup_campus_hotline} is
+     * filled in (placeholder: leave empty to keep it inert).
+     */
+    private void dialCampusSecurityHotline() {
+        String hotline = getString(R.string.safe_meetup_campus_hotline);
+        if (hotline == null || hotline.trim().isEmpty()) {
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.safe_meetup_hotline_unconfigured);
+            return;
+        }
+        Uri number = Uri.parse("tel:" + hotline.trim());
+        Intent dial = new Intent(Intent.ACTION_DIAL, number);
+        try {
+            startActivity(dial);
+        } catch (ActivityNotFoundException e) {
+            UiUtils.snackbar(findViewById(android.R.id.content), R.string.safe_meetup_dial_hotline_unavailable);
         }
     }
 
@@ -308,15 +333,19 @@ public class SafeMeetupActivity extends BaseActivity implements OnMapReadyCallba
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         }
 
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(loc -> {
-                    if (loc != null) {
-                        result.onResult(loc.getLatitude(), loc.getLongitude());
-                    } else {
-                        requestFreshFix(result);
-                    }
-                })
-                .addOnFailureListener(e -> requestFreshFix(result));
+        try {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(loc -> {
+                        if (loc != null) {
+                            result.onResult(loc.getLatitude(), loc.getLongitude());
+                        } else {
+                            requestFreshFix(result);
+                        }
+                    })
+                    .addOnFailureListener(e -> requestFreshFix(result));
+        } catch (SecurityException ignored) {
+            result.onResult(null, null);
+        }
     }
 
     private void requestFreshFix(LocationResult result) {
@@ -329,6 +358,8 @@ public class SafeMeetupActivity extends BaseActivity implements OnMapReadyCallba
                     .addOnSuccessListener(loc -> result.onResult(loc == null ? null : loc.getLatitude(), loc == null ? null : loc.getLongitude()))
                     .addOnFailureListener(e -> result.onResult(null, null))
                     .addOnCanceledListener(() -> result.onResult(null, null));
+        } catch (SecurityException ignored) {
+            result.onResult(null, null);
         } catch (Exception ignored) {
             result.onResult(null, null);
         }

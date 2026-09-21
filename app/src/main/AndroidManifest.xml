@@ -10,6 +10,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <application
         android:name=".PolyGoApplication"
         android:allowBackup="false"
@@ -97,6 +101,8 @@
             android:exported="false" />
         <activity android:name=".ErrorStateActivity"
             android:exported="false" />
+        <activity android:name=".BannedActivity"
+            android:exported="false" />
         <activity android:name=".ImageGalleryActivity"
             android:exported="false"
             android:theme="@style/Theme.PolyGo" />
@@ -119,8 +125,22 @@
             android:exported="false" />
         <activity android:name=".CampusPulseActivity"
             android:exported="false" />
+        <activity android:name=".CaCalculatorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+<activity android:name=".EventsActivity"
+            android:exported="false" />
+        <activity android:name=".EventDetailActivity"
+            android:exported="false" />
+        <activity android:name=".TimetableActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".DealTrackerActivity"
             android:exported="false" />
+
+        <activity android:name=".CreatePulseActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

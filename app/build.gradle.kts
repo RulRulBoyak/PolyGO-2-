@@ -20,7 +20,6 @@ if (propertiesFile.exists()) {
     }
 }
 val mapsKey = properties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
-val googleWebClientId = properties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: ""
 
 android {
     namespace = "com.poliku.polygoplus"
@@ -198,10 +197,6 @@ androidComponents {
         variant.buildConfigFields?.put(
             "GOOGLE_MAPS_API_KEY",
             BuildConfigField("String", "\"$mapsKey\"", "Google Maps API Key")
-        )
-        variant.buildConfigFields?.put(
-            "GOOGLE_WEB_CLIENT_ID",
-            BuildConfigField("String", "\"$googleWebClientId\"", "Google Sign-In Client ID")
         )
     }
 }

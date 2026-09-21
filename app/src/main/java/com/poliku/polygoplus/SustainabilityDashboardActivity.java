@@ -84,6 +84,9 @@ public class SustainabilityDashboardActivity extends BaseActivity {
         tvTopCategory = findViewById(R.id.tvTopCategory);
         tvTopCategoryDetail = findViewById(R.id.tvTopCategoryDetail);
         cardImpactBadge = findViewById(R.id.cardImpactBadge);
+        cardImpactBadge.setClickable(true);
+        cardImpactBadge.setFocusable(true);
+        cardImpactBadge.setOnClickListener(v -> loadLeaderboard());
         progressTier = findViewById(R.id.progressTier);
 
         findViewById(R.id.btnShareImpact).setOnClickListener(v -> {
@@ -136,15 +139,15 @@ public class SustainabilityDashboardActivity extends BaseActivity {
             tvTopCategory.setVisibility(View.VISIBLE);
             tvTopCategoryDetail.setVisibility(View.VISIBLE);
             tvTopCategory.setText(top.category);
-            tvTopCategoryDetail.setText(String.format(Locale.getDefault(), "%d item(s) saved ≈ %.1f kg CO2", top.items, top.co2));
+            String toolsLine = metrics.tools_reused > 0
+                    ? String.format(Locale.getDefault(), " • %d TVET tool(s) reused on campus", metrics.tools_reused)
+                    : "";
+            tvTopCategoryDetail.setText(String.format(Locale.getDefault(), "%d item(s) saved ≈ %.1f kg CO2%s", top.items, top.co2, toolsLine));
         }
     }
 
     private void bindLocalFallback() {
         int itemsSold = AppDataStore.countSoldBySeller(this, AppDataStore.userId(this), "all");
-        if (itemsSold == 0) {
-            itemsSold = 4;
-        }
         double co2 = itemsSold * 3.55;
         double water = itemsSold * 600.0;
         double paper = itemsSold * 210.0;
@@ -164,6 +167,48 @@ public class SustainabilityDashboardActivity extends BaseActivity {
         } else {
             bindTier("bronze", co2, 0, itemsSold);
         }
+    }
+
+    private void loadLeaderboard() {
+        HapticManager.lightTap(cardImpactBadge);
+        repository.getGreenLeaderboard(20, new Callback<PolyGoApi.GreenLeaderboardResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.GreenLeaderboardResponse> call,
+                                   Response<PolyGoApi.GreenLeaderboardResponse> response) {
+                PolyGoApi.GreenLeaderboardResponse body = response.body();
+                if (!response.isSuccessful() || body == null || !body.isSuccess()
+                        || body.leaderboard == null) {
+                    showLeaderboardError();
+                    return;
+                }
+                String currentId = AppDataStore.userId(SustainabilityDashboardActivity.this);
+                StringBuilder rows = new StringBuilder();
+                for (int index = 0; index < body.leaderboard.size(); index++) {
+                    PolyGoApi.GreenEntry entry = body.leaderboard.get(index);
+                    boolean me = currentId != null && currentId.equals(entry.user_id);
+                    rows.append(index + 1).append(". ").append(me ? "★ " : "")
+                            .append(entry.name).append("  •  ")
+                            .append(String.format(Locale.getDefault(), "%.1f kg CO₂", entry.co2))
+                            .append('\n');
+                }
+                String message = rows.length() == 0
+                        ? getString(R.string.impact_leaderboard_empty) : rows.toString().trim();
+                new MaterialAlertDialogBuilder(SustainabilityDashboardActivity.this)
+                        .setTitle(R.string.impact_leaderboard_title)
+                        .setMessage(message)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.GreenLeaderboardResponse> call, Throwable error) {
+                showLeaderboardError();
+            }
+        });
+    }
+
+    private void showLeaderboardError() {
+        Toast.makeText(this, R.string.impact_leaderboard_failed, Toast.LENGTH_SHORT).show();
     }
 
     private void bindTier(String tier, double co2, int rank, int count) {

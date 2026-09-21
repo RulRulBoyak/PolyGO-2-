@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -71,7 +72,8 @@ public class AddServiceActivity extends BaseActivity {
     private AddServiceViewModel viewModel;
     private TextInputLayout tilCustomCategory;
     private TextInputEditText etCustomCategory, etTitle, etPrice, etAvailability, etDescription, etTime, etCustomLocation, etFreeSlots;
-    private AutoCompleteTextView autoCategory, autoCompleteLocation, autoCompleteMajor;
+    private AutoCompleteTextView autoCategory, autoCompleteMajor;
+    private TextInputEditText autoCompleteLocation;
     private ChipGroup chipGroupPriceType, chipGroupFulfillment, chipGroupFreeSlotsQuick;
     private final List<PolyGoApi.Major> majors = new ArrayList<>();
     private TextInputLayout tilCustomLocation;
@@ -110,7 +112,7 @@ public class AddServiceActivity extends BaseActivity {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottomBar), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(0, 0, 0, v.getPaddingBottom() + Math.max(systemBars.bottom, ime.bottom));
+            v.setPadding(0, 0, 0, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
 
@@ -254,7 +256,7 @@ public class AddServiceActivity extends BaseActivity {
                 AddServiceActivity.this,
                 autoCompleteLocation.getText() == null ? "Near campus" : autoCompleteLocation.getText().toString(),
                 name -> {
-                    autoCompleteLocation.setText(name, false);
+                    autoCompleteLocation.setText(name);
                     toggleCustomLocation("Other".equalsIgnoreCase(name));
                 }));
 
@@ -290,7 +292,7 @@ public class AddServiceActivity extends BaseActivity {
             applyCustomLocationVisibility(true);
             etCustomLocation.setText(custom == null ? "" : custom);
         } else if (base != null && !base.isEmpty()) {
-            autoCompleteLocation.setText(base, false);
+            autoCompleteLocation.setText(base);
             applyCustomLocationVisibility(false);
         } else {
             applyCustomLocationVisibility(false);
@@ -313,6 +315,7 @@ public class AddServiceActivity extends BaseActivity {
                 PolyGoApi.CategoryResponse body = response.body();
                 List<String> names = new ArrayList<>();
                 if (body != null && body.categories != null) {
+                    UiUtils.rememberCategoryIcons(AddServiceActivity.this, body.categories);
                     for (PolyGoApi.Category c : body.categories) {
                         names.add(c.name);
                     }
@@ -338,7 +341,7 @@ public class AddServiceActivity extends BaseActivity {
             chip.setText(name);
             chip.setTag(name);
             if (!"Others".equalsIgnoreCase(name)) {
-                chip.setChipIcon(getDrawable(iconForServiceCategory(name)));
+                chip.setChipIcon(getDrawable(UiUtils.categoryIcon(name)));
                 chip.setChipIconTint(ColorStateList.valueOf(getColor(UiUtils.categoryColor(name))));
             }
             chip.setOnCheckedChangeListener((c, checked) -> {
@@ -379,7 +382,7 @@ public class AddServiceActivity extends BaseActivity {
 
     private int iconForServiceCategory(String name) {
         if (name == null) return R.drawable.ic_category_tech;
-        String n = name.toLowerCase();
+        String n = name.toLowerCase(Locale.ROOT);
         if (n.contains("repair") || n.contains("print") || n.contains("laundry") || n.contains("clean")) return R.drawable.ic_category_repair;
         if (n.contains("less") || n.contains("tutor") || n.contains("study")) return R.drawable.ic_category_books;
         if (n.contains("deliver")) return R.drawable.ic_category_delivery;
@@ -484,7 +487,7 @@ public class AddServiceActivity extends BaseActivity {
         int majorId = 0;
         String selectedMajor = autoCompleteMajor.getText().toString().trim();
         for (PolyGoApi.Major m : majors) {
-            if (m.name.equals(selectedMajor)) {
+            if (m.name != null && m.name.equals(selectedMajor)) {
                 majorId = m.id;
                 break;
             }

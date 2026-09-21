@@ -88,8 +88,11 @@ try {
             respond(false, 'Invalid verification code');
         }
 
-        $delete = $pdo->prepare('DELETE FROM verification_codes WHERE email = ?');
-        $delete->execute([$email]);
+        // Leave a short-lived, one-time proof for register.php. Without this,
+        // callers could bypass this endpoint and create an unverified account.
+        $verified = $pdo->prepare('UPDATE verification_codes
+            SET code_hash = ?, expires_at = ? WHERE email = ?');
+        $verified->execute(['verified', date('Y-m-d H:i:s', time() + 600), $email]);
         // A successful verify resets the attempt counter for this email.
         $reset = $pdo->prepare('DELETE FROM rate_limits WHERE bucket = ?');
         $reset->execute(['otp_verify:' . $email]);

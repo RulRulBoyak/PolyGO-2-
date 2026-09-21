@@ -2,6 +2,7 @@ package com.poliku.polygoplus.network;
 
 import com.google.android.gms.maps.model.LatLng;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -36,7 +37,7 @@ public final class CampusMapHelper {
         if (landmark == null) return LANDMARKS.get("Near campus");
         
         for (String key : LANDMARKS.keySet()) {
-            if (landmark.toLowerCase().contains(key.toLowerCase())) {
+            if (landmark.toLowerCase(Locale.ROOT).contains(key.toLowerCase(Locale.ROOT))) {
                 return LANDMARKS.get(key);
             }
         }

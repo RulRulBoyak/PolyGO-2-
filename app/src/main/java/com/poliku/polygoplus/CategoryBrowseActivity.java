@@ -17,15 +17,23 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.poliku.polygoplus.ui.UiUtils;
+import com.poliku.polygoplus.api.PolyGoApi;
+import com.poliku.polygoplus.data.PolyGoRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 @AndroidEntryPoint
 public class CategoryBrowseActivity extends BaseActivity {
-    private static final String[] NAMES = {"Food", "Drink", "Tech", "Books", "Repair", "Fashion", "Home", "Services"};
-    private static final int[] ICONS = {
-        R.drawable.ic_category_food, R.drawable.ic_category_drink, R.drawable.ic_category_tech,
-        R.drawable.ic_category_books, R.drawable.ic_category_repair, R.drawable.ic_category_fashion,
-        R.drawable.ic_category_home, R.drawable.ic_category_service
-    };
+    @Inject PolyGoRepository repository;
+    private final List<PolyGoApi.Category> categories = new ArrayList<>();
+    private RecyclerView.Adapter<Holder> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +42,7 @@ public class CategoryBrowseActivity extends BaseActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         RecyclerView rv = findViewById(R.id.rvCategories);
         rv.setLayoutManager(new GridLayoutManager(this, 2));
-        rv.setAdapter(new RecyclerView.Adapter<Holder>() {
+        adapter = new RecyclerView.Adapter<Holder>() {
             @NonNull
             @Override
             public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -44,20 +52,41 @@ public class CategoryBrowseActivity extends BaseActivity {
 
             @Override
             public void onBindViewHolder(@NonNull Holder holder, int position) {
-                holder.name.setText(NAMES[position]);
-                holder.icon.setImageResource(ICONS[position]);
-                holder.icon.setImageTintList(ColorStateList.valueOf(getColor(UiUtils.categoryColor(NAMES[position]))));
-                holder.badge.setBackgroundTintList(ColorStateList.valueOf(getColor(UiUtils.categoryTint(NAMES[position]))));
+                PolyGoApi.Category category = categories.get(position);
+                holder.name.setText(category.name);
+                holder.icon.setImageResource(UiUtils.categoryIconKey(category.icon_res));
+                holder.icon.setImageTintList(ColorStateList.valueOf(
+                        getColor(UiUtils.categoryColor(category.name))));
+                holder.badge.setBackgroundTintList(ColorStateList.valueOf(
+                        getColor(UiUtils.categoryTint(category.name))));
                 holder.itemView.setOnClickListener(v -> {
                     Intent i = new Intent(CategoryBrowseActivity.this, SearchActivity.class);
-                    i.putExtra(SearchActivity.EXTRA_CATEGORY, NAMES[position]);
+                    i.putExtra(SearchActivity.EXTRA_CATEGORY, category.name);
                     startActivity(i);
                 });
             }
 
             @Override
             public int getItemCount() {
-                return NAMES.length;
+                return categories.size();
+            }
+        };
+        rv.setAdapter(adapter);
+        repository.getCategories(new Callback<PolyGoApi.CategoryResponse>() {
+            @Override
+            public void onResponse(Call<PolyGoApi.CategoryResponse> call,
+                                   Response<PolyGoApi.CategoryResponse> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().categories != null) {
+                    categories.clear();
+                    categories.addAll(response.body().categories);
+                    adapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PolyGoApi.CategoryResponse> call, Throwable error) {
+                // The empty screen is preferable to stale hard-coded categories.
             }
         });
     }

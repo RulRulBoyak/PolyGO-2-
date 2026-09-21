@@ -7,14 +7,21 @@ $action  = $input['action'] ?? 'list';
 // Public read feed: only approved, newest first.
 if ($action === 'list') {
     $query = $pdo->prepare(
-        'SELECT id, user_id, user_name, tag, title, body, UNIX_TIMESTAMP(created_at) AS created_at
+        'SELECT id, user_id, user_name, tag, title, body, is_global, UNIX_TIMESTAMP(created_at) AS created_at
            FROM campus_alerts
           WHERE status = ?
           ORDER BY id DESC
           LIMIT 50'
     );
     $query->execute(['approved']);
-    respond(true, 'OK', ['alerts' => $query->fetchAll()]);
+    $announcements = [];
+    $threads = [];
+    foreach ($query->fetchAll() as $item) {
+        $item['is_global'] = (bool)($item['is_global'] ?? 0);
+        if ($item['is_global']) $announcements[] = $item;
+        else $threads[] = $item;
+    }
+    respond(true, 'OK', ['announcements' => $announcements, 'alerts' => $threads]);
 }
 
 // Authenticated post.
@@ -32,7 +39,7 @@ if ($action === 'post') {
     $title = trim((string)($input['title'] ?? ''));
     $body  = trim((string)($input['body'] ?? ''));
 
-    $allowedTags = ['ANNOUNCEMENT', 'REQUEST', 'FLASH SALE', 'EVENT'];
+    $allowedTags = ['REQUEST', 'FLASH SALE', 'EVENT'];
     if (!in_array($tag, $allowedTags, true) || $title === '' || mb_strlen($title) > 150
         || $body === '' || mb_strlen($body) > 2000) {
         respond(false, 'Please provide a valid tag, title and message');

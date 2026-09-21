@@ -16,6 +16,14 @@ final class NotificationManager {
      */
     public static function sendToUser(PDO $pdo, int $userId, string $title, string $body, array $data = []): bool {
         try {
+            // Suspended users (admin ban) get no inbox rows or pushes; keep their
+            // token intact so unbanning restores delivery without a fresh login.
+            $banCheck = $pdo->prepare('SELECT is_banned FROM users WHERE id = ?');
+            $banCheck->execute([$userId]);
+            if ((int)$banCheck->fetchColumn() === 1) {
+                return false;
+            }
+
             $stmt = $pdo->prepare('INSERT INTO notifications (user_id, title, body) VALUES (?, ?, ?)');
             $stmt->execute([$userId, $title, $body]);
         } catch (Throwable $e) {
@@ -93,6 +101,7 @@ final class NotificationManager {
 
         // Data-only message: title/body travel in 'data' so the app can render
         // its own notification (unique id, custom icon) instead of the system default.
+        $data['type'] = (string)($data['type'] ?? 'campus_alert');
         $messageId = $data['message_id'] ?? bin2hex(random_bytes(6));
         $data['message_id'] = $messageId;
         $data['title'] = $title;
@@ -102,7 +111,7 @@ final class NotificationManager {
         // review) never silently collapse into one.  FCM restricts collapse_key
         // to ≤ 32 chars.  Omit when no clear grouping is available.
         $collapseKey = null;
-        $type = $data['type'] ?? '';
+        $type = $data['type'];
         if ($type === 'chat' && !empty($data['thread_id'])) {
             $collapseKey = 'c_' . substr($data['thread_id'], 0, 12);
         } elseif ($type !== '' && in_array($type, ['offer', 'review', 'verification', 'transactions'], true)) {
@@ -111,11 +120,12 @@ final class NotificationManager {
 
         $url = "https://fcm.googleapis.com/v1/projects/$projectId/messages:send";
 
+        $highPriority = in_array($type, ['chat', 'message', 'live_alert'], true);
         $message = [
             'token' => $targetToken,
             'data'  => $data,
             'android' => [
-                'priority' => 'high'
+                'priority' => $highPriority ? 'high' : 'normal'
             ]
         ];
         if ($collapseKey !== null) {
@@ -373,6 +383,142 @@ final class NotificationManager {
             $children[] = $tlv;
         }
         return $children;
+    }
+
+    /**
+     * OAuth2 service-account flow for an arbitrary Google API scope. Same
+     * assertion/signing machinery as getAccessToken, parameterised by scope so
+     * the admin panel can reach Firestore REST (scope: datastore).
+     */
+    private static function tokenForScope(string $scope): ?string {
+        $raw = @file_get_contents(__DIR__ . '/service-account.json');
+        $jsonKey = $raw !== false ? json_decode($raw, true) : null;
+        if (is_array($jsonKey) !== true || empty($jsonKey['client_email']) || empty($jsonKey['private_key'])) {
+            error_log('NotificationManager: service-account.json missing or invalid');
+            return null;
+        }
+
+        $now = time();
+        $header = base64url_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $payload = base64url_encode(json_encode([
+            'iss'   => $jsonKey['client_email'],
+            'scope' => $scope,
+            'aud'   => 'https://oauth2.googleapis.com/token',
+            'exp'   => $now + 3600,
+            'iat'   => $now,
+        ]));
+        $signature = self::signJwtAssertion("$header.$payload", (string)$jsonKey['private_key']);
+        if ($signature === null) {
+            error_log('NotificationManager: JWT signing failed');
+            return null;
+        }
+        $jwt = "$header.$payload." . base64url_encode($signature);
+
+        $ch = curl_init('https://oauth2.googleapis.com/token');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt_array($ch, self::sslOpts());
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion'  => $jwt,
+        ]));
+        $response = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode < 200 || $httpCode >= 300 || $response === false) {
+            error_log('NotificationManager: token exchange failed: HTTP ' . $httpCode . ' ' . $response);
+            return null;
+        }
+        $parsed = json_decode((string)$response, true);
+        return $parsed['access_token'] ?? null;
+    }
+
+    /** OAuth2 token for Firestore REST (used by the admin pulse broadcast). */
+    public static function firestoreAccessToken(): ?string {
+        return self::tokenForScope('https://www.googleapis.com/auth/datastore');
+    }
+
+    /**
+     * Lists the most recent documents in a Firestore collection via REST,
+     * newest-first on integer-seconds `created_at` (the documented pulse shape).
+     * Returns the HTTP status + raw JSON body so the caller can surface
+     * per-step results (same convention as postFirestore).
+     */
+    public static function listFirestore(string $collection, int $limit = 20): array {
+        $token = self::firestoreAccessToken();
+        if ($token === null) {
+            return ['status' => 0, 'body' => 'Could not obtain Firestore access token'];
+        }
+
+        $project = 'polygo-143cf';
+        $url = "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/"
+            . rawurlencode($collection)
+            . '?pageSize=' . max(1, $limit)
+            . '&orderBy=' . rawurlencode('created_at desc');
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt_array($ch, self::sslOpts());
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $token,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode < 200 || $httpCode >= 300) {
+            error_log('[polygo-api] Firestore list failed: HTTP ' . $httpCode . ' ' . $response);
+        }
+
+        return ['status' => $httpCode, 'body' => (string)$response];
+    }
+
+    /**
+     * Writes a document to a Firestore collection via REST. Returns the HTTP
+     * status + body so callers can surface per-step results to the admin UI.
+     *
+     * @param array  $fields      plain value array -> Firestore typed values
+     * @param string $documentId  explicit document id; empty = Firestore-generated
+     */
+    public static function postFirestore(string $collection, array $fields, string $documentId = ''): array {
+        $token = self::firestoreAccessToken();
+        if ($token === null) {
+            return ['status' => 0, 'body' => 'Could not obtain Firestore access token'];
+        }
+
+        $encoded = [];
+        foreach ($fields as $key => $value) {
+            if (is_int($value)) {
+                $encoded[$key] = ['integerValue' => (string)$value];
+            } elseif (is_float($value)) {
+                $encoded[$key] = ['doubleValue' => $value];
+            } elseif (is_bool($value)) {
+                $encoded[$key] = ['booleanValue' => $value];
+            } else {
+                $encoded[$key] = ['stringValue' => (string)$value];
+            }
+        }
+
+        $project = 'polygo-143cf';
+        $url = "https://firestore.googleapis.com/v1/projects/$project/databases/(default)/documents/" . rawurlencode($collection);
+        if ($documentId !== '') {
+            $url .= '?documentId=' . rawurlencode($documentId);
+        }
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt_array($ch, self::sslOpts());
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['fields' => $encoded]));
+        $response = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return ['status' => $httpCode, 'body' => (string)$response];
     }
 }
 

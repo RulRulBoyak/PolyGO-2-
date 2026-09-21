@@ -8,11 +8,11 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.Person;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.poliku.polygoplus.HomeActivity;
-import com.poliku.polygoplus.PolyGoApplication;
 import com.poliku.polygoplus.R;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
@@ -88,6 +88,7 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
     }
 
     private void sendNotification(String title, String messageBody, String messageId, Map<String, String> data) {
+        String channelId = NotificationChannels.forType(data.get("type"));
         Intent intent = new Intent(this, HomeActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         
@@ -96,18 +97,33 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
             intent.putExtra("thread_id", data.get("thread_id"));
         }
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        int requestCode = messageId == null ? title.hashCode() : messageId.hashCode();
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, requestCode, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder notificationBuilder =
-                new NotificationCompat.Builder(this, PolyGoApplication.CHANNEL_ID)
+                new NotificationCompat.Builder(this, channelId)
                         .setSmallIcon(R.drawable.ic_notification)
                         .setColor(getResources().getColor(R.color.airbnb_coral, null))
                         .setContentTitle(title)
                         .setContentText(messageBody)
                         .setAutoCancel(true)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setCategory(NotificationChannels.MESSAGES.equals(channelId)
+                                ? NotificationCompat.CATEGORY_MESSAGE
+                                : NotificationCompat.CATEGORY_STATUS)
+                        .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                        .setPriority(NotificationChannels.priorityFor(channelId))
                         .setContentIntent(pendingIntent);
+
+        if (NotificationChannels.MESSAGES.equals(channelId)) {
+            Person sender = new Person.Builder().setName(title).build();
+            Person user = new Person.Builder().setName(getString(R.string.app_name)).build();
+            notificationBuilder.setStyle(new NotificationCompat.MessagingStyle(user)
+                    .setConversationTitle(title)
+                    .addMessage(messageBody, System.currentTimeMillis(), sender));
+        } else {
+            notificationBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(messageBody));
+        }
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

@@ -93,7 +93,7 @@ try {
     }
 
     // Find an existing user by email, otherwise create one.
-    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role FROM users WHERE email = ? LIMIT 1');
+    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, is_banned FROM users WHERE email = ? LIMIT 1');
     $query->execute([$email]);
     $user = $query->fetch();
 
@@ -113,9 +113,22 @@ try {
     }
 
     $userId = (int)$user['id'];
+
+    // Reject suspended accounts before minting a fresh JWT (is_banned set by the
+    // admin panel; verify_jwt() blocks their existing tokens server-side too).
+    if ((int)($user['is_banned'] ?? 0) === 1) {
+        respond(false, 'Unauthorized: Your account has been suspended by an administrator.');
+    }
+
     $user['id'] = $userId;
     $user['name'] = $user['full_name'];
     $user['studentId'] = $user['student_id'];
+
+    // Fix: Cast numbers to booleans to prevent Android Gson crash
+    $user['is_verified'] = (bool)($user['is_verified'] ?? 0);
+    $user['is_banned'] = (bool)($user['is_banned'] ?? 0);
+    $user['is_private'] = (bool)($user['is_private'] ?? 0);
+
     unset($user['full_name'], $user['student_id']);
 
     $token = create_jwt($userId);

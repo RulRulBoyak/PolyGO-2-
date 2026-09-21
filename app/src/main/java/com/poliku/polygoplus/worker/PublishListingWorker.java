@@ -53,6 +53,10 @@ public class PublishListingWorker extends Worker {
         String tags = input.getString("tags");
         String location = input.getString("location");
         String freeSlots = input.getString("free_slots");
+        String condition = input.getString("condition");
+        String originalPrice = input.getString("original_price");
+        boolean autoReply = input.getBoolean("auto_reply", false);
+        boolean hideFromFriends = input.getBoolean("hide_from_friends", false);
         Integer majorId = input.getInt("major_id", 0);
         String[] imageUris = input.getStringArray("image_uris");
 
@@ -105,7 +109,8 @@ public class PublishListingWorker extends Worker {
         final AtomicReference<String> listingId = new AtomicReference<>();
         CountDownLatch listingLatch = new CountDownLatch(1);
         repository.addListing(ownerId, title, category, price, description, finalImageString, tags, location,
-                freeSlots, majorId > 0 ? majorId : null, new Callback<PolyGoApi.AddListingResponse>() {
+                freeSlots, majorId > 0 ? majorId : null, condition, originalPrice, autoReply, hideFromFriends,
+                new Callback<PolyGoApi.AddListingResponse>() {
                     @Override
                     public void onResponse(Call<PolyGoApi.AddListingResponse> call, Response<PolyGoApi.AddListingResponse> response) {
                         PolyGoApi.AddListingResponse body = response.body();

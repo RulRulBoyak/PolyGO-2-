@@ -18,7 +18,7 @@ try {
     }
 
     // Support login via either Student ID (Matrix No) OR Email
-    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, is_verified, password_hash FROM users WHERE student_id = ? OR email = ? LIMIT 1');
+    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, is_verified, is_banned, password_hash FROM users WHERE student_id = ? OR email = ? LIMIT 1');
     $query->execute([$studentId, $studentId]);
     $user = $query->fetch();
 
@@ -26,11 +26,22 @@ try {
         respond(false, 'Incorrect student ID or password');
     }
 
+    // Suspended accounts are rejected at the door instead of receiving a JWT
+    // that would 401 on the very first API call (admin panel toggles is_banned).
+    if ((int)($user['is_banned'] ?? 0) === 1) {
+        respond(false, 'Unauthorized: Your account has been suspended by an administrator.');
+    }
+
     unset($user['password_hash']);
     $userId = (int)$user['id'];
     $user['id'] = $userId;
     $user['name'] = $user['full_name'];
     $user['studentId'] = $user['student_id'];
+
+    // Fix: Cast numbers to booleans to prevent Android Gson crash
+    $user['is_verified'] = (bool)($user['is_verified'] ?? 0);
+    $user['is_banned'] = (bool)($user['is_banned'] ?? 0);
+    $user['is_private'] = (bool)($user['is_private'] ?? 0);
 
     // Generate Security Token
     $token = create_jwt($userId);

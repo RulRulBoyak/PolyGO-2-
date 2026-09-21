@@ -1,4 +1,14 @@
 <resources>
+    <string name="channel_updates">Kemas kini PolyGo+</string>
+    <string name="channel_updates_description">Kemas kini umum daripada PolyGo+.</string>
+    <string name="channel_messages">Mesej</string>
+    <string name="channel_messages_description">Mesej baharu dan balasan perbualan.</string>
+    <string name="channel_campus_alerts">Makluman kampus</string>
+    <string name="channel_campus_alerts_description">Pengumuman dan notis penting kampus.</string>
+    <string name="channel_event_reminders">Peringatan acara</string>
+    <string name="channel_event_reminders_description">Peringatan untuk acara kampus yang anda ikuti.</string>
+    <string name="channel_marketplace">Pasaran</string>
+    <string name="channel_marketplace_description">Tawaran, pesanan, ulasan dan kemas kini penyenaraian.</string>
     <string name="app_name">PolyGo+</string>
     <string name="logo_content_description">Logo PolyGo+</string>
     <string name="content_description_add_product">Tambah Iklan</string>
@@ -21,6 +31,7 @@
     <string name="greeting_morning">Selamat pagi</string>
     <string name="greeting_afternoon">Selamat tengah hari</string>
     <string name="greeting_evening">Selamat petang</string>
+    <string name="greeting_night">Selamat malam</string>
     <string name="explore_campus">Terokai Kampus</string>
     <string name="home_greeting_sub">Apa yang berlaku di kampus hari ini?</string>
     <string name="recent_listings">Iklan Terkini</string>
@@ -212,6 +223,10 @@
     <string name="safe_meetup_emergency_title">Amaran Kecemasan</string>
     <string name="safe_meetup_emergency_confirm">Hantar amaran keselamatan kepada pengguna lain dan Keselamatan PKS?</string>
     <string name="safe_meetup_emergency_sent">Amaran dihantar. Keselamatan PKS telah dimaklumkan.</string>
+    <!-- Talian hotline keselamatan kampus untuk pendail SOS Safe Meetup. Placeholder: isi dengan nombor sebenar (cth. +60 12 345 6789) atau biarkan KOSONG untuk pendail kekal tidak aktif dengan selamat. -->
+    <string name="safe_meetup_campus_hotline"></string>
+    <string name="safe_meetup_dial_hotline_unavailable">Tiada pendail tersedia pada peranti ini</string>
+    <string name="safe_meetup_hotline_unconfigured">Talian hotline kampus belum dikonfigurasi lagi</string>
     <string name="safe_meetup_emergency_send">Hantar Amaran</string>
 
     <!-- Blocking (moderasi UGC) -->
@@ -242,6 +257,8 @@
     <string name="pulse_post_failed">Gagal menghantar. Cuba lagi.</string>
     <string name="pulse_load_failed">Gagal memuatkan Campus Pulse</string>
     <string name="pulse_empty">Tiada pulse lagi - jadi yang pertama untuk siar!</string>
+    <string name="pulse_official_announcements">Pengumuman rasmi</string>
+    <string name="pulse_student_threads">Thread kampus</string>
     <string name="pulse_time_just_now">Baru sahaja</string>
     <string name="pulse_time_m">%1$dm lalu</string>
     <string name="pulse_time_h">%1$dj lalu</string>
@@ -359,7 +376,9 @@
     <string name="seller_sold_segment">%1$d terjual</string>
     <string name="seller_joined_segment">Ahli sejak %1$s</string>
     <string name="home_categories">Kategori</string>
-    <string name="picks_for_you">Pilihan Untuk Anda</string>
+    <string name="picks_for_you">🔥 Hot Picks untuk Anda</string>
+    <string name="home_campus_threads">Campus Threads</string>
+    <string name="home_campus_threads_desc">Sertai perbualan. Apa yang berlaku di PKS?</string>
     <string name="picks_for_you_subtitle">Barangan terbaik untuk jabatan anda</string>
     <!-- Legal -->
     <string name="privacy_title">Privacy Policy</string>
@@ -527,6 +546,12 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_service_draft_saved">Draf perkhidmatan disimpan</string>
     <string name="toast_fill_all_fields_photos">Sila lengkapkan semua ruangan termasuk foto</string>
     <string name="toast_uploading_images">Memuat naik gambar...</string>
+    <!-- Role-aware listing (Premium) -->
+    <string name="edit_product_visitor_title">Semak Senarai</string>
+    <string name="edit_product_lecturer_title">Terbitkan Sumber Akademik</string>
+    <string name="edit_product_free_for_students">Sumber percuma untuk pelajar</string>
+    <string name="edit_product_role_badge_suffix">&#8226; %1$s</string>
+
     <string name="toast_please_sign_in_first">Sila log masuk dahulu</string>
     <string name="toast_service_posted_success">Perkhidmatan berjaya disiarkan!</string>
     <string name="toast_post_error">Ralat siaran</string>
@@ -561,6 +586,15 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_enter_valid_price">Masukkan harga yang sah</string>
     <string name="toast_listing_published">Penyenaraian diterbitkan!</string>
     <string name="toast_listing_error">Ralat penyenaraian</string>
+    <string name="hint_original_price">Harga Asal (Pilihan)</string>
+    <string name="helper_original_price">Untuk menunjukkan coretan diskaun</string>
+    <string name="hint_condition">Keadaan</string>
+    <string name="condition_label">Keadaan: </string>
+    <string name="condition_new">Baharu</string>
+    <string name="condition_used_like_new">Terpakai - Seperti Baharu</string>
+    <string name="condition_used_good">Terpakai - Baik</string>
+    <string name="condition_used_fair">Terpakai - Sederhana</string>
+    <string name="listing_on_marketplace">Menyenarai di Marketplace PolyGo</string>
 
     <!-- Auth: forgot password -->
     <string name="toast_enter_id_or_email">Masukkan ID atau e-mel anda</string>
@@ -574,6 +608,21 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <!-- Home -->
     <string name="toast_press_back_again">Tekan kembali untuk keluar</string>
     <string name="toast_login_required_post">Sila log masuk untuk menyiarkan penyenaraian</string>
+    <string name="create_thread_title">Thread Baharu</string>
+    <string name="handle_format">\@%1$s_pks</string>
+    <string name="action_post">Siarkan</string>
+    <string name="hint_thread_title">Tajuk Thread</string>
+    <string name="hint_start_thread">Mulakan thread kampus...</string>
+    <string name="tag_request">PERMINTAAN</string>
+    <string name="tag_announcement">PENGUMUMAN</string>
+    <string name="tag_flash_sale">JUALAN KILAT</string>
+    <string name="tag_event">ACARA</string>
+    <string name="action_remove_photo">Alih keluar foto</string>
+    <string name="action_pick_tag">Pilih tag</string>
+    <string name="action_add_photo">Tambah foto</string>
+    <string name="action_schedule">Jadual</string>
+    <string name="action_save_draft">Simpan draf</string>
+    <string name="toast_visitor_cannot_post">Pelawat tidak boleh menyiarkan iklan. Sila daftar sebagai Pelajar atau Pensyarah.</string>
 
     <!-- Scanner -->
     <string name="toast_error_starting_camera">Ralat memulakan kamera</string>
@@ -594,6 +643,11 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Auth: OTP -->
     <string name="otp_sent_subtitle">Kami telah menghantar kod 6 digit ke %1$s</string>
+    <string name="otp_title">Sahkan e-mel anda</string>
+    <string name="otp_subtitle_placeholder">Masukkan kod 6 digit yang dihantar ke e-mel kampus anda.</string>
+    <string name="otp_code_hint">Kod pengesahan</string>
+    <string name="otp_verify_account">Sahkan akaun</string>
+    <string name="otp_resend">Tidak menerima kod? Hantar semula</string>
     <string name="toast_enter_valid_otp">Sila masukkan kod 6 digit yang sah</string>
     <string name="toast_invalid_code">Kod tidak sah</string>
     <string name="toast_code_resent_to">Kod dihantar semula ke %1$s</string>
@@ -693,6 +747,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="content_description_joined">Ahli sejak</string>
 
     <string name="product_mark_sold">Tandai sebagai Terjual</string>
+    <string name="role_free_for_students">Percuma untuk pelajar (Sumber Pensyarah)</string>
     <string name="product_detail_trust_rating">Penilaian</string>
     <string name="product_detail_trust_sold">Terjual</string>
     <string name="product_detail_trust_joined">Ahli sejak</string>
@@ -713,9 +768,157 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="notif_not_now">Tidak sekarang</string>
     <string name="notif_open_settings">Buka Tetapan</string>
 
-    <!-- Home event carousel -->
-    <string name="event_trending">Trending</string>
-    <string name="event_going_format">%1$s pergi</string>
-    <string name="event_see_details">Lihat butiran</string>
+    <!-- Account suspension (admin ban) -->
+    <string name="banned_title">Akaun digantung</string>
+    <string name="banned_body">Akaun ini telah digantung oleh pentadbir, biasanya kerana melanggar peraturan pasaran. Penyenaraian anda disembunyikan dan anda tidak lagi boleh log masuk.</string>
+    <string name="banned_contact">Anda tidak boleh menggunakan PolyGo+ sehingga penggantungan ini dikaji semula</string>
+    <string name="banned_logout_button">Kembali ke log masuk</string>
+    <string name="banned_support_button">Hubungi sokongan</string>
+    <string name="toast_account_suspended">Akaun anda telah digantung oleh pentadbir.</string>
 
+    <!-- Marketplace Pro: listing pickers & product detail -->
+    <string name="browse_all_categories">Semua kategori</string>
+    <string name="condition_picker_title">Sejauh mana ia digunakan?</string>
+    <string name="condition_picker_subtitle">Jujurlah supaya pembeli mempercayai penyenaraian anda.</string>
+    <string name="condition_desc_new">Baharu, tidak pernah digunakan.</string>
+    <string name="condition_desc_like_new">Hampir tidak digunakan, seperti baharu.</string>
+    <string name="condition_desc_good">Terpakai tetapi diselenggara dengan baik.</string>
+    <string name="condition_desc_fair">Terpakai dengan kesan kehausan yang jelas.</string>
+    <string name="category_picker_title">Semak imbas kategori</string>
+    <string name="category_picker_subtitle">Pilih kategori yang paling sesuai untuk item anda.</string>
+    <string name="toast_categories_loading">Kategori masih dimuatkan, cuba lagi sekejap lagi.</string>
+    <string name="quick_message_hint">Masih ada ke?</string>
+    <string name="quick_message_send">Hantar mesej</string>
+    <string name="quick_message_default">Masih ada ke?</string>
+    <string name="toast_message_failed">Tidak dapat menghantar mesej. Sila cuba lagi.</string>
+    <string name="product_alert">Dapatkan alert untuk penyenaraian ini</string>
+    <string name="product_alert_on">Alert diaktifkan untuk penyenaraian ini</string>
+    <string name="toast_alert_on">Anda akan dimaklumkan tentang penurunan harga dan ketersediaan.</string>
+    <string name="seller_followers_count">%1$d pengikut</string>
+    <string name="meetup_location_title">Lokasi pertemuan</string>
+    <string name="meetup_map_caption">%1$s • Politeknik Kuching Sarawak</string>
+    <string name="location_near_campus">Berhampiran kampus</string>
+    <string name="photo_count">%1$d/%2$d gambar</string>
+    <string name="photo_tips">Gambar yang jelas mempercepatkan jualan. Tambah sehingga 9.</string>
+    <string name="auto_reply_label">Balas automatik kepada pembeli</string>
+    <string name="auto_reply_helper">Menjawab soalan lazim secara automatik untuk anda.</string>
+    <string name="hide_from_friends_label">Sembunyikan daripada rakan saya</string>
+    <string name="hide_from_friends_helper">Kekalkan penyenaraian ini peribadi daripada rangkaian pengikut anda.</string>
+    <string name="toast_max_photos">Anda boleh menambah sehingga 9 gambar.</string>
+    <string name="photo_tips_body">Gambar yang jelas dan terang item anda dari beberapa sudut. Sehingga 9 gambar. Pembeli mempercayai gambar yang menunjukkan keadaan sebenar.</string>
+    <string name="content_description_product_image">Imej produk</string>
+    <string name="save_changes">Simpan perubahan</string>
+    <string name="toast_loading_listing">Memuatkan penyenaraian anda…</string>
+    <string name="toast_listing_loaded">Penyenaraian dimuatkan. Lakukan perubahan anda.</string>
+    <string name="toast_listing_updated">Perubahan disimpan.</string>
+    <string name="item_live">Aktif</string>
+    <string name="item_sold">Terjual</string>
+    <string name="item_removed">Dibuang</string>
+    <string name="campus_seller">Penjual kampus</string>
+    <string name="thread_you_prefix">Anda: %1$s</string>
+    <string name="thread_open_to_chat">Ketik untuk membuka chat</string>
+    <string name="home_marketplace_activity">Pasaran Anda</string>
+    <string name="home_your_listings">Penyenaraian Anda</string>
+    <string name="home_empty_my_listings">Anda belum menyenaraikan apa-apa. Cipta penyenaraian dan ia akan muncul di sini untuk suntingan pantas.</string>
+    <string name="home_buying">Pembelian</string>
+    <string name="home_empty_buying">Mesej tentang item yang anda beli akan muncul di sini.</string>
+    <string name="campus_hub">Hab Kampus</string>
+    <string name="campus_hub_pulse">Nadi Kampus</string>
+    <string name="campus_hub_pulse_desc">Permintaan dan kemas kini langsung kampus</string>
+    <string name="campus_hub_ca">Kalkulator PB</string>
+    <string name="campus_hub_ca_desc">Anggar PB dan sasaran markah peperiksaan akhir</string>
+    <string name="campus_hub_events">Acara</string>
+    <string name="campus_hub_events_desc">Lihat aktiviti PKS yang akan datang</string>
+    <string name="campus_hub_timetable">Jadual Waktu</string>
+    <string name="campus_hub_timetable_desc">Kelas anda dan sesi seterusnya</string>
+    <string name="ca_title">Penilaian Berterusan</string>
+    <string name="ca_intro">Masukkan setiap markah penilaian untuk menganggar sumbangan PB dan markah peperiksaan akhir yang diperlukan.</string>
+    <string name="ca_subject">Nama subjek</string>
+    <string name="ca_weight">Wajaran PB (%)</string>
+    <string name="fe_weight">Wajaran PA (%)</string>
+    <string name="ca_target">Sasaran (%)</string>
+    <string name="ca_components_heading">Komponen penilaian</string>
+    <string name="ca_component_name">Komponen</string>
+    <string name="ca_default_quiz">Kuiz / Ujian 1</string>
+    <string name="ca_default_lab">Tugasan / Makmal</string>
+    <string name="ca_obtained_short">Markah</string>
+    <string name="ca_max_short">Maks</string>
+    <string name="ca_weight_short">%</string>
+    <string name="ca_remove_component">Buang komponen</string>
+    <string name="ca_move_up">Alih komponen ke atas</string>
+    <string name="ca_move_down">Alih komponen ke bawah</string>
+    <string name="ca_add_component">Tambah baris penilaian</string>
+    <string name="ca_calculate">Kira PB dan sasaran PA</string>
+    <string name="ca_load_preset">Muat subjek tersimpan</string>
+    <string name="ca_save_preset">Simpan pratetap subjek</string>
+    <string name="ca_disclaimer">Anggaran sahaja. Keputusan rasmi ditentukan oleh peraturan dan rekod peperiksaan PKS.</string>
+    <string name="ca_no_final_exam">Subjek ini tiada peperiksaan akhir.</string>
+    <string name="ca_required_fe">Markah mentah PA diperlukan: %1$.1f%%</string>
+    <string name="ca_impossible">Sasaran ini tidak dapat dicapai dengan baki wajaran PA.</string>
+    <string name="ca_minimum_met">Minimum PB kini dipenuhi.</string>
+    <string name="ca_minimum_not_met">Minimum PB belum dipenuhi.</string>
+    <string name="ca_result_format">Sumbangan PB: %1$.1f / 100\nPrestasi PB: %2$.1f%%\n%3$s\n%4$s</string>
+    <string name="ca_invalid_input">Semak semua markah, maksimum dan wajaran. Jumlah komponen mesti sama dengan wajaran PB, dan PB + PA mesti 100.</string>
+    <string name="ca_subject_required">Masukkan nama subjek sebelum menyimpan.</string>
+    <string name="ca_preset_saved">Pratetap subjek disimpan.</string>
+    <string name="ca_no_presets">Belum ada subjek tersimpan.</string>
+    <string name="events_title">Acara Kampus</string>
+    <string name="events_empty">Tiada acara kampus akan datang.</string>
+    <string name="event_remind_me">Ingatkan saya</string>
+    <string name="featured">Pilihan</string>
+    <string name="event_cancel_reminder">Batalkan peringatan</string>
+    <string name="event_reminder_set">Peringatan dijadualkan sejam sebelum acara.</string>
+    <string name="event_reminder_cancelled">Peringatan dibatalkan.</string>
+    <string name="event_reminder_too_late">Acara ini telah bermula.</string>
+    <string name="event_detail_date_time">Tarikh &amp; masa</string>
+    <string name="event_detail_venue">Lokasi</string>
+    <string name="event_detail_organizer">Penganjur</string>
+    <string name="event_capacity_spot">%1$d slot</string>
+    <string name="event_capacity_spots">%1$d slot</string>
+    <string name="event_action_register">Daftar</string>
+    <string name="event_action_directions">Dapatkan arah</string>
+    <string name="event_about">Perihal acara</string>
+    <string name="timetable_title">Jadual Waktu Saya</string>
+    <string name="timetable_empty">Belum ada kelas. Tambah kelas pertama anda.</string>
+    <string name="timetable_no_next">Tiada kelas akan datang dalam jadual ini.</string>
+    <string name="timetable_add">Tambah kelas</string>
+    <string name="timetable_edit">Sunting kelas</string>
+    <string name="timetable_course">Kursus</string>
+    <string name="timetable_room">Bilik</string>
+    <string name="timetable_start">Mula</string>
+    <string name="timetable_end">Tamat</string>
+    <string name="timetable_invalid">Masukkan kursus, bilik dan julat masa yang sah.</string>
+    <string name="timetable_overlap">Kelas ini bertindih dengan kelas lain pada hari yang sama.</string>
+    <string name="timetable_save_failed">Jadual waktu tidak dapat dikemas kini.</string>
+    <string name="timetable_next_format">Seterusnya: %1$s · %2$s, %3$s</string>
+    <string name="timetable_detail_format">%1$s–%2$s · %3$s</string>
+    <string name="timetable_delete">Padam kelas ini?</string>
+    <string name="delete">Padam</string>
+    <string-array name="weekdays">
+        <item>Isnin</item><item>Selasa</item><item>Rabu</item><item>Khamis</item>
+        <item>Jumaat</item><item>Sabtu</item><item>Ahad</item>
+    </string-array>
+    <string name="tour_back">Kembali</string>
+    <string name="tour_finish">Selesai</string>
+    <string name="tour_replay">Ulang panduan aplikasi</string>
+    <string-array name="tour_titles">
+        <item>Utama</item><item>Teroka</item><item>Tambah penyenaraian</item>
+        <item>Peti masuk</item><item>Profil</item>
+    </string-array>
+    <string-array name="tour_bodies">
+        <item>Lihat kemas kini kampus, kategori dan alat pelajar.</item>
+        <item>Terokai produk dan perkhidmatan mengikut kategori.</item>
+        <item>Gunakan butang tengah untuk menjual item atau menawarkan perkhidmatan.</item>
+        <item>Simpan tawaran dan perbualan penjual di satu tempat.</item>
+        <item>Urus pengesahan, item tersimpan dan tetapan akaun.</item>
+    </string-array>
+    <string-array name="home_rotating_messages">
+        <item>Apa yang berlaku di kampus hari ini?</item>
+        <item>Penemuan hebat anda mungkin sedang mengelak pandangan.</item>
+        <item>Belajar dahulu. Teroka dengan berhemah. Mungkin.</item>
+        <item>Satu kampus, banyak tawaran yang mencurigakan bagusnya.</item>
+    </string-array>
+    <string name="impact_leaderboard_title">Papan pendahulu Impak Hijau</string>
+    <string name="impact_leaderboard_empty">Belum ada urus niaga lestari yang selesai.</string>
+    <string name="impact_leaderboard_failed">Papan pendahulu tidak dapat dimuatkan.</string>
 </resources>

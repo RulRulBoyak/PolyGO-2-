@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background"
+    android:fitsSystemWindows="true"
+    android:paddingHorizontal="32dp">
+
+    <!-- Center Content Group -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/layoutBannedActions"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside">
+
+        <!-- Emoji / Icon Circle -->
+        <FrameLayout
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="28dp"
+            android:background="@drawable/bg_category_circle"
+            android:backgroundTint="@color/surface_tint_danger">
+
+            <TextView
+                android:id="@+id/tvBannedEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="🚫"
+                android:textSize="42sp" />
+        </FrameLayout>
+
+        <!-- Headline -->
+        <TextView
+            android:id="@+id/tvBannedTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:letterSpacing="-0.02"
+            android:text="@string/banned_title"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="@color/airbnb_ink"
+            android:textStyle="bold" />
+
+        <!-- Body -->
+        <TextView
+            android:id="@+id/tvBannedBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:paddingHorizontal="16dp"
+            android:text="@string/banned_body"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/airbnb_muted" />
+
+        <TextView
+            android:id="@+id/tvBannedContact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/banned_contact"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/airbnb_muted"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Bottom Action Group -->
+    <LinearLayout
+        android:id="@+id/layoutBannedActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="36dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBannedLogout"
+            style="@style/Widget.PolyGo.Button"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:letterSpacing="0.01"
+            android:text="@string/banned_logout_button"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/pks_blue"
+            app:cornerRadius="16dp"
+            app:elevation="0dp"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="18dp"
+            app:iconTint="@color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBannedSupport"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/banned_support_button"
+            android:textAllCaps="false"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="14sp"
+            app:rippleColor="#15000000" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,9 +12,11 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.poliku.polygoplus.BannedActivity;
 import com.poliku.polygoplus.LoginActivity;
 import com.poliku.polygoplus.data.AppDataStore;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -31,7 +33,7 @@ public final class AuthSessionHandler {
     private static final AtomicBoolean FIRED = new AtomicBoolean(false);
 
     private static volatile Context appContext;
-    private static volatile Activity topActivity;
+    private static volatile WeakReference<Activity> topActivity;
     private static volatile int startedCount;
 
     private AuthSessionHandler() { }
@@ -49,7 +51,7 @@ public final class AuthSessionHandler {
                     FIRED.set(false);
                 }
                 startedCount++;
-                topActivity = activity;
+                topActivity = new WeakReference<>(activity);
             }
 
             @Override
@@ -61,7 +63,8 @@ public final class AuthSessionHandler {
             @Override
             public void onActivityStopped(@NonNull Activity activity) {
                 startedCount--;
-                if (topActivity == activity) {
+                WeakReference<Activity> ref = topActivity;
+                if (ref != null && ref.get() == activity) {
                     topActivity = null;
                 }
             }
@@ -80,7 +83,8 @@ public final class AuthSessionHandler {
 
     @Nullable
     public static Activity getTopActivity() {
-        return topActivity;
+        WeakReference<Activity> ref = topActivity;
+        return ref == null ? null : ref.get();
     }
 
     /**
@@ -98,7 +102,7 @@ public final class AuthSessionHandler {
             if (ctx == null) {
                 return;
             }
-            Activity top = topActivity;
+            Activity top = getTopActivity();
             if (top == null || top.isFinishing() || top.isDestroyed()) {
                 return;
             }
@@ -107,6 +111,42 @@ public final class AuthSessionHandler {
             }
             AppDataStore.logout(ctx);
             Intent intent = new Intent(ctx, LoginActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            try {
+                ctx.startActivity(intent);
+            } catch (Exception ignored) {
+                // No launcher intent available yet - stay silent.
+            }
+        });
+    }
+
+    /**
+     * Account suspension (admin ban) detected from a 401 whose body says
+     * "suspended". Caches the flag so cold starts route straight to
+     * {@link BannedActivity}, then replaces the back stack with the banned
+     * screen. Shares the single-flight guard with {@link #onSessionExpired()}
+     * so a burst of 401s can't present two screens.
+     */
+    public static void onSuspended() {
+        if (!FIRED.compareAndSet(false, true)) {
+            return;
+        }
+        MAIN.post(() -> {
+            Context ctx = appContext;
+            if (ctx == null) {
+                return;
+            }
+            Activity top = getTopActivity();
+            if (top == null || top.isFinishing() || top.isDestroyed()) {
+                return;
+            }
+            if (top instanceof BannedActivity || top instanceof LoginActivity) {
+                return;
+            }
+            AppDataStore.markBanned(ctx);
+            AppDataStore.logout(ctx);
+            Intent intent = new Intent(ctx, BannedActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                             | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             try {

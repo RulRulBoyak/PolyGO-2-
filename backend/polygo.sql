@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     verification_photo VARCHAR(500) NULL DEFAULT NULL,
     verification_status ENUM('unverified','pending','approved','rejected') NOT NULL DEFAULT 'unverified',
+    is_banned TINYINT(1) NOT NULL DEFAULT 0,
+    banned_at DATETIME NULL DEFAULT NULL,
     role VARCHAR(20) NULL DEFAULT 'Student',
     profile_pic_url VARCHAR(500) NULL DEFAULT NULL,
     fcm_token VARCHAR(500) NULL DEFAULT NULL,
@@ -40,18 +42,51 @@ CREATE TABLE IF NOT EXISTS verification_codes (
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    icon_res VARCHAR(50) DEFAULT 'ic_category_default',
+    icon_res VARCHAR(50) DEFAULT 'ic_category_tech',
     is_published TINYINT(1) DEFAULT 1,
     proposed_by BIGINT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_category_proposed_by FOREIGN KEY (proposed_by) REFERENCES users(id)
 );
 
+-- Campus Hub planner data.
+CREATE TABLE IF NOT EXISTS campus_events (
+    id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(120) NOT NULL,
+    description TEXT NOT NULL, venue VARCHAR(120) NOT NULL,
+    starts_at DATETIME NOT NULL, ends_at DATETIME NULL,
+    is_published TINYINT(1) NOT NULL DEFAULT 0,
+    theme VARCHAR(40) NOT NULL DEFAULT 'default',
+    accent_color CHAR(7) NULL DEFAULT NULL,
+    emoji VARCHAR(16) NULL DEFAULT NULL,
+    label VARCHAR(40) NULL DEFAULT NULL,
+    cover_url VARCHAR(500) NULL DEFAULT NULL,
+    is_featured TINYINT(1) NOT NULL DEFAULT 0,
+    organizer_name VARCHAR(120) NULL DEFAULT NULL,
+    organizer_contact VARCHAR(120) NULL DEFAULT NULL,
+    registration_url VARCHAR(500) NULL DEFAULT NULL,
+    map_url VARCHAR(300) NULL DEFAULT NULL,
+    capacity INT UNSIGNED NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_campus_events_published_starts (is_published, starts_at),
+    INDEX idx_campus_events_featured_starts (is_featured, starts_at)
+);
+
+CREATE TABLE IF NOT EXISTS timetable_entries (
+    id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT UNSIGNED NOT NULL,
+    course VARCHAR(100) NOT NULL, room VARCHAR(80) NOT NULL,
+    day_of_week TINYINT UNSIGNED NOT NULL, starts_at TIME NOT NULL, ends_at TIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_timetable_entries_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_timetable_entries_user_day (user_id, day_of_week, starts_at)
+);
+
 INSERT IGNORE INTO categories (name, icon_res, is_published) VALUES
     ('Food','ic_category_food',1),('Drink','ic_category_drink',1),('Tech','ic_category_tech',1),
-    ('Electronics','ic_category_electronics',1),('Fashion','ic_category_fashion',1),('Books','ic_category_books',1),
+    ('Electronics','ic_category_tech',1),('Fashion','ic_category_fashion',1),('Books','ic_category_books',1),
     ('Repair','ic_category_repair',1),('Home','ic_category_home',1),('Laundry','ic_category_laundry',1),
-    ('Delivery','ic_category_delivery',1),('Services','ic_category_services',1);
+    ('Delivery','ic_category_delivery',1),('Services','ic_category_service',1);
 
 CREATE TABLE IF NOT EXISTS listings (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -60,11 +95,15 @@ CREATE TABLE IF NOT EXISTS listings (
     category VARCHAR(80) NOT NULL,
     description TEXT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
+    `condition` ENUM('New','Used - Like New','Used - Good','Used - Fair') NOT NULL DEFAULT 'New',
+    original_price DECIMAL(10,2) NULL DEFAULT NULL,
     image_url VARCHAR(500),
     tags VARCHAR(255) NOT NULL DEFAULT '',
     free_slots VARCHAR(500) NULL DEFAULT NULL,
     major_id INT UNSIGNED NULL DEFAULT NULL,
     location VARCHAR(150),
+    auto_reply TINYINT(1) NOT NULL DEFAULT 0,
+    hide_from_friends TINYINT(1) NOT NULL DEFAULT 0,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -74,6 +113,28 @@ CREATE TABLE IF NOT EXISTS listings (
     INDEX idx_listings_major (major_id),
     CONSTRAINT fk_listing_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS user_follows (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    follower_id BIGINT UNSIGNED NOT NULL,
+    followed_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_follow_pair (follower_id, followed_id),
+    KEY idx_follow_followed (followed_id),
+    CONSTRAINT fk_follow_follower FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_follow_followed FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS listing_alerts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    listing_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_alert_pair (user_id, listing_id),
+    KEY idx_alert_listing (listing_id),
+    CONSTRAINT fk_listing_alert_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_listing_alert_listing FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS majors (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -199,6 +260,7 @@ CREATE TABLE IF NOT EXISTS campus_alerts (
     title VARCHAR(150) NOT NULL,
     body TEXT NOT NULL,
     status ENUM('pending','approved','hidden') NOT NULL DEFAULT 'approved',
+    is_global TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_alert_status_created (status, created_at),
     CONSTRAINT fk_alert_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
