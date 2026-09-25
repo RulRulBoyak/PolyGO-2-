@@ -28,6 +28,12 @@ if (!$user) {
 
 $ownerId = (int)$user['id'];
 
+if ($viewerId > 0 && $viewerId !== $ownerId) {
+    $block = $pdo->prepare('SELECT 1 FROM blocked_users WHERE (user_id = ? AND blocked_id = ?) OR (user_id = ? AND blocked_id = ?) LIMIT 1');
+    $block->execute([$viewerId, $ownerId, $ownerId, $viewerId]);
+    if ($block->fetchColumn()) respond(false, 'Seller profile is not available');
+}
+
 // Social proof: follower count + whether the (optional) viewer follows them.
 $followCount = 0;
 $isFollowing = false;
@@ -45,12 +51,10 @@ try {
 
 // Metrics Action: Returns calculated business data
 if ($action === 'metrics') {
-    // Private accounts only expose metrics to the account owner.
-    if ((bool)$user['is_private']) {
-        $viewerId = verify_jwt(); // exits with 401 if no valid token
-        if ((int)$viewerId !== $ownerId) {
-            respond(false, 'This account is private');
-        }
+    // Earnings and business metrics are private to the account owner.
+    $viewerId = verify_jwt();
+    if ((int)$viewerId !== $ownerId) {
+        respond(false, 'Seller metrics are private');
     }
     // 1. Total Earnings from COMPLETED transactions
     $earnQuery = $pdo->prepare('SELECT SUM(amount) FROM transactions WHERE seller_id = ? AND status = "completed"');
@@ -70,7 +74,7 @@ if ($action === 'metrics') {
     // 4. Rating Statistics
     $rateQuery = $pdo->prepare('SELECT AVG(stars), COUNT(*) FROM reviews WHERE seller_id = ?');
     $rateQuery->execute([$ownerId]);
-    $rateRow = $rateQuery->fetch();
+    $rateRow = $rateQuery->fetch(PDO::FETCH_NUM) ?: [null, 0];
     $avgRating = round((float)$rateRow[0], 1);
     $reviewCount = (int)$rateRow[1];
 
@@ -85,7 +89,7 @@ if ($action === 'metrics') {
 }
 
 // Private accounts hide their listings and reviews from other students
-if ((bool)$user['is_private']) {
+if ((bool)$user['is_private'] && $viewerId !== $ownerId) {
     respond(true, 'Seller profile (private)', [
         'seller' => [
             'id' => $ownerId,
@@ -122,12 +126,7 @@ foreach ($listQuery->fetchAll() as $item) {
     $item['is_available'] = (bool)$item['is_available'];
     $item['is_verified'] = (bool)($item['is_verified'] ?? false);
     $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
-    $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
-        ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
-        : '';
-    if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
-        $item['thumb_url'] = $item['image_url'];
-    }
+    $item['thumb_url'] = listing_thumbnail_url((string)($item['image_url'] ?? ''));
     if ($item['is_available']) $active++;
     else $sold++;
     $listings[] = $item;
@@ -144,7 +143,7 @@ try {
 // Aggregate social proof: average rating + review count (mirrors the metrics action).
 $rateQuery = $pdo->prepare('SELECT AVG(stars), COUNT(*) FROM reviews WHERE seller_id = ?');
 $rateQuery->execute([$ownerId]);
-$rateRow = $rateQuery->fetch();
+$rateRow = $rateQuery->fetch(PDO::FETCH_NUM) ?: [null, 0];
 $avgRating = round((float)$rateRow[0], 1);
 $reviewCount = (int)$rateRow[1];
 

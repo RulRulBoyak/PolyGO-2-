@@ -31,7 +31,6 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -61,7 +60,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.text.SimpleDateFormat;
@@ -653,7 +651,6 @@ public class ProductDetailActivity extends BaseActivity {
                         if (response.isSuccessful() && body != null && body.isSuccess() && body.threadId != null) {
                             HapticManager.success(ProductDetailActivity.this);
                             AppDataStore.rememberThread(ProductDetailActivity.this, body.threadId, product.id, product.seller);
-                            broadcastMessageToFirestore(body.threadId, text);
                             openThread(body.threadId);
                         } else {
                             resetComposer();
@@ -682,15 +679,6 @@ public class ProductDetailActivity extends BaseActivity {
         i.putExtra(ChatActivity.EXTRA_SELLER_ID, product.ownerId);
         i.putExtra(ChatActivity.EXTRA_OTHER_NAME, product.seller);
         startActivity(i);
-    }
-
-    private void broadcastMessageToFirestore(String threadId, String text) {
-        if (threadId == null || threadId.isEmpty()) return;
-        java.util.Map<String, Object> data = new HashMap<>();
-        data.put("content", text);
-        data.put("sender_id", AppDataStore.userId(this));
-        data.put("timestamp", System.currentTimeMillis() / 1000);
-        FirebaseFirestore.getInstance().collection("chats").document(threadId).collection("messages").add(data);
     }
 
     private void shareListing() {
@@ -867,13 +855,8 @@ public class ProductDetailActivity extends BaseActivity {
                 boolean fav = AppDataStore.isFavorite(ProductDetailActivity.this, product.id);
                 updateSaveButton(fav);
 
-                if (!fav) {
-                    Snackbar.make(saveButton, R.string.snack_removed_offline, Snackbar.LENGTH_LONG)
-                            .setAction(getString(R.string.action_undo), v -> toggleFavorite())
-                            .show();
-                } else {
-                    Toast.makeText(ProductDetailActivity.this, R.string.toast_saved_offline, Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(ProductDetailActivity.this, R.string.toast_favorite_update_failed,
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }

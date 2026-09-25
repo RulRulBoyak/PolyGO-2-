@@ -15,7 +15,7 @@ try {
 }
 
 try {
-    $pending_reports = (int) $pdo->query("SELECT COUNT(*) FROM reports r LEFT JOIN admin_report_actions a ON a.report_id = r.id WHERE r.target_type = 'listing' AND COALESCE(a.status, 'pending') = 'pending'")->fetchColumn();
+    $pending_reports = (int) $pdo->query("SELECT COUNT(*) FROM reports r LEFT JOIN admin_report_actions a ON a.report_id = r.id WHERE COALESCE(a.status, 'pending') = 'pending'")->fetchColumn();
 } catch (PDOException $e) {
     $pending_reports = 0;
 }
@@ -24,6 +24,12 @@ try {
     $pending_pulse = (int) $pdo->query("SELECT COUNT(*) FROM campus_alerts WHERE status = 'pending'")->fetchColumn();
 } catch (PDOException $e) {
     $pending_pulse = 0;
+}
+
+try {
+    $new_bugs = (int) $pdo->query("SELECT COUNT(*) FROM bug_reports WHERE status = 'new'")->fetchColumn();
+} catch (PDOException $e) {
+    $new_bugs = 0;
 }
 
 if (!function_exists('sidebarItem')) {
@@ -71,7 +77,7 @@ if (!function_exists('sidebarItem')) {
         <div class="sidebar-section-label">System</div>
         <?php
         sidebarItem('maintenance.php', 'bi-tools', 'Maintenance', 'maintenance.php');
-        sidebarItem('firebase_monitor.php', 'bi-radio', 'Live Feed Monitor', 'firebase_monitor.php');
+        sidebarItem('bug_reports.php', 'bi-bug', 'Bug Reports', 'bug_reports.php', $new_bugs);
         ?>
 
         <hr class="text-muted">

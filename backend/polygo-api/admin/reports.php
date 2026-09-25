@@ -6,51 +6,46 @@ $pdo = getConnection();
 $message = '';
 $error = '';
 
-// Handle report actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
+// Handle report actions. Target IDs are always read from the report itself;
+// never trust a hidden listing ID supplied by the browser.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
+    $error = 'Your session expired. Refresh the page and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $report_id = $_POST['report_id'] ?? 0;
-    $listing_id = $_POST['listing_id'] ?? 0;
-    
-    if ($action === 'resolve' && $report_id) {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO admin_report_actions (report_id, status) VALUES (?, 'resolved') ON DUPLICATE KEY UPDATE status = VALUES(status)");
-            $stmt->execute([$report_id]);
-            $message = "Report resolved successfully!";
-        } catch (PDOException $e) {
-            $error = "Failed to resolve report.";
+    $report_id = (int) ($_POST['report_id'] ?? 0);
+    try {
+        $target = $pdo->prepare('SELECT target_type, target_id FROM reports WHERE id = ? LIMIT 1');
+        $target->execute([$report_id]);
+        $reportTarget = $target->fetch();
+        if (!$reportTarget || !in_array($action, ['resolve', 'dismiss', 'remove_listing'], true)) {
+            throw new RuntimeException('Invalid report action');
         }
-    }
-    
-    if ($action === 'dismiss' && $report_id) {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO admin_report_actions (report_id, status) VALUES (?, 'dismissed') ON DUPLICATE KEY UPDATE status = VALUES(status)");
-            $stmt->execute([$report_id]);
-            $message = "Report dismissed successfully!";
-        } catch (PDOException $e) {
-            $error = "Failed to dismiss report.";
-        }
-    }
-    
-    if ($action === 'remove_listing' && $listing_id && $report_id) {
-        try {
-            // Start transaction
+
+        $statusValue = $action === 'dismiss' ? 'dismissed' : 'resolved';
+        if ($action === 'remove_listing') {
+            if ($reportTarget['target_type'] !== 'listing' || !ctype_digit((string) $reportTarget['target_id'])) {
+                throw new RuntimeException('This report does not target a listing');
+            }
             $pdo->beginTransaction();
-            
-            // Archive the same listing that Android reads.
-            $stmt = $pdo->prepare("UPDATE listings SET archived_at = NOW() WHERE id = ?");
-            $stmt->execute([$listing_id]);
-            
-            // Resolve the report
-            $stmt = $pdo->prepare("INSERT INTO admin_report_actions (report_id, status) VALUES (?, 'resolved') ON DUPLICATE KEY UPDATE status = VALUES(status)");
-            $stmt->execute([$report_id]);
-            
-            $pdo->commit();
-            $message = "Listing removed and report resolved!";
-        } catch (PDOException $e) {
-            $pdo->rollBack();
-            $error = "Failed to remove listing.";
+            $listingId = (int) $reportTarget['target_id'];
+            $stmt = $pdo->prepare('UPDATE listings SET archived_at = NOW(), is_available = 0 WHERE id = ?');
+            $stmt->execute([$listingId]);
+            if ($stmt->rowCount() === 0) throw new RuntimeException('Listing no longer exists');
         }
+
+        $stmt = $pdo->prepare('INSERT INTO admin_report_actions (report_id, status) VALUES (?, ?) ON DUPLICATE KEY UPDATE status = VALUES(status)');
+        $stmt->execute([$report_id, $statusValue]);
+        if ($pdo->inTransaction()) $pdo->commit();
+
+        auditAdminAction($pdo, $action, 'report', $report_id,
+            $reportTarget['target_type'] . ' #' . $reportTarget['target_id'] . ' -> ' . $statusValue);
+        $message = $action === 'remove_listing'
+            ? 'Listing archived and report resolved.'
+            : 'Report ' . $statusValue . ' successfully.';
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('[polygo-admin] report action failed: ' . $e->getMessage());
+        $error = 'The report action could not be completed.';
     }
 }
 
@@ -58,14 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
 $status = $_GET['status'] ?? '';
 
 // Build query
-$query = "SELECT r.id AS report_id, r.reason, r.details, r.created_at,
+$query = "SELECT r.id AS report_id, r.target_type, r.target_id, r.reason, r.details, r.created_at,
           COALESCE(a.status, 'pending') AS status, l.title AS listing_title, l.id AS listing_id,
           u.full_name AS reporter_username, u.full_name AS reporter_name,
-          seller.full_name AS seller_username, seller.full_name AS seller_name
+          seller.full_name AS seller_username, seller.full_name AS seller_name,
+          target_user.full_name AS target_user_name, target_user.email AS target_user_email
           FROM reports r LEFT JOIN admin_report_actions a ON a.report_id = r.id
           LEFT JOIN listings l ON r.target_type = 'listing' AND CAST(r.target_id AS UNSIGNED) = l.id
           LEFT JOIN users u ON r.reporter_id = u.id
-          LEFT JOIN users seller ON l.owner_id = seller.id WHERE 1=1";
+          LEFT JOIN users seller ON l.owner_id = seller.id
+          LEFT JOIN users target_user ON r.target_type = 'user' AND CAST(r.target_id AS UNSIGNED) = target_user.id
+          WHERE 1=1";
 $params = [];
 
 if ($status) {
@@ -118,7 +116,7 @@ $dismissed_reports = $stmt->fetch()['total'];
                                 <h3 class="fw-bold">
                                     <i class="bi bi-flag"></i> Reports Management
                                 </h3>
-                                <p class="text-muted">Monitor and handle reported listings</p>
+                                <p class="text-muted">Monitor and handle reported listings and users</p>
                             </div>
                         </div>
                     </div>
@@ -204,9 +202,9 @@ $dismissed_reports = $stmt->fetch()['total'];
                                 <thead class="table-light">
                                     <tr>
                                         <th>#</th>
-                                        <th>Listing</th>
+                                        <th>Target</th>
                                         <th>Reported By</th>
-                                        <th>Seller</th>
+                                        <th>Owner / Reported user</th>
                                         <th>Reason</th>
                                         <th>Status</th>
                                         <th>Date</th>
@@ -222,9 +220,15 @@ $dismissed_reports = $stmt->fetch()['total'];
                                                 <td>
                                                     <div>
                                                         <div class="fw-semibold">
-                                                            <?php echo htmlspecialchars($report['listing_title'] ?? 'Deleted Listing'); ?>
+                                                            <?php if ($report['target_type'] === 'user'): ?>
+                                                                <span class="badge bg-info me-1">User</span>
+                                                                <?php echo htmlspecialchars($report['target_user_name'] ?? 'Deleted user'); ?>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-primary me-1">Listing</span>
+                                                                <?php echo htmlspecialchars($report['listing_title'] ?? 'Deleted listing'); ?>
+                                                            <?php endif; ?>
                                                         </div>
-                                                        <small class="text-muted">ID: #<?php echo $report['listing_id']; ?></small>
+                                                        <small class="text-muted">ID: #<?php echo htmlspecialchars((string) $report['target_id']); ?></small>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -232,8 +236,13 @@ $dismissed_reports = $stmt->fetch()['total'];
                                                     <small class="d-block text-muted">@<?php echo htmlspecialchars($report['reporter_username'] ?? 'unknown'); ?></small>
                                                 </td>
                                                 <td>
-                                                    <?php echo htmlspecialchars($report['seller_name'] ?? $report['seller_username'] ?? 'Unknown'); ?>
-                                                    <small class="d-block text-muted">@<?php echo htmlspecialchars($report['seller_username'] ?? 'unknown'); ?></small>
+                                                    <?php if ($report['target_type'] === 'user'): ?>
+                                                        <?php echo htmlspecialchars($report['target_user_name'] ?? 'Deleted user'); ?>
+                                                        <small class="d-block text-muted"><?php echo htmlspecialchars($report['target_user_email'] ?? ''); ?></small>
+                                                    <?php else: ?>
+                                                        <?php echo htmlspecialchars($report['seller_name'] ?? 'Unknown'); ?>
+                                                        <small class="d-block text-muted"><?php echo htmlspecialchars($report['seller_username'] ?? 'unknown'); ?></small>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <div class="text-truncate" style="max-width: 150px;" title="<?php echo htmlspecialchars($report['reason'] ?? 'No reason provided'); ?>">
@@ -259,16 +268,17 @@ $dismissed_reports = $stmt->fetch()['total'];
                                                 <td>
                                                     <?php if ($report['status'] === 'pending'): ?>
                                                         <div class="btn-group btn-group-sm">
-                                                            <form method="POST" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
-                                                                <input type="hidden" name="report_id" value="<?php echo $report['report_id']; ?>">
-                                                                <input type="hidden" name="listing_id" value="<?php echo $report['listing_id']; ?>">
-                                                                <input type="hidden" name="action" value="remove_listing">
-                                                                <button type="submit" class="btn btn-danger" 
-                                                                        title="Remove Listing & Resolve Report"
-                                                                        onclick="return confirm('Remove this listing and resolve the report?')">
-                                                                    <i class="bi bi-trash"></i> Remove
-                                                                </button>
-                                                            </form>
+                                                            <?php if ($report['target_type'] === 'listing' && $report['listing_id']): ?>
+                                                                <form method="POST" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                                                    <input type="hidden" name="report_id" value="<?php echo $report['report_id']; ?>">
+                                                                    <input type="hidden" name="action" value="remove_listing">
+                                                                    <button type="submit" class="btn btn-danger"
+                                                                            title="Remove Listing & Resolve Report"
+                                                                            onclick="return confirm('Remove this listing and resolve the report?')">
+                                                                        <i class="bi bi-trash"></i> Remove
+                                                                    </button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                             <form method="POST" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
                                                                 <input type="hidden" name="report_id" value="<?php echo $report['report_id']; ?>">
                                                                 <input type="hidden" name="action" value="resolve">

@@ -27,6 +27,12 @@ function eventDate(?string $value, bool $required): ?string {
     return $date->format('Y-m-d H:i:s');
 }
 
+function eventWebUrl(string $value): bool {
+    if ($value === '') return true;
+    if (!filter_var($value, FILTER_VALIDATE_URL)) return false;
+    return in_array(strtolower((string)parse_url($value, PHP_URL_SCHEME)), ['http', 'https'], true);
+}
+
 // Site-relative cover path (/polygo-api/uploads/...). Made absolute for the
 // Android client at request time so emulator / device / prod hosts all work.
 $apiRoot = basename(__DIR__) === 'admin' ? dirname(__DIR__) : __DIR__;
@@ -72,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
         $row = $old->fetch();
         $pdo->prepare('DELETE FROM campus_events WHERE id = ?')->execute([$id]);
         if ($row) removeCoverFile($apiRoot, $row['cover_url']);
+        auditAdminAction($pdo, 'delete', 'campus_event', $id, 'Deleted campus event');
         $message = 'Event deleted.';
     } elseif ($action === 'save') {
         $title = trim($_POST['title'] ?? '');
@@ -95,9 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
         $mapUrl = trim($_POST['map_url'] ?? '');
         $capacityRaw = trim($_POST['capacity'] ?? '');
         $capacity = $capacityRaw === '' ? null : filter_var($capacityRaw, FILTER_VALIDATE_INT);
-        if ($registrationUrl !== '' && !filter_var($registrationUrl, FILTER_VALIDATE_URL)) {
+        if (!eventWebUrl($registrationUrl)) {
             $error = 'Registration link must be a valid URL.';
-        } elseif ($mapUrl !== '' && !filter_var($mapUrl, FILTER_VALIDATE_URL)) {
+        } elseif (!eventWebUrl($mapUrl)) {
             $error = 'Maps link must be a valid URL.';
         } elseif ($capacity !== null && ($capacity === false || $capacity < 1 || $capacity > 99999)) {
             $error = 'Capacity must be a number between 1 and 99999.';
@@ -149,7 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
                         $accent !== '' ? $accent : null, $emoji !== '' ? $emoji : null, $label !== '' ? $label : null,
                         $existingCover, $featured, $nullIfEmpty($organizerName), $nullIfEmpty($organizerContact),
                         $nullIfEmpty($registrationUrl), $nullIfEmpty($mapUrl), $capacity]);
+                $id = (int)$pdo->lastInsertId();
             }
+            auditAdminAction($pdo, $id > 0 && $existing ? 'update' : 'create', 'campus_event', $id,
+                ($published ? 'Published' : 'Saved draft') . ': ' . $title);
             $message = $published
                 ? 'Event published to Android. It will appear while its start time is in the future.'
                 : 'Event saved as a draft. Publish it to show it in Android.';
@@ -181,6 +191,11 @@ $events = $pdo->query('SELECT * FROM campus_events ORDER BY is_featured DESC, st
 .detail-mini-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: #6b7280; }
 .detail-mini-row i { color: #0d47a1; }
 .detail-mini-row .text-primary { color: #0d47a1 !important; font-weight: 600; }
+#eventModal .modal-dialog { max-width: min(1140px, calc(100vw - 32px)); }
+@media (min-width: 768px) {
+    #eventModal .modal-body > .row > .col-md-4 { width: 41.666667%; }
+    #eventModal .modal-body > .row > .col-md-8 { width: 58.333333%; }
+}
 </style></head>
 <body><div class="d-flex" id="wrapper"><?php include 'includes/sidebar.php'; ?><div id="page-content-wrapper" class="w-100"><?php include 'includes/header.php'; ?>
 <main class="container-fluid px-4 py-4"><div class="d-flex justify-content-between align-items-center mb-4"><div><h3 class="fw-bold mb-1"><i class="bi bi-calendar-event"></i> Campus Events</h3><p class="text-muted mb-0">Publish verified campus activities to the student calendar.</p></div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#eventModal"><i class="bi bi-plus-lg"></i> Add event</button></div>

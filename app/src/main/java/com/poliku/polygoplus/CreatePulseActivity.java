@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -19,24 +18,22 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -96,6 +93,25 @@ public class CreatePulseActivity extends AppCompatActivity {
         setupActions();
 
         etTitle.requestFocus();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private boolean isDirty() {
+        return ExitGuard.anyText(etTitle.getText(), etBody.getText()) || selectedImageUri != null;
+    }
+
+    private void confirmExit() {
+        if (!isDirty()) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private void setupUserData() {
@@ -111,7 +127,7 @@ public class CreatePulseActivity extends AppCompatActivity {
     }
 
     private void setupActions() {
-        findViewById(R.id.btnCancel).setOnClickListener(v -> finish());
+        findViewById(R.id.btnCancel).setOnClickListener(v -> confirmExit());
 
         btnPost.setOnClickListener(v -> {
             String title = etTitle.getText().toString().trim();
@@ -141,11 +157,6 @@ public class CreatePulseActivity extends AppCompatActivity {
         findViewById(R.id.btnRemoveAttachment).setOnClickListener(v -> {
             selectedImageUri = null;
             layoutAttachment.setVisibility(View.GONE);
-        });
-
-        findViewById(R.id.btnSchedule).setOnClickListener(v -> {
-            wireMorphEffect(v);
-            Toast.makeText(this, R.string.toast_alerts_in_development, Toast.LENGTH_SHORT).show();
         });
 
         findViewById(R.id.btnSaveDraft).setOnClickListener(v -> {
@@ -186,8 +197,8 @@ public class CreatePulseActivity extends AppCompatActivity {
             public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     HapticManager.success(CreatePulseActivity.this);
+                    Toast.makeText(CreatePulseActivity.this, R.string.pulse_submitted_review, Toast.LENGTH_LONG).show();
                     btnPost.animate().scaleX(1.1f).scaleY(1.1f).alpha(0f).setDuration(200).start();
-                    broadcastPulseToFirestore(title, body);
                     setResult(RESULT_OK);
                     btnPost.postDelayed(CreatePulseActivity.this::finish, 250);
                 } else {
@@ -204,19 +215,6 @@ public class CreatePulseActivity extends AppCompatActivity {
                 UiUtils.snackbarError(findViewById(android.R.id.content), R.string.pulse_post_failed);
             }
         });
-    }
-
-    private void broadcastPulseToFirestore(String title, String body) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Map<String, Object> data = new HashMap<>();
-        data.put("title", title);
-        data.put("body", body);
-        data.put("tag", selectedTag);
-        data.put("user_name", AppDataStore.userName(this));
-        data.put("is_global", false);
-        data.put("created_at", System.currentTimeMillis() / 1000);
-
-        db.collection("pulse").add(data);
     }
 
     @Override

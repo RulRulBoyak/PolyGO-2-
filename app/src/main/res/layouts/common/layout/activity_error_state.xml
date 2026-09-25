@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:letterSpacing="-0.02"
-            android:text="No internet connection"
+                android:text="@string/error_state_offline_title"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
             android:textColor="@color/airbnb_ink"
             android:textStyle="bold" />
@@ -56,7 +56,7 @@
             android:gravity="center"
             android:lineSpacingExtra="3dp"
             android:paddingHorizontal="16dp"
-            android:text="Check your campus Wi-Fi or mobile data connection, then try again."
+                android:text="@string/error_state_offline_body"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="@color/airbnb_muted" />
 
@@ -79,12 +79,12 @@
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:letterSpacing="0.01"
-            android:text="Try Again"
+            android:text="@string/error_state_retry"
             android:textAllCaps="false"
-            android:textColor="@color/white"
+            android:textColor="@color/button_primary_text"
             android:textSize="15sp"
             android:textStyle="bold"
-            app:backgroundTint="@color/pks_blue"
+            app:backgroundTint="@color/button_primary_background"
             app:cornerRadius="16dp"
             app:elevation="0dp"
             app:icon="@drawable/ic_refresh"
@@ -96,14 +96,16 @@
         <!-- Secondary Subdued Fallback Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnContinueOffline"
-            style="@style/Widget.Material3.Button.TextButton"
+            style="@style/Widget.PolyGo.Button.Tonal"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Continue with saved data"
+            android:minHeight="48dp"
+            android:text="@string/error_state_continue_saved"
             android:textAllCaps="false"
-            android:textColor="@color/airbnb_muted"
+            android:textColor="@color/button_tonal_text"
             android:textSize="14sp"
+            android:textStyle="bold"
             app:rippleColor="#15000000" />
 
     </LinearLayout>

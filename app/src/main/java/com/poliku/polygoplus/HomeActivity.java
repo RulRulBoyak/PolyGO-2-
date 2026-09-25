@@ -28,6 +28,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.os.Build;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.poliku.polygoplus.fragments.ExploreFragment;
 import com.poliku.polygoplus.fragments.MessagesFragment;
@@ -48,6 +49,7 @@ import retrofit2.Response;
 
 @AndroidEntryPoint
 public class HomeActivity extends AppCompatActivity {
+    private static final String TAG = "HomeActivity";
     public static final String EXTRA_REPLAY_TOUR = "replay_tour";
     @Inject PolyGoRepository polyGoRepository;
     private int previousTabIndex = 0;
@@ -336,7 +338,8 @@ public class HomeActivity extends AppCompatActivity {
                         startActivity(intent);
                         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     } catch (Exception e) {
-                        Toast.makeText(HomeActivity.this, "Err: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Could not open product editor", e);
+                        Toast.makeText(HomeActivity.this, R.string.toast_screen_open_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -350,14 +353,16 @@ public class HomeActivity extends AppCompatActivity {
                         startActivity(intent);
                         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     } catch (Exception e) {
-                        Toast.makeText(HomeActivity.this, "Err: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Could not open service editor", e);
+                        Toast.makeText(HomeActivity.this, R.string.toast_screen_open_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
 
             dialog.show();
         } catch (Exception e) {
-            Toast.makeText(this, "Layout Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Could not open listing type chooser", e);
+            Toast.makeText(this, R.string.toast_screen_open_failed, Toast.LENGTH_LONG).show();
         }
     }
 

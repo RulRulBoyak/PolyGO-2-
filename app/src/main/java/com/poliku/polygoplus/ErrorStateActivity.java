@@ -29,17 +29,18 @@ public class ErrorStateActivity extends BaseActivity {
         setContentView(R.layout.activity_error_state);
         boolean maintenance = "maintenance".equals(getIntent().getStringExtra(EXTRA_MODE));
         ((TextView) findViewById(R.id.tvErrorEmoji)).setText(maintenance ? "🛠️" : "📡");
-        ((TextView) findViewById(R.id.tvErrorTitle)).setText(maintenance ? "We'll be back soon" : "No internet connection");
+        ((TextView) findViewById(R.id.tvErrorTitle)).setText(maintenance
+                ? R.string.error_state_maintenance_title : R.string.error_state_offline_title);
         ((TextView) findViewById(R.id.tvErrorBody)).setText(maintenance
-                ? "PolyGo+ is in maintenance while the campus database is updated. Please try again shortly."
-                : "Check your internet connection and try again. You can also continue with listings saved on this phone.");
+                ? getString(R.string.error_state_maintenance_body)
+                : getString(R.string.error_state_offline_body));
         findViewById(R.id.btnRetry).setOnClickListener(v -> retry());
         findViewById(R.id.btnContinueOffline).setOnClickListener(v -> finish());
     }
 
     private void retry() {
         if (!ConnectivityHelper.isOnline(this)) {
-            ((TextView) findViewById(R.id.tvErrorTitle)).setText("Still offline");
+            ((TextView) findViewById(R.id.tvErrorTitle)).setText(R.string.error_state_still_offline);
             return;
         }
         polyGoRepository.getStatus(new Callback<BaseResponse>() {
@@ -52,27 +53,31 @@ public class ErrorStateActivity extends BaseActivity {
                         // admin's message verbatim (falls back to default copy).
                         String msg = response.body().getMaintenanceMessage();
                         AppDataStore.setMaintenanceMode(ErrorStateActivity.this, true);
-                        ((TextView) findViewById(R.id.tvErrorTitle)).setText("Still under maintenance");
+                        ((TextView) findViewById(R.id.tvErrorTitle)).setText(R.string.error_state_still_maintenance);
                         ((TextView) findViewById(R.id.tvErrorBody)).setText(
                                 msg != null && !msg.trim().isEmpty()
                                         ? msg
-                                        : "PolyGo+ is in maintenance while the campus database is updated. Please try again shortly.");
+                                        : getString(R.string.error_state_maintenance_body));
                         return;
                     }
                     AppDataStore.setMaintenanceMode(ErrorStateActivity.this, false);
                     NetworkErrorHandler.notifyServerOk();
                     finish();
                 } else {
-                    ((TextView) findViewById(R.id.tvErrorTitle)).setText("Server unreachable");
+                    showServerUnavailable();
                 }
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 if (isFinishing() || isDestroyed()) return;
-                ((TextView) findViewById(R.id.tvErrorTitle)).setText("Server unreachable");
-                ((TextView) findViewById(R.id.tvErrorBody)).setText(t.getMessage());
+                showServerUnavailable();
             }
         });
+    }
+
+    private void showServerUnavailable() {
+        ((TextView) findViewById(R.id.tvErrorTitle)).setText(R.string.error_state_server_title);
+        ((TextView) findViewById(R.id.tvErrorBody)).setText(R.string.error_state_server_body);
     }
 }

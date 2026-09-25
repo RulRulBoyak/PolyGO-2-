@@ -65,6 +65,13 @@
     <string name="flag_ai_suggestion_reason">Dilaporkan sebagai cadangan janaan AI yang menyinggung atau tidak tepat</string>
     <string name="ai_flag_reported">Dilaporkan. Maklumat ini membantu penapisan.</string>
     <string name="ai_flag_failed">Laporan tidak dapat dihantar. Sila semak sambungan anda dan cuba lagi.</string>
+    <string name="ai_analyzing">Menganalisis imej...</string>
+    <string name="ai_idle_hint">Tangkap foto untuk mencari barang</string>
+    <string name="ai_suggestion_ready">Cadangan AI: %1$s</string>
+    <string name="ai_suggestion_title">Cadangan AI</string>
+    <string name="ai_suggestion_body">Tajuk: %1$s\nHarga: RM %2$s\n\n%3$s</string>
+    <string name="ai_suggestion_body_full">Tajuk: %1$s\nHarga: RM %2$s\nKategori: %3$s\nKeadaan: %4$s\nTag: %5$s\n\n%6$s</string>
+    <string name="ai_suggestion_create">Buat penyenaraian</string>
 
     <!-- General -->
     <string name="search_hint">Cari di kampus...</string>
@@ -73,6 +80,9 @@
     <string name="chat">Sembang</string>
     <string name="make_offer">Buat Tawaran</string>
     <string name="cancel">Batal</string>
+    <string name="discard">Buang</string>
+    <string name="discard_changes_title">Buang perubahan?</string>
+    <string name="discard_changes_message">Anda ada input yang belum selesai. Ingin tinggalkan?</string>
 
     <!-- Akaun & Privasi Data (PDPA) -->
     <string name="delete_account_title">Padam akaun</string>
@@ -80,6 +90,7 @@
     <string name="delete_account_confirm">Padam</string>
     <string name="deleting_account">Memadam akaun dan data anda...</string>
     <string name="delete_account_failed">Akaun tidak dapat dipadam. Sila semak sambungan anda dan cuba lagi.</string>
+    <string name="account_email_change_hint">Perubahan e-mel memerlukan pengesahan</string>
     <string name="download_my_data">Muat Turun Data Saya (JSON / CSV)</string>
     <string name="export_format_title">Pilih format eksport</string>
     <string name="export_as_json">JSON (semua data)</string>
@@ -96,12 +107,20 @@
     <string name="i_agree_to_terms">Saya bersetuju dengan Peraturan Komuniti Kampus dan Standard Keselamatan PolyGo+.</string>
     <string name="pdpa_footer">PolyGo+ mematuhi Akta Perlindungan Data Peribadi (PDPA) 2010. Identiti kampus anda hanya digunakan untuk pengesahan dalaman.</string>
     <string name="please_agree_to_terms">Sila bersetuju dengan terma untuk meneruskan</string>
+    <string name="please_fix_registration_fields">Semak medan yang ditandakan dan cuba lagi</string>
+    <string name="register_subtitle">Gunakan mana-mana alamat e-mel. Akses pelajar diberikan selepas kad pelajar anda diluluskan.</string>
+    <string name="full_name">Nama penuh</string>
+    <string name="student_staff_id">ID pelajar</string>
+    <string name="email_address">Alamat e-mel</string>
+    <string name="password">Kata laluan</string>
 
     <!-- Profile -->
     <string name="profile_account_settings">Akaun &amp; Tetapan</string>
     <string name="profile_welcome_back">Profil anda</string>
     <string name="profile_user_name_placeholder">Mr. John Doe</string>
     <string name="profile_student">★  Pelajar</string>
+    <string name="profile_verification_pending">Pengesahan pelajar sedang diproses</string>
+    <string name="profile_member_unverified">Ahli • Sahkan kad pelajar anda</string>
     <string name="profile_logout">Log Keluar</string>
     <string name="profile_seller_dashboard">PAPAN PEMUKA PENJUAL</string>
     <string name="profile_view_details">Lihat butiran</string>
@@ -224,7 +243,7 @@
     <string name="safe_meetup_emergency_confirm">Hantar amaran keselamatan kepada pengguna lain dan Keselamatan PKS?</string>
     <string name="safe_meetup_emergency_sent">Amaran dihantar. Keselamatan PKS telah dimaklumkan.</string>
     <!-- Talian hotline keselamatan kampus untuk pendail SOS Safe Meetup. Placeholder: isi dengan nombor sebenar (cth. +60 12 345 6789) atau biarkan KOSONG untuk pendail kekal tidak aktif dengan selamat. -->
-    <string name="safe_meetup_campus_hotline"></string>
+    <string name="safe_meetup_campus_hotline">0123578993</string>
     <string name="safe_meetup_dial_hotline_unavailable">Tiada pendail tersedia pada peranti ini</string>
     <string name="safe_meetup_hotline_unconfigured">Talian hotline kampus belum dikonfigurasi lagi</string>
     <string name="safe_meetup_emergency_send">Hantar Amaran</string>
@@ -264,6 +283,21 @@
     <string name="pulse_time_h">%1$dj lalu</string>
     <string name="pulse_time_d">%1$dh lalu</string>
     <string name="pulse_time_w">%1$dmg lalu</string>
+    <string name="pulse_new_thread">Thread baharu</string>
+    <string name="pulse_thread_title">Thread</string>
+    <string name="pulse_replies">Balasan</string>
+    <string name="pulse_no_replies">Belum ada balasan. Mulakan perbualan.</string>
+    <string name="pulse_reply_hint">Tulis balasan…</string>
+    <string name="pulse_send_reply">Hantar balasan</string>
+    <string name="pulse_reply">Balas</string>
+    <string name="pulse_author_badge">Penulis</string>
+    <string name="pulse_share">Kongsi thread</string>
+    <string name="pulse_shared_from">Dikongsi daripada PolyGo+ Campus Pulse</string>
+    <string name="pulse_member">Ahli PolyGo</string>
+    <string name="pulse_login_to_interact">Log masuk untuk suka atau balas thread</string>
+    <string name="pulse_interaction_failed">Thread ini tidak dapat dikemas kini. Sila cuba lagi.</string>
+    <string name="pulse_comments_failed">Balasan tidak dapat dimuatkan. Semak sambungan anda.</string>
+    <string name="pulse_comment_failed">Balasan tidak dapat dihantar. Sila cuba lagi.</string>
     <string name="listing_posted_prefix">Tersenarai %1$s</string>
     <string name="listing_listed_on">Tersenarai pada %1$s</string>
     <string name="product_views_count">%1$d paparan</string>
@@ -277,9 +311,10 @@
     <string name="textbook_not_found">Tiada maklumat buku untuk ISBN %1$s. Cari penyenaraian kampus sebaliknya?</string>
     <string name="textbook_search_listings">Cari penyenaraian</string>
     <string name="verification_uploading">Memuat naik kad matrik...</string>
+    <string name="verification_wait_for_submission">Sila tunggu sementara kad pelajar anda dihantar</string>
     <string name="verification_submitted">Pengesahan dihantar untuk semakan</string>
     <string name="verification_upload_failed">Gagal memuat naik kad anda. Cuba lagi.</string>
-    <string name="verification_server_failed">Gagal sampai ke pelayan. Pengesahan disimpan pada peranti ini sahaja.</string>
+    <string name="verification_server_failed">Pengesahan tidak dapat dihantar. Sila cuba lagi.</string>
     <string name="help_data_safety_title">Keselamatan Data &amp; Privasi</string>
     <string name="help_data_safety_desc">Bagaimana kami mengumpul, menggunakan dan melindungi data anda - dan cara memuat turun atau memadamnya.</string>
     <string name="more_options">Pilihan lain</string>
@@ -310,13 +345,11 @@
     <string name="offer_sheet_send">Hantar Tawaran</string>
     <string name="offer_sheet_error_amount">Masukkan jumlah tawaran yang sah</string>
     <string name="offer_sheet_sent">Tawaran dihantar berjaya!</string>
-    <string name="offer_sheet_local_only">Tawaran dihantar (Lokal Sahaja)</string>
 
     <!-- Verified Buyer Reviews -->
     <string name="seller_write_review">Tulis ulasan</string>
     <string name="review_verified_buyer_title">Pembeli Disahkan Sahaja</string>
     <string name="review_verified_buyer_message">Peraturan Kampus: Ulasan hanya untuk pembeli disahkan. Selesaikan urus niaga dengan penjual ini dahulu, kemudian beri penilaian selepas pertemuan.</string>
-    <string name="review_saved_offline">Ulasan disimpan (Mod Luar Talian)</string>
 
     <!-- Campus Hook -->
     <string name="campus_details_title">Butiran Kampus</string>
@@ -387,6 +420,7 @@
     <string name="terms_title_ms">Terma Perkhidmatan</string>
     <string name="lang_toggle_to_bm">BM</string>
     <string name="lang_toggle_to_en">EN</string>
+    <string name="legal_document_label">POLYGO+ LEGAL</string>
 <string name="privacy_policy_text">
         &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n
         Last updated: September 11, 2026\n\n
@@ -394,7 +428,7 @@
         &lt;b&gt;1. Information We Collect&lt;/b&gt;\n
         To facilitate a secure campus marketplace, we collect information you provide when you register, including:\n
         - Name and Mobile Number\n
-        - Campus Email Address\n
+        - Alamat E-mel\n
         - Student / Matrix ID (for PKS verification)\n
         - Profile information\n
         - Meetup landmark selections and precise meetup locations for verified safe-meetup features\n
@@ -535,11 +569,15 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <!-- Account -->
     <string name="toast_complete_profile">Lengkapkan profil anda</string>
     <string name="toast_uploading_profile_picture">Memuat naik gambar profil baharu...</string>
+    <string name="crop_photo_title">Laraskan gambar profil</string>
+    <string name="crop_photo_help">Seret untuk alih • Cubit untuk zum</string>
+    <string name="crop_photo_use">Gunakan gambar</string>
+    <string name="crop_photo_load_failed">Gambar itu tidak dapat dibuka. Cuba gambar lain.</string>
+    <string name="crop_photo_save_failed">Gambar itu tidak dapat disediakan. Sila cuba lagi.</string>
     <string name="toast_upload_failed">Muat naik gagal</string>
     <string name="toast_upload_failed_reason">Muat naik gagal: %1$s</string>
     <string name="toast_profile_saved">Profil disimpan</string>
     <string name="toast_save_error">Ralat simpan</string>
-    <string name="toast_save_error_reason">Ralat simpan: %1$s</string>
 
     <!-- Marketplace: add service -->
     <string name="toast_add_portfolio_photo_first">Tambah foto portfolio dahulu</string>
@@ -558,7 +596,6 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Chat -->
     <string name="chat_error_write_message">Tulis mesej</string>
-    <string name="toast_chat_network_error">Ralat rangkaian: %1$s</string>
     <string name="chat_message_hint">Mesej...</string>
     <string name="chat_no_messages">Tiada mesej lagi</string>
 
@@ -632,19 +669,31 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_login_failed">Log masuk gagal</string>
     <string name="toast_google_sign_in_unavailable">Log masuk Google tidak tersedia buat masa ini. Gunakan ID kampus anda sebaliknya.</string>
     <string name="toast_google_sign_in_failed">Log masuk Google gagal. Sila cuba lagi.</string>
+    <string name="google_consent_title">Teruskan dengan Google?</string>
+    <string name="google_consent_message">Jika ini log masuk pertama anda, PolyGo+ akan mencipta akaun anda. Dengan meneruskan, anda bersetuju dengan Terma Perkhidmatan dan Dasar Privasi.</string>
 
     <!-- Orders & Transactions -->
     <string name="toast_order_not_found">Pesanan tidak ditemui</string>
     <string name="map_pin_label">📍\n%1$s\nPenanda tempat kampus PKS</string>
     <string name="toast_transaction_completed">Urus niaga selesai!</string>
-    <string name="toast_completed_offline">Selesai (Mod Luar Talian)</string>
     <string name="toast_deal_accepted_tracker">Urus niaga diterima — penjejak pertemuan aktif dalam chat</string>
-    <string name="toast_accepted_offline">Diterima (Mod Luar Talian)</string>
+    <string name="toast_transaction_update_failed">Tidak dapat mengemas kini urus niaga</string>
+    <string name="toast_need_login">Log masuk diperlukan</string>
+
+    <!-- Deal Tracker -->
+    <string name="deal_desc_waiting">Menunggu penerimaan penjual</string>
+    <string name="deal_desc_accepted">Tawaran diterima — aturkan pertemuan dalam chat</string>
+    <string name="deal_desc_pickup">Barang sedia untuk diambil</string>
+    <string name="deal_desc_inspection">Periksa barang di tempat pertemuan</string>
+    <string name="deal_desc_payment">Pembayaran telah dikeluarkan kepada penjual</string>
+    <string name="deal_desc_closed">Urus niaga selesai sepenuhnya</string>
+    <string name="deal_desc_declined">Tawaran ini telah ditolak</string>
+    <string name="deal_desc_cancelled">Tawaran ini telah dibatalkan</string>
 
     <!-- Auth: OTP -->
     <string name="otp_sent_subtitle">Kami telah menghantar kod 6 digit ke %1$s</string>
     <string name="otp_title">Sahkan e-mel anda</string>
-    <string name="otp_subtitle_placeholder">Masukkan kod 6 digit yang dihantar ke e-mel kampus anda.</string>
+    <string name="otp_subtitle_placeholder">Masukkan kod 6 digit yang dihantar ke e-mel anda.</string>
     <string name="otp_code_hint">Kod pengesahan</string>
     <string name="otp_verify_account">Sahkan akaun</string>
     <string name="otp_resend">Tidak menerima kod? Hantar semula</string>
@@ -652,6 +701,12 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_invalid_code">Kod tidak sah</string>
     <string name="toast_code_resent_to">Kod dihantar semula ke %1$s</string>
     <string name="toast_failed_to_resend">Gagal menghantar semula</string>
+    <string name="toast_code_send_failed">Kod pengesahan tidak dapat dihantar</string>
+    <string name="sending_verification_code">Menghantar kod pengesahan…</string>
+    <string name="register_with_google">Teruskan dengan Google</string>
+    <string name="or_register_with_email">atau daftar dengan e-mel</string>
+    <string name="google_email_verified">E-mel Google disahkan</string>
+    <string name="creating_account">Mencipta akaun…</string>
     <string name="toast_registration_failed">Pendaftaran gagal</string>
 
     <!-- Product Detail -->
@@ -671,8 +726,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="snack_removed_from_saved">Dikeluarkan daripada item disimpan</string>
     <string name="action_undo">Buat Asal</string>
     <string name="toast_saved_to_items">Disimpan ke item anda</string>
-    <string name="snack_removed_offline">Dikeluarkan (luar talian)</string>
-    <string name="toast_saved_offline">Disimpan (luar talian)</string>
+    <string name="toast_favorite_update_failed">Item disimpan tidak dapat dikemas kini. Sila cuba lagi.</string>
     <string name="toast_login_to_leave_review">Sila log masuk untuk meninggalkan ulasan</string>
 
     <!-- Receipt -->
@@ -707,6 +761,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Verification -->
     <string name="toast_verification_approved_dev">Pengesahan Diluluskan (Dev)</string>
+    <string name="toast_snap_card_required">Sila tangkap kad atau gambar diri anda dahulu</string>
     <string name="toast_snap_card_or_enter_matrix">Sila tangkap kad anda atau masukkan No Matrik</string>
     <string name="toast_answer_alumni_questions">Sila jawab soalan cabaran alumni</string>
     <string name="toast_challenge_answer_incorrect">Jawapan cabaran 1 kelihatan tidak betul</string>
@@ -721,7 +776,29 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="bio_prompt_change_password">Sahkan identiti untuk menukar kata laluan</string>
     <string name="bio_title_enable_biometric_lock">Dayakan Kunci Biometrik</string>
     <string name="bio_prompt_enable_lock">Sahkan untuk mendayakan lapisan keselamatan</string>
-    <string name="error_password_min_length">Gunakan sekurang-kurangnya 6 aksara</string>
+    <string name="error_password_min_length">Gunakan 5 hingga 128 aksara</string>
+    <string name="forgot_password_title">Lupa kata laluan?</string>
+    <string name="forgot_password_instructions">Masukkan ID pelajar atau e-mel anda. Kami akan menghantar kod enam digit yang tamat dalam 10 minit.</string>
+    <string name="student_id_or_email">ID pelajar atau e-mel</string>
+    <string name="reset_code">Kod tetapan semula enam digit</string>
+    <string name="send_reset_code">Hantar kod tetapan semula</string>
+    <string name="reset_password">Tetapkan semula kata laluan</string>
+    <string name="reset_code_sent">Jika akaun wujud, kod tetapan semula telah dihantar ke e-melnya.</string>
+    <string name="password_reset_success">Kata laluan ditetapkan semula. Anda kini boleh log masuk.</string>
+    <string name="error_reset_code">Masukkan kod enam digit</string>
+    <string name="error_passwords_do_not_match">Kata laluan tidak sepadan</string>
+    <string name="refresh">Muat semula</string>
+    <string name="secure_student_verification">Pengesahan pelajar selamat PolyGo+</string>
+    <string name="error_current_password_required">Masukkan kata laluan semasa anda</string>
+    <string name="current_password">Kata laluan semasa</string>
+    <string name="new_password">Kata laluan baharu</string>
+    <string name="confirm_new_password">Sahkan kata laluan baharu</string>
+    <string name="confirm_password">Sahkan kata laluan</string>
+    <string name="action_continue">Teruskan</string>
+    <string name="logout_title">Log keluar?</string>
+    <string name="logout_message">Data peribadi yang dicache akan dipadam daripada peranti ini.</string>
+    <string name="logout_action">Log keluar</string>
+    <string name="pulse_submitted_review">Dihantar untuk semakan moderator kampus</string>
     <string name="error_password_mismatch">Kata laluan tidak sepadan</string>
     <string name="toast_password_changed">Kata laluan ditukar</string>
     <string name="toast_password_change_failed">Gagal menukar kata laluan</string>
@@ -791,6 +868,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="quick_message_send">Hantar mesej</string>
     <string name="quick_message_default">Masih ada ke?</string>
     <string name="toast_message_failed">Tidak dapat menghantar mesej. Sila cuba lagi.</string>
+    <string name="toast_screen_open_failed">Skrin ini tidak dapat dibuka. Sila cuba lagi.</string>
     <string name="product_alert">Dapatkan alert untuk penyenaraian ini</string>
     <string name="product_alert_on">Alert diaktifkan untuk penyenaraian ini</string>
     <string name="toast_alert_on">Anda akan dimaklumkan tentang penurunan harga dan ketersediaan.</string>
@@ -918,7 +996,39 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
         <item>Belajar dahulu. Teroka dengan berhemah. Mungkin.</item>
         <item>Satu kampus, banyak tawaran yang mencurigakan bagusnya.</item>
     </string-array>
+    <string-array name="home_greetings_morning">
+        <item>Selamat pagi</item><item>Semangat pagi</item><item>Sedia untuk kampus</item><item>Selamat kembali</item>
+    </string-array>
+    <string-array name="home_greetings_afternoon">
+        <item>Selamat tengah hari</item><item>Jom semak petang ini</item><item>Kembali mencari tawaran</item><item>Selamat kembali</item>
+    </string-array>
+    <string-array name="home_greetings_evening">
+        <item>Selamat petang</item><item>Tawaran petang menanti</item><item>Kembali ke kampus</item><item>Selamat kembali</item>
+    </string-array>
+    <string-array name="home_greetings_night">
+        <item>Selamat malam</item><item>Masih meneroka</item><item>Mod burung hantu malam</item><item>Semakan kampus terakhir</item>
+    </string-array>
     <string name="impact_leaderboard_title">Papan pendahulu Impak Hijau</string>
     <string name="impact_leaderboard_empty">Belum ada urus niaga lestari yang selesai.</string>
     <string name="impact_leaderboard_failed">Papan pendahulu tidak dapat dimuatkan.</string>
+    <string name="error_state_offline_title">Tiada sambungan internet</string>
+    <string name="error_state_offline_body">Semak Wi-Fi atau data mudah alih anda, kemudian cuba lagi. Anda masih boleh melihat data yang disimpan pada telefon ini.</string>
+    <string name="error_state_maintenance_title">Kami akan kembali tidak lama lagi</string>
+    <string name="error_state_maintenance_body">PolyGo+ sedang dikemas kini. Sila cuba sebentar lagi.</string>
+    <string name="error_state_still_offline">Masih di luar talian</string>
+    <string name="error_state_still_maintenance">Masih dalam penyelenggaraan</string>
+    <string name="error_state_server_title">Pelayan tidak tersedia</string>
+    <string name="error_state_server_body">PolyGo+ tidak dapat menghubungi pelayan. Semak sambungan anda dan cuba lagi.</string>
+    <string name="error_state_retry">Cuba lagi</string>
+    <string name="error_state_continue_saved">Teruskan dengan data tersimpan</string>
+    <string name="drafts_title">Draf</string>
+    <string name="drafts_subtitle">Sambung dari tempat anda berhenti</string>
+    <string name="drafts_saved_count">%1$d disimpan</string>
+    <string name="draft_untitled">Penyenaraian tanpa tajuk</string>
+    <string name="draft_resume">Sambung</string>
+    <string name="draft_delete">Padam</string>
+    <string name="draft_delete_title">Padam draf ini?</string>
+    <string name="draft_delete_message">Draf ini akan dipadam secara kekal daripada peranti ini.</string>
+    <string name="draft_saved_recently">Baru disimpan</string>
+    <string name="published_listings_title">Penyenaraian diterbitkan</string>
 </resources>

@@ -73,42 +73,12 @@
                 android:orientation="vertical"
                 android:layout_marginTop="32dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/i_am_a"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupRole"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:singleSelection="true"
-                    app:selectionRequired="true">
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipStudent"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/student"
-                        app:chipIcon="@drawable/ic_category_books" />
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAlumni"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/alumni"
-                        app:chipIcon="@drawable/ic_nav_profile" />
-                </com.google.android.material.chip.ChipGroup>
-
-                <!-- Student Section -->
                 <LinearLayout
                     android:id="@+id/layoutStudent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="0dp"
                     android:visibility="visible">
 
                     <TextView
@@ -155,47 +125,6 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
-                <!-- Alumni Section -->
-                <LinearLayout
-                    android:id="@+id/layoutAlumni"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="24dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/alumni_challenge"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:hint="@string/alumni_q1">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAlumniQ1"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:hint="@string/alumni_q2">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAlumniQ2"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSubmit"
                     style="@style/Widget.Material3.Button"
@@ -204,16 +133,18 @@
                     android:layout_marginTop="32dp"
                     android:text="@string/submit_review" />
 
-            </LinearLayout>
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/verificationProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp"
+                    android:indeterminate="true"
+                    android:visibility="gone"
+                    app:indicatorColor="@color/pks_blue"
+                    app:trackColor="@color/grey_200" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSimulate"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="[Dev] Fast Approve"
-                android:visibility="gone" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

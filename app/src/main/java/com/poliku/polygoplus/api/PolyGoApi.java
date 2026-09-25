@@ -7,6 +7,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import java.util.List;
 
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -95,7 +96,7 @@ public interface PolyGoApi {
     Call<BaseResponse> markNotificationsRead(@Body NotificationRequest request);
 
     @POST("transactions.php")
-    Call<BaseResponse> addTransaction(@Body TransactionRequest request);
+    Call<TransactionResponse> addTransaction(@Body TransactionRequest request);
 
     @POST("transactions.php")
     Call<TransactionsResponse> getTransactions(@Body TransactionRequest request);
@@ -133,6 +134,15 @@ public interface PolyGoApi {
     @POST("pulse.php")
     Call<BaseResponse> postPulse(@Body PulseRequest request);
 
+    @POST("pulse.php")
+    Call<PulseActionResponse> reactPulse(@Body PulseRequest request);
+
+    @POST("pulse.php")
+    Call<PulseCommentsResponse> getPulseComments(@Body PulseRequest request);
+
+    @POST("pulse.php")
+    Call<PulseCommentResponse> postPulseComment(@Body PulseRequest request);
+
     @POST("verify.php")
     Call<BaseResponse> submitVerification(@Body VerificationRequest request);
 
@@ -166,7 +176,8 @@ public interface PolyGoApi {
 
     @Multipart
     @POST("ai_suggest.php")
-    Call<AiSuggestResponse> aiSuggestImage(@Part MultipartBody.Part image);
+    Call<AiSuggestResponse> aiSuggestImage(@Part MultipartBody.Part image,
+                                           @Part("mode") RequestBody mode);
 
     @POST("report_bug.php")
     Call<BaseResponse> reportBug(@Body BugReportRequest request);
@@ -236,10 +247,20 @@ public interface PolyGoApi {
     }
 
     class GoogleLoginRequest {
-        public String id_token;
+        public String id_token, full_name, student_id, password;
+        public boolean consent_agreed;
 
-        public GoogleLoginRequest(String idToken) {
+        public GoogleLoginRequest(String idToken, boolean consentAgreed) {
             this.id_token = idToken;
+            this.consent_agreed = consentAgreed;
+        }
+
+        public GoogleLoginRequest(String idToken, String name, String studentId,
+                                  String password, boolean consentAgreed) {
+            this(idToken, consentAgreed);
+            this.full_name = name;
+            this.student_id = studentId;
+            this.password = password;
         }
     }
 
@@ -323,6 +344,10 @@ public interface PolyGoApi {
         public String user_id, listing_id, seller_id, transaction_id, status, amount, action;
     }
 
+    class TransactionResponse extends BaseResponse {
+        public String id;
+    }
+
     class SellerRequest {
         public String seller_id, seller_name, action;
     }
@@ -384,7 +409,10 @@ public interface PolyGoApi {
     }
 
     class PulseRequest {
-        public String action, tag, title, body;
+        public String action, tag, title, body, comment;
+        @SerializedName("pulse_id")
+        public String pulseId;
+        public Boolean liked;
 
         public PulseRequest() {
             this.action = "list";
@@ -396,14 +424,46 @@ public interface PolyGoApi {
             this.title = title;
             this.body = body;
         }
+
+        public static PulseRequest like(String pulseId, boolean liked) {
+            PulseRequest request = new PulseRequest();
+            request.action = "like";
+            request.pulseId = pulseId;
+            request.liked = liked;
+            return request;
+        }
+
+        public static PulseRequest comments(String pulseId) {
+            PulseRequest request = new PulseRequest();
+            request.action = "comments";
+            request.pulseId = pulseId;
+            return request;
+        }
+
+        public static PulseRequest comment(String pulseId, String text) {
+            PulseRequest request = comments(pulseId);
+            request.action = "comment";
+            request.comment = text;
+            return request;
+        }
     }
 
     class PulseAlert {
         public String id, title, body, tag;
+        @SerializedName("user_id")
+        public String userId;
         @SerializedName("is_global")
         public boolean global;
         @SerializedName("user_name")
         public String userName;
+        @SerializedName("profile_pic_url")
+        public String profilePicUrl;
+        @SerializedName("like_count")
+        public int likeCount;
+        @SerializedName("comment_count")
+        public int commentCount;
+        @SerializedName("liked_by_me")
+        public boolean likedByMe;
         @SerializedName("created_at")
         public long createdAt;
     }
@@ -450,29 +510,69 @@ public interface PolyGoApi {
     }
 
     class ForgotPasswordRequest {
-        public String identifier;
+        public String action, identifier, code, new_password;
 
-        public ForgotPasswordRequest(String identifier) {
+        public ForgotPasswordRequest(String action, String identifier, String code, String newPassword) {
+            this.action = action;
             this.identifier = identifier;
+            this.code = code;
+            this.new_password = newPassword;
         }
     }
 
+    class PulseActionResponse extends BaseResponse {
+        public boolean liked;
+        @SerializedName("like_count")
+        public int likeCount;
+    }
+
+    class PulseComment {
+        public String id, body;
+        @SerializedName("user_id")
+        public String userId;
+        @SerializedName("user_name")
+        public String userName;
+        @SerializedName("profile_pic_url")
+        public String profilePicUrl;
+        @SerializedName("created_at")
+        public long createdAt;
+        @SerializedName("is_mine")
+        public boolean mine;
+    }
+
+    class PulseCommentsResponse extends BaseResponse {
+        public List<PulseComment> comments;
+    }
+
+    class PulseCommentResponse extends BaseResponse {
+        public PulseComment comment;
+        @SerializedName("comment_count")
+        public int commentCount;
+    }
+
     class ForgotPasswordResponse extends BaseResponse {
-        @SerializedName("temporary_password")
-        public String temporaryPassword;
+        @SerializedName("reset_code")
+        public String resetCode;
     }
 
     class UpdatePasswordRequest {
+        public String current_password;
         public String new_password;
 
-        public UpdatePasswordRequest(String newPassword) {
+        public UpdatePasswordRequest(String currentPassword, String newPassword) {
+            this.current_password = currentPassword;
             this.new_password = newPassword;
         }
     }
 
     class LoginResponse extends BaseResponse {
-        public String token;
         public User user;
+        @SerializedName("requires_profile")
+        public boolean requiresProfile;
+        @SerializedName("google_email")
+        public String googleEmail;
+        @SerializedName("google_name")
+        public String googleName;
     }
 
     class User {
@@ -481,6 +581,8 @@ public interface PolyGoApi {
         public String profile_pic_url;
         @SerializedName("is_verified")
         public boolean verified;
+        @SerializedName("verification_status")
+        public String verificationStatus;
         @SerializedName("is_banned")
         public boolean banned;
         public int active, sold;
@@ -578,7 +680,7 @@ public interface PolyGoApi {
     }
 
     class Transaction {
-        public String id, listingId, title, amount, status, location, seller;
+        public String id, listingId, title, amount, status, location, seller, role;
         public long time;
         public boolean reviewed;
     }
@@ -645,7 +747,9 @@ public interface PolyGoApi {
     }
 
     class AiSuggestResponse extends BaseResponse {
-        public String title, price, description;
+        public String title, price, description, category, condition;
+        public List<String> tags;
+        public double confidence;
     }
 
     class BugReportRequest {

@@ -25,6 +25,7 @@ import com.poliku.polygoplus.ui.BaseActivity;
 
 import com.poliku.polygoplus.ui.EmptyStates;
 import com.poliku.polygoplus.ui.HapticManager;
+import com.poliku.polygoplus.ui.UiUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ public class SellerProfileActivity extends BaseActivity {
 
     private boolean following;
     private boolean privateMode;
+    private MaterialButton btnFollow;
     private NestedScrollView profileScroll;
     private View headerListings;
     private View headerReviews;
@@ -121,6 +123,9 @@ public class SellerProfileActivity extends BaseActivity {
         });
 
         setupFollowButton();
+        if (sellerOwnerId != null && sellerOwnerId.equals(AppDataStore.userId(this))) {
+            btnFollow.setVisibility(View.GONE);
+        }
         MaterialButton btnMessage = findViewById(R.id.btnMessageSeller);
         btnMessage.setOnClickListener(v -> {
             HapticManager.lightTap(v);
@@ -149,34 +154,105 @@ public class SellerProfileActivity extends BaseActivity {
         headerReviews.setOnClickListener(v -> scrollToView(headerReviews));
 
         loadRemoteSeller(sellerOwnerId, sellerName);
+        refreshTransactionsForReview();
         if (getIntent().getBooleanExtra(EXTRA_SCROLL_TO_REVIEWS, false)) {
             scrollToView(headerReviews);
         }
     }
 
+    private void refreshTransactionsForReview() {
+        if (!AppDataStore.isLoggedIn(this)) return;
+        polyGoRepository.getTransactions(AppDataStore.userId(this),
+                new Callback<PolyGoApi.TransactionsResponse>() {
+                    @Override
+                    public void onResponse(Call<PolyGoApi.TransactionsResponse> call,
+                                           Response<PolyGoApi.TransactionsResponse> response) {
+                        PolyGoApi.TransactionsResponse body = response.body();
+                        if (response.isSuccessful() && body != null && body.isSuccess()
+                                && body.transactions != null) {
+                            AppDataStore.cacheTransactions(SellerProfileActivity.this, body.transactions);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
+                        // Existing cached transactions remain usable while offline.
+                    }
+                });
+    }
+
     private void setupFollowButton() {
-        MaterialButton follow = findViewById(R.id.btnFollow);
-        follow.setOnClickListener(v -> {
+        btnFollow = findViewById(R.id.btnFollow);
+        applyFollowVisual();
+        btnFollow.setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            following = !following;
-            if (following) {
-                follow.setText(getString(R.string.seller_following));
-                follow.setIconResource(R.drawable.ic_heart_filled);
-                follow.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
-                follow.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.soft_blue, getTheme())));
-                follow.setTextColor(getResources().getColor(R.color.pks_blue, getTheme()));
-                follow.setStrokeColor(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
-                follow.setStrokeWidth(2);
-            } else {
-                follow.setText(getString(R.string.seller_follow));
-                follow.setIconResource(R.drawable.ic_heart_outline);
-                follow.setIconTint(ColorStateList.valueOf(Color.WHITE));
-                follow.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
-                follow.setTextColor(Color.WHITE);
-                follow.setStrokeColor(ColorStateList.valueOf(Color.TRANSPARENT));
-                follow.setStrokeWidth(0);
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, R.string.toast_login_required_save, Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
             }
+            if (sellerOwnerId == null) {
+                Toast.makeText(this, R.string.seller_no_active, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int followedId;
+            try {
+                followedId = Integer.parseInt(sellerOwnerId.trim());
+            } catch (NumberFormatException e) {
+                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+                return;
+            }
+            boolean desired = !following;
+            following = desired;
+            applyFollowVisual();
+            btnFollow.setEnabled(false);
+            polyGoRepository.followUser(AppDataStore.userId(this), followedId, desired, new Callback<PolyGoApi.FollowResponse>() {
+                @Override
+                public void onResponse(Call<PolyGoApi.FollowResponse> call, Response<PolyGoApi.FollowResponse> response) {
+                    btnFollow.setEnabled(true);
+                    PolyGoApi.FollowResponse body = response.body();
+                    if (response.isSuccessful() && body != null && body.isSuccess()) {
+                        following = body.following;
+                        applyFollowVisual();
+                    } else {
+                        following = !desired;
+                        applyFollowVisual();
+                        if (body != null && body.getMessage() != null && !body.getMessage().isEmpty()) {
+                            Toast.makeText(SellerProfileActivity.this, body.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<PolyGoApi.FollowResponse> call, Throwable t) {
+                    btnFollow.setEnabled(true);
+                    following = !desired;
+                    applyFollowVisual();
+                    UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_could_not_reach_server);
+                }
+            });
         });
+    }
+
+    private void applyFollowVisual() {
+        if (btnFollow == null) return;
+        if (following) {
+            btnFollow.setText(getString(R.string.seller_following));
+            btnFollow.setIconResource(R.drawable.ic_heart_filled);
+            btnFollow.setIconTint(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            btnFollow.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.soft_blue, getTheme())));
+            btnFollow.setTextColor(getResources().getColor(R.color.pks_blue, getTheme()));
+            btnFollow.setStrokeColor(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            btnFollow.setStrokeWidth(2);
+        } else {
+            btnFollow.setText(getString(R.string.seller_follow));
+            btnFollow.setIconResource(R.drawable.ic_heart_outline);
+            btnFollow.setIconTint(ColorStateList.valueOf(Color.WHITE));
+            btnFollow.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.pks_blue, getTheme())));
+            btnFollow.setTextColor(Color.WHITE);
+            btnFollow.setStrokeColor(ColorStateList.valueOf(Color.TRANSPARENT));
+            btnFollow.setStrokeWidth(0);
+        }
     }
 
     private void scrollToView(View target) {
@@ -233,6 +309,10 @@ public class SellerProfileActivity extends BaseActivity {
                     if (remote.verified) {
                         findViewById(R.id.tvSellerBadge).setVisibility(View.VISIBLE);
                         findViewById(R.id.ivVerifiedBadge).setVisibility(View.VISIBLE);
+                    }
+                    if (remote.following) {
+                        following = true;
+                        runOnUiThread(SellerProfileActivity.this::applyFollowVisual);
                     }
                     if (response.body().reviews != null && !response.body().reviews.isEmpty()) {
                         List<AppDataStore.ReviewRecord> server = new ArrayList<>();

@@ -5,7 +5,9 @@ declare(strict_types=1);
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
-header('Content-Type: application/json; charset=utf-8');
+header('Content-Type: ' . (defined('LANDING_ADMIN_CONTEXT') ? 'text/html' : 'application/json') . '; charset=utf-8');
+header('Cache-Control: no-store');
+header('Vary: Origin');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 
@@ -40,15 +42,31 @@ if (!defined('JWT_SECRET')) {
 define('TOKEN_EXPIRY', 604800); // 7 days in seconds
 
 function is_dev_request(): bool {
-    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    $rawHost = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    $host = (string)(parse_url('http://' . $rawHost, PHP_URL_HOST) ?: $rawHost);
     return $host === 'localhost' || $host === '127.0.0.1' || $host === '10.0.2.2';
 }
 
-$host = '127.0.0.1';
-$port = 3306;
-$database = 'polygo';
-$username = 'root';
-$password = '';
+function request_headers(): array {
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        if (is_array($headers)) return $headers;
+    }
+    $headers = [];
+    foreach ($_SERVER as $key => $value) {
+        if (str_starts_with($key, 'HTTP_')) {
+            $name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
+            $headers[$name] = $value;
+        }
+    }
+    return $headers;
+}
+
+$host = defined('DB_HOST') ? (string) DB_HOST : '127.0.0.1';
+$port = defined('DB_PORT') ? (int) DB_PORT : 3306;
+$database = defined('DB_NAME') ? (string) DB_NAME : 'polygo';
+$username = defined('DB_USER') ? (string) DB_USER : 'root';
+$password = defined('DB_PASS') ? (string) DB_PASS : '';
 
 try {
     $pdo = new PDO(
@@ -85,9 +103,14 @@ function respond(bool $success, string $message, array $extra = []): void {
  * Lightweight JWT-style Token Generator
  */
 function create_jwt(int $userId): string {
+    global $pdo;
+    $versionQuery = $pdo->prepare('SELECT token_version FROM users WHERE id = ? LIMIT 1');
+    $versionQuery->execute([$userId]);
+    $tokenVersion = (int)($versionQuery->fetchColumn() ?: 0);
     $header = json_encode(['alg' => 'HS256', 'typ' => 'JWT']);
     $payload = json_encode([
         'user_id' => $userId,
+        'ver' => $tokenVersion,
         'exp' => time() + TOKEN_EXPIRY
     ]);
 
@@ -112,7 +135,7 @@ function verify_jwt(bool $exitOnFailure = true): int {
         verify_app_check(true);
     }
 
-    $headers = getallheaders();
+    $headers = request_headers();
     $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
     if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
@@ -131,6 +154,13 @@ function verify_jwt(bool $exitOnFailure = true): int {
     $payload = $tokenParts[1];
     $signature = $tokenParts[2];
 
+    $decodedHeader = json_decode(base64url_decode($header), true);
+    if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== 'HS256'
+            || ($decodedHeader['typ'] ?? '') !== 'JWT') {
+        if ($exitOnFailure) respond(false, 'Unauthorized: Invalid token header');
+        return 0;
+    }
+
     // Verify Signature (timing-safe comparison)
     $validSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode(hash_hmac('sha256', $header . "." . $payload, JWT_SECRET, true)));
     if (!hash_equals($validSignature, $signature)) {
@@ -138,18 +168,36 @@ function verify_jwt(bool $exitOnFailure = true): int {
         return 0;
     }
 
-    $data = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $payload)), true);
-    if (($data['exp'] ?? 0) < time()) {
+    $data = json_decode(base64url_decode($payload), true);
+    $userId = is_array($data) ? (int)($data['user_id'] ?? 0) : 0;
+    $expiresAt = is_array($data) ? (int)($data['exp'] ?? 0) : 0;
+    if ($userId <= 0) {
+        if ($exitOnFailure) respond(false, 'Unauthorized: Invalid token payload');
+        return 0;
+    }
+    if ($expiresAt < time()) {
         if ($exitOnFailure) respond(false, 'Unauthorized: Token expired. Please login again.');
         return 0;
     }
 
-    if (isUserBanned($pdo, (int) $data['user_id'])) {
+    $tokenVersion = is_array($data) ? (int)($data['ver'] ?? 0) : 0;
+    $accountQuery = $pdo->prepare('SELECT is_banned, token_version FROM users WHERE id = ? LIMIT 1');
+    $accountQuery->execute([$userId]);
+    $account = $accountQuery->fetch(PDO::FETCH_NUM);
+    if ($account === false) {
+        if ($exitOnFailure) respond(false, 'Unauthorized: Account no longer exists');
+        return 0;
+    }
+    if ((int)$account[0] === 1) {
         if ($exitOnFailure) respond(false, 'Unauthorized: Your account has been suspended by an administrator.');
         return 0;
     }
+    if ((int)$account[1] !== $tokenVersion) {
+        if ($exitOnFailure) respond(false, 'Unauthorized: Session revoked. Please login again.');
+        return 0;
+    }
 
-    return (int)$data['user_id'];
+    return $userId;
 }
 
 /**
@@ -186,7 +234,7 @@ function verify_jwt_optional(): int {
  */
 function verify_app_check(bool $enforce): bool
 {
-    $headers = getallheaders();
+    $headers = request_headers();
     $token = $headers['X-Firebase-AppCheck'] ?? $headers['x-firebase-appcheck'] ?? '';
 
     if ($token === '') {
@@ -210,7 +258,7 @@ function verify_app_check(bool $enforce): bool
         return false;
     }
 
-    if (isset($payload['exp']) && (int)$payload['exp'] < time()) {
+    if (!isset($payload['exp']) || (int)$payload['exp'] < time()) {
         error_log('[polygo-api] App Check: expired token');
         if ($enforce) respond(false, 'Unauthorized: App Check token expired');
         return false;
@@ -221,14 +269,21 @@ function verify_app_check(bool $enforce): bool
         return false;
     }
 
-    if (!isset($payload['iss']) || strpos((string)$payload['iss'], 'https://firebaseappcheck.googleapis.com/') !== 0) {
+    $projectNumber = defined('FIREBASE_PROJECT_NUMBER') ? trim((string)FIREBASE_PROJECT_NUMBER) : '';
+    if ($projectNumber === '') {
+        error_log('[polygo-api] App Check: FIREBASE_PROJECT_NUMBER is not configured');
+        if ($enforce) respond(false, 'Unauthorized: App Check is not configured');
+        return false;
+    }
+    if (($payload['iss'] ?? '') !== 'https://firebaseappcheck.googleapis.com/' . $projectNumber) {
         error_log('[polygo-api] App Check: invalid issuer');
         if ($enforce) respond(false, 'Unauthorized: Invalid App Check issuer');
         return false;
     }
 
-    if (defined('FIREBASE_PROJECT_NUMBER') && FIREBASE_PROJECT_NUMBER !== ''
-        && (int)($payload['aud'] ?? 0) !== (int)FIREBASE_PROJECT_NUMBER) {
+    $audience = $payload['aud'] ?? [];
+    $audience = is_array($audience) ? $audience : [$audience];
+    if (!in_array('projects/' . $projectNumber, $audience, true)) {
         error_log('[polygo-api] App Check: audience mismatch');
         if ($enforce) respond(false, 'Unauthorized: App Check audience mismatch');
         return false;
@@ -236,10 +291,11 @@ function verify_app_check(bool $enforce): bool
 
     $jwks = app_check_jwks();
     if ($jwks === null) {
-        // Firebase JWKS unreachable from this host — fail open to keep the API
-        // usable when the XAMPP machine has no network path to Google.
-        error_log('[polygo-api] App Check: JWKS unavailable; skipping signature check');
-        return true;
+        // An enforced security check must fail closed when Firebase keys cannot
+        // be refreshed; otherwise a network outage would bypass attestation.
+        error_log('[polygo-api] App Check: JWKS unavailable');
+        if ($enforce) respond(false, 'Unauthorized: App Check verification unavailable');
+        return false;
     }
 
     $matchedKey = null;
@@ -323,6 +379,58 @@ function app_check_verify_signature(array $jwk, string $message, string $signatu
 function base64url_decode(string $data): string
 {
     return base64_decode(strtr($data, '-_', '+/'), true) ?: '';
+}
+
+/**
+ * Canonical public API origin. Production should define PUBLIC_API_BASE_URL in
+ * secrets.php; validated request-host fallback keeps emulator/LAN development working.
+ */
+function public_api_base_url(): string
+{
+    if (defined('PUBLIC_API_BASE_URL') && filter_var(PUBLIC_API_BASE_URL, FILTER_VALIDATE_URL)) {
+        return rtrim((string)PUBLIC_API_BASE_URL, '/');
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $requestHost = (string)($_SERVER['HTTP_HOST'] ?? '10.0.2.2');
+    $hostName = (string)(parse_url($scheme . '://' . $requestHost, PHP_URL_HOST) ?: '');
+    $trustedNames = ['localhost', '10.0.2.2', 'polygo.pks.edu.my'];
+    $privateIp = filter_var($hostName, FILTER_VALIDATE_IP) !== false
+        && filter_var($hostName, FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+    if (!$privateIp && !in_array(strtolower($hostName), $trustedNames, true)) {
+        return 'https://polygo.pks.edu.my/polygo-api';
+    }
+    return $scheme . '://' . $requestHost . '/polygo-api';
+}
+
+/** Returns a canonical URL only when it names a file in this API's uploads directory. */
+function canonical_uploaded_image_url(string $url): ?string
+{
+    $url = trim($url);
+    if ($url === '') return '';
+    $path = parse_url($url, PHP_URL_PATH);
+    $fileName = is_string($path) ? basename(rawurldecode($path)) : '';
+    if ($fileName === '') return null;
+    $candidate = realpath(__DIR__ . '/uploads/' . $fileName);
+    $root = realpath(__DIR__ . '/uploads');
+    if ($candidate === false || $root === false
+            || !str_starts_with($candidate, $root . DIRECTORY_SEPARATOR)
+            || !is_file($candidate)) {
+        return null;
+    }
+    return public_api_base_url() . '/uploads/' . rawurlencode($fileName);
+}
+
+function listing_thumbnail_url(string $imageUrl): string
+{
+    $path = parse_url($imageUrl, PHP_URL_PATH);
+    $fileName = is_string($path) ? basename(rawurldecode($path)) : '';
+    if ($fileName === '') return $imageUrl;
+    $thumbName = pathinfo($fileName, PATHINFO_FILENAME) . '.thumb.jpg';
+    return is_file(__DIR__ . '/uploads/thumbs/' . $thumbName)
+        ? public_api_base_url() . '/uploads/thumbs/' . rawurlencode($thumbName)
+        : $imageUrl;
 }
 
 function bc_from_bytes(string $bytes): string

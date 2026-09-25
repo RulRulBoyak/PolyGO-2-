@@ -1,0 +1,27 @@
+# Never allow directory browsing or direct downloads of server credentials,
+# dependency metadata, database dumps, logs, or project backup files.
+Options -Indexes
+
+# Force HTTPS on the production host only. Local dev and emulator builds use
+# plain HTTP (e.g. http://192.168.100.152), so the redirect must not fire there.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} ^polygo\.pks\.edu\.my$ [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+<FilesMatch "^(secrets\.php|service-account\.json|composer\.(json|lock)|.*\.bak.*)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(sql|ini|log|env)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "no-referrer"
+    Header always set X-Frame-Options "DENY"
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on'"
+</IfModule>

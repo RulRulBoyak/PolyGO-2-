@@ -4,47 +4,71 @@ require_once __DIR__ . '/Mailer.php';
 
 $input = input_json();
 $identifier = trim((string)($input['identifier'] ?? ''));
-if ($identifier === '') {
-    respond(false, 'Enter your student ID or email');
-}
+$action = (string)($input['action'] ?? 'request');
+if ($identifier === '') respond(false, 'Enter your student ID or email');
 
-// Rate limit reset requests per IP and per identifier.
 $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-if (!rate_limit_check($pdo, 'forgot_ip:' . $ip, 5, 600) ||
-    !rate_limit_check($pdo, 'forgot_id:' . $identifier, 5, 600)) {
+if (!rate_limit_check($pdo, 'forgot_ip:' . $ip, 5, 600)
+        || !rate_limit_check($pdo, 'forgot_id:' . strtolower($identifier), 5, 600)) {
     respond(false, 'Too many reset requests, please try again later');
 }
 
-$query = $pdo->prepare('SELECT id, email, student_id FROM users WHERE student_id = ? OR email = ? LIMIT 1');
+$pdo->exec('CREATE TABLE IF NOT EXISTS password_reset_codes (
+    user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+    code_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+
+$query = $pdo->prepare('SELECT id, email FROM users WHERE student_id = ? OR email = ? LIMIT 1');
 $query->execute([$identifier, $identifier]);
 $user = $query->fetch();
-$generic = 'If your account exists, a temporary password has been sent to your email';
-if (!$user) {
-    // Same message as the success branch to prevent account enumeration.
+$generic = 'If your account exists, a reset code has been sent to your email';
+
+if ($action === 'request') {
+    if ($user) {
+        $code = (string)random_int(100000, 999999);
+        $store = $pdo->prepare('INSERT INTO password_reset_codes (user_id, code_hash, expires_at)
+            VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE code_hash = VALUES(code_hash), expires_at = VALUES(expires_at), created_at = CURRENT_TIMESTAMP');
+        $store->execute([(int)$user['id'], password_hash($code, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + 600)]);
+        $body = "Your PolyGo+ password reset code is: $code\n\nIt expires in 10 minutes.\n\nIf you did not request this, your password has not changed.";
+        if (!Mailer::send((string)$user['email'], 'PolyGo+ password reset code', $body)) {
+            $pdo->prepare('DELETE FROM password_reset_codes WHERE user_id = ?')->execute([(int)$user['id']]);
+            error_log('[polygo-api] password reset email failed for user ' . (int)$user['id']);
+        }
+        if (defined('APP_ENV') && APP_ENV === 'dev' && defined('DEV_OTP_ECHO') && DEV_OTP_ECHO) {
+            respond(true, $generic, ['reset_code' => $code]);
+        }
+    }
     respond(true, $generic);
 }
 
-// High-entropy temporary password (128 bits of randomness).
-$temp = 'PKS' . bin2hex(random_bytes(16));
-$hash = password_hash($temp, PASSWORD_DEFAULT);
-
-// Keep the previous hash so we can roll back if the email cannot be sent —
-// otherwise the user is silently locked out of their old password.
-$oldHashQ = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
-$oldHashQ->execute([$user['id']]);
-$oldHash = (string)$oldHashQ->fetchColumn();
-
-$update = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
-$update->execute([$hash, $user['id']]);
-
-$body = "Your PolyGo+ temporary password is: $temp\n\n"
-    . 'Please sign in and change it as soon as possible.';
-if (!Mailer::send((string)$user['email'], 'PolyGo+ temporary password', $body)) {
-    if ($oldHash !== '') {
-        $update->execute([$oldHash, $user['id']]);
+if ($action === 'reset') {
+    $code = trim((string)($input['code'] ?? ''));
+    $newPassword = (string)($input['new_password'] ?? '');
+    $length = function_exists('mb_strlen') ? mb_strlen($newPassword, 'UTF-8') : strlen($newPassword);
+    if (!preg_match('/^\d{6}$/', $code) || $length < 5 || $length > 128) {
+        respond(false, 'Enter the six-digit code and a 5 to 128 character password');
     }
-    // Keep it generic — never confirm account existence in a failure message.
-    respond(false, 'Could not send the email right now, please try again later');
+    if (!rate_limit_check($pdo, 'forgot_verify:' . strtolower($identifier), 5, 900)) {
+        respond(false, 'Too many attempts, please try again later');
+    }
+    if (!$user) respond(false, 'Invalid or expired reset code');
+    $find = $pdo->prepare('SELECT code_hash, expires_at FROM password_reset_codes WHERE user_id = ? LIMIT 1');
+    $find->execute([(int)$user['id']]);
+    $reset = $find->fetch();
+    if (!$reset || strtotime((string)$reset['expires_at']) < time()
+            || !password_verify($code, (string)$reset['code_hash'])) {
+        respond(false, 'Invalid or expired reset code');
+    }
+    $pdo->beginTransaction();
+    $update = $pdo->prepare('UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?');
+    $update->execute([password_hash($newPassword, PASSWORD_DEFAULT), (int)$user['id']]);
+    $pdo->prepare('DELETE FROM password_reset_codes WHERE user_id = ?')->execute([(int)$user['id']]);
+    $pdo->prepare('DELETE FROM rate_limits WHERE bucket = ?')->execute(['forgot_verify:' . strtolower($identifier)]);
+    $pdo->commit();
+    respond(true, 'Password reset successfully');
 }
 
-respond(true, $generic);
+respond(false, 'Invalid reset action');

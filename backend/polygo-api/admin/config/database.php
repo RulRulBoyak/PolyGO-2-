@@ -12,8 +12,22 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
+    session_name('polygo_admin');
+    $secureCookie = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/polygo-api/admin',
+        'secure' => $secureCookie,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
     session_start();
 }
+
+// Load the shared API credentials first so the admin panel uses the same
+// production database instead of falling back to XAMPP's local defaults.
+@include_once __DIR__ . '/../../secrets.php';
 
 if (!defined('DB_HOST')) {
     define('DB_HOST', '127.0.0.1');
@@ -26,7 +40,6 @@ if (!defined('DB_HOST')) {
 // The unified Control Center logs in with the API's shared ADMIN_PASSWORD
 // (../secrets.php). Keep that file OUT of the repo; if it is missing the panel
 // simply refuses to authenticate until it is restored.
-@include_once __DIR__ . '/../../secrets.php';
 
 function getConnection(): PDO {
     static $pdo = null;
@@ -62,12 +75,19 @@ function getConnection(): PDO {
 }
 
 function isAdminLoggedIn(): bool {
-    if (isset($_SESSION['admin_auth']) && $_SESSION['admin_auth'] === true) {
-        return true;
-    }
+    $authenticated = isset($_SESSION['admin_auth']) && $_SESSION['admin_auth'] === true;
     // Legacy DB-session shape (kept transiently for bookmarks/sessions in flight).
-    return isset($_SESSION['user_id'], $_SESSION['role'])
-        && strtolower((string) $_SESSION['role']) === 'admin';
+    $authenticated = $authenticated || (isset($_SESSION['user_id'], $_SESSION['role'])
+        && strtolower((string) $_SESSION['role']) === 'admin');
+    if (!$authenticated) return false;
+    $now = time();
+    if (isset($_SESSION['last_activity']) && $now - (int)$_SESSION['last_activity'] > 1800) {
+        $_SESSION = [];
+        session_destroy();
+        return false;
+    }
+    $_SESSION['last_activity'] = $now;
+    return true;
 }
 
 /**

@@ -4,11 +4,6 @@
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">polygo.pks.edu.my</domain>
     </domain-config>
-    <!-- Dev-only cleartext to local backend -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-        <domain includeSubdomains="false">localhost</domain>
-    </domain-config>
-    <!-- default: no cleartext -->
+    <!-- Release default: no cleartext. Debug exceptions live in src/debug. -->
     <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

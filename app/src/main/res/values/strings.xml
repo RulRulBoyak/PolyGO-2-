@@ -65,6 +65,13 @@
     <string name="flag_ai_suggestion_reason">Reported as offensive or incorrect AI-generated suggestion</string>
     <string name="ai_flag_reported">Reported. This helps us filter bad suggestions.</string>
     <string name="ai_flag_failed">Could not submit the report. Check your connection and try again.</string>
+    <string name="ai_analyzing">Analyzing image...</string>
+    <string name="ai_idle_hint">Snap a photo to find items</string>
+    <string name="ai_suggestion_ready">AI suggestion: %1$s</string>
+    <string name="ai_suggestion_title">AI Suggestion</string>
+    <string name="ai_suggestion_body">Title: %1$s\nPrice: RM %2$s\n\n%3$s</string>
+    <string name="ai_suggestion_body_full">Title: %1$s\nPrice: RM %2$s\nCategory: %3$s\nCondition: %4$s\nTags: %5$s\n\n%6$s</string>
+    <string name="ai_suggestion_create">Create listing</string>
 
     <!-- General -->
     <string name="search_hint">Search campus...</string>
@@ -73,6 +80,9 @@
     <string name="chat">Chat</string>
     <string name="make_offer">Make an Offer</string>
     <string name="cancel">Cancel</string>
+    <string name="discard">Discard</string>
+    <string name="discard_changes_title">Discard changes?</string>
+    <string name="discard_changes_message">You have input that isn\'t finished yet. Leave anyway?</string>
 
     <!-- Account & Data Privacy (PDPA) -->
     <string name="delete_account_title">Delete account</string>
@@ -80,6 +90,7 @@
     <string name="delete_account_confirm">Delete</string>
     <string name="deleting_account">Deleting your account and data...</string>
     <string name="delete_account_failed">Could not delete your account. Please check your connection and try again.</string>
+    <string name="account_email_change_hint">Email changes require verification</string>
     <string name="download_my_data">Download My Data (JSON / CSV)</string>
     <string name="export_format_title">Choose export format</string>
     <string name="export_as_json">JSON (all data)</string>
@@ -96,6 +107,12 @@
     <string name="i_agree_to_terms">I agree to PolyGo+\'s Campus Community Rules and Safety Standards.</string>
     <string name="pdpa_footer">PolyGo+ complies with the Personal Data Protection Act (PDPA) 2010. Your campus identity is only used for internal verification.</string>
     <string name="please_agree_to_terms">Please agree to the terms to proceed</string>
+    <string name="please_fix_registration_fields">Check the highlighted fields and try again</string>
+    <string name="register_subtitle">Use any email address. Student access is granted after your student card is approved.</string>
+    <string name="full_name">Full name</string>
+    <string name="student_staff_id">Student ID</string>
+    <string name="email_address">Email address</string>
+    <string name="password">Password</string>
 
 <!-- Legal -->
     <string name="privacy_title">Privacy Policy</string>
@@ -104,6 +121,7 @@
     <string name="terms_title_ms">Terma Perkhidmatan</string>
     <string name="lang_toggle_to_bm">BM</string>
     <string name="lang_toggle_to_en">EN</string>
+    <string name="legal_document_label">POLYGO+ LEGAL</string>
 
     <string name="privacy_policy_text">
         &lt;b&gt;Privacy Policy for PolyGo+&lt;/b&gt;\n\n
@@ -112,7 +130,7 @@
         &lt;b&gt;1. Information We Collect&lt;/b&gt;\n
         To facilitate a secure campus marketplace, we collect information you provide when you register, including:\n
         - Name and Mobile Number\n
-        - Campus Email Address\n
+        - Email Address\n
         - Student / Matrix ID (for PKS verification)\n
         - Profile information\n
         - Meetup landmark selections and precise meetup locations for verified safe-meetup features\n
@@ -228,6 +246,8 @@
     <string name="profile_welcome_back">Your profile</string>
     <string name="profile_user_name_placeholder">Mr. John Doe</string>
     <string name="profile_student">★  Student</string>
+    <string name="profile_verification_pending">Student verification pending</string>
+    <string name="profile_member_unverified">Member • Verify your student card</string>
     <string name="profile_logout">Logout</string>
     <string name="profile_seller_dashboard">SELLER DASHBOARD</string>
     <string name="profile_view_details">View details</string>
@@ -350,7 +370,7 @@
     <string name="safe_meetup_emergency_confirm">Send a safety alert to the other user and PKS Security?</string>
     <string name="safe_meetup_emergency_sent">Alert sent. PKS Security has been notified.</string>
     <!-- Campus security hotline for the Safe Meetup SOS dialer. Placeholder: fill with the real number (e.g. +60 12 345 6789) or leave EMPTY to keep the dialer a safe no-op. -->
-    <string name="safe_meetup_campus_hotline"></string>
+    <string name="safe_meetup_campus_hotline">0123578993</string>
     <string name="safe_meetup_dial_hotline_unavailable">No dialer available on this device</string>
     <string name="safe_meetup_hotline_unconfigured">Campus hotline is not configured yet</string>
     <string name="safe_meetup_emergency_send">Send Alert</string>
@@ -390,6 +410,21 @@
     <string name="pulse_time_h">%1$dh ago</string>
     <string name="pulse_time_d">%1$dd ago</string>
     <string name="pulse_time_w">%1$dw ago</string>
+    <string name="pulse_new_thread">New thread</string>
+    <string name="pulse_thread_title">Thread</string>
+    <string name="pulse_replies">Replies</string>
+    <string name="pulse_no_replies">No replies yet. Start the conversation.</string>
+    <string name="pulse_reply_hint">Write a reply…</string>
+    <string name="pulse_send_reply">Send reply</string>
+    <string name="pulse_reply">Reply</string>
+    <string name="pulse_author_badge">Author</string>
+    <string name="pulse_share">Share thread</string>
+    <string name="pulse_shared_from">Shared from PolyGo+ Campus Pulse</string>
+    <string name="pulse_member">PolyGo member</string>
+    <string name="pulse_login_to_interact">Log in to like or reply to threads</string>
+    <string name="pulse_interaction_failed">Couldn’t update this thread. Please try again.</string>
+    <string name="pulse_comments_failed">Couldn’t load replies. Check your connection.</string>
+    <string name="pulse_comment_failed">Couldn’t post your reply. Please try again.</string>
     <string name="listing_posted_prefix">Listed %1$s</string>
     <string name="listing_listed_on">Listed on %1$s</string>
     <string name="product_views_count">%1$d views</string>
@@ -403,9 +438,10 @@
     <string name="textbook_not_found">No book details found for ISBN %1$s. Search campus listings instead?</string>
     <string name="textbook_search_listings">Search listings</string>
     <string name="verification_uploading">Uploading Matrix Card...</string>
+    <string name="verification_wait_for_submission">Please wait while your student card is submitted</string>
     <string name="verification_submitted">Verification submitted for review</string>
     <string name="verification_upload_failed">Could not upload your card. Please try again.</string>
-    <string name="verification_server_failed">Could not reach the server. Verification saved on this device only.</string>
+    <string name="verification_server_failed">Could not submit verification. Please try again.</string>
     <string name="help_data_safety_title">Data Safety &amp; Privacy</string>
     <string name="help_data_safety_desc">How we collect, use and protect your data - and how to download or delete it.</string>
     <string name="data_safety_title">Data Safety &amp; Privacy</string>
@@ -462,13 +498,11 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="offer_sheet_send">Send Offer</string>
     <string name="offer_sheet_error_amount">Enter a valid offer amount</string>
     <string name="offer_sheet_sent">Offer sent successfully!</string>
-    <string name="offer_sheet_local_only">Offer sent (Local Only)</string>
 
     <!-- Verified Buyer Reviews -->
     <string name="seller_write_review">Write a review</string>
     <string name="review_verified_buyer_title">Verified Buyer Only</string>
     <string name="review_verified_buyer_message">Campus Rule: Reviews are only available to verified buyers. Complete a transaction with this seller first, then leave your rating after the meetup.</string>
-    <string name="review_saved_offline">Review saved (Offline Mode)</string>
 
     <!-- Campus Hook -->
     <string name="campus_details_title">Campus Details</string>
@@ -536,11 +570,15 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <!-- Account -->
     <string name="toast_complete_profile">Complete your profile</string>
     <string name="toast_uploading_profile_picture">Uploading new profile picture...</string>
+    <string name="crop_photo_title">Adjust profile photo</string>
+    <string name="crop_photo_help">Drag to reposition • Pinch to zoom</string>
+    <string name="crop_photo_use">Use photo</string>
+    <string name="crop_photo_load_failed">We couldn’t open that photo. Try another one.</string>
+    <string name="crop_photo_save_failed">We couldn’t prepare that photo. Please try again.</string>
     <string name="toast_upload_failed">Upload failed</string>
     <string name="toast_upload_failed_reason">Upload failed: %1$s</string>
     <string name="toast_profile_saved">Profile saved</string>
     <string name="toast_save_error">Save error</string>
-    <string name="toast_save_error_reason">Save error: %1$s</string>
 
     <!-- Marketplace: add service -->
     <string name="toast_add_portfolio_photo_first">Add a portfolio photo first</string>
@@ -559,7 +597,6 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Chat -->
     <string name="chat_error_write_message">Write a message</string>
-    <string name="toast_chat_network_error">Network error: %1$s</string>
     <string name="chat_message_hint">Message...</string>
     <string name="chat_no_messages">No messages yet</string>
 
@@ -633,19 +670,31 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_login_failed">Login failed</string>
     <string name="toast_google_sign_in_unavailable">Google sign-in is not available right now. Use your campus ID instead.</string>
     <string name="toast_google_sign_in_failed">Google sign-in failed. Please try again.</string>
+    <string name="google_consent_title">Continue with Google?</string>
+    <string name="google_consent_message">If this is your first sign-in, PolyGo+ will create your account. By continuing, you agree to the Terms of Service and Privacy Policy.</string>
 
     <!-- Orders & Transactions -->
     <string name="toast_order_not_found">Order not found</string>
     <string name="map_pin_label">📍\n%1$s\nPKS campus landmark</string>
     <string name="toast_transaction_completed">Transaction completed!</string>
-    <string name="toast_completed_offline">Completed (Offline Mode)</string>
     <string name="toast_deal_accepted_tracker">Deal accepted — meetup tracker is live in chat</string>
-    <string name="toast_accepted_offline">Accepted (Offline Mode)</string>
+    <string name="toast_transaction_update_failed">Could not update the deal</string>
+    <string name="toast_need_login">Login required</string>
+
+    <!-- Deal Tracker -->
+    <string name="deal_desc_waiting">Waiting for the seller to accept</string>
+    <string name="deal_desc_accepted">Offer accepted — arrange the meetup in chat</string>
+    <string name="deal_desc_pickup">Item is ready for pickup</string>
+    <string name="deal_desc_inspection">Inspect the item at the meetup point</string>
+    <string name="deal_desc_payment">Payment released to the seller</string>
+    <string name="deal_desc_closed">Transaction officially complete</string>
+    <string name="deal_desc_declined">This offer was declined</string>
+    <string name="deal_desc_cancelled">This offer was cancelled</string>
 
     <!-- Auth: OTP -->
     <string name="otp_sent_subtitle">We\'ve sent a 6-digit code to %1$s</string>
     <string name="otp_title">Verify your email</string>
-    <string name="otp_subtitle_placeholder">Enter the 6-digit code sent to your campus email.</string>
+    <string name="otp_subtitle_placeholder">Enter the 6-digit code sent to your email.</string>
     <string name="otp_code_hint">Verification code</string>
     <string name="otp_verify_account">Verify account</string>
     <string name="otp_resend">Didn\'t receive a code? Resend</string>
@@ -653,6 +702,12 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="toast_invalid_code">Invalid code</string>
     <string name="toast_code_resent_to">Code resent to %1$s</string>
     <string name="toast_failed_to_resend">Failed to resend</string>
+    <string name="toast_code_send_failed">Could not send the verification code</string>
+    <string name="sending_verification_code">Sending verification code…</string>
+    <string name="register_with_google">Continue with Google</string>
+    <string name="or_register_with_email">or register with email</string>
+    <string name="google_email_verified">Google email verified</string>
+    <string name="creating_account">Creating account…</string>
     <string name="toast_registration_failed">Registration failed</string>
 
     <!-- Product Detail -->
@@ -672,8 +727,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="snack_removed_from_saved">Removed from saved items</string>
     <string name="action_undo">UNDO</string>
     <string name="toast_saved_to_items">Saved to your items</string>
-    <string name="snack_removed_offline">Removed (offline)</string>
-    <string name="toast_saved_offline">Saved (offline)</string>
+    <string name="toast_favorite_update_failed">Could not update saved items. Please try again.</string>
     <string name="toast_login_to_leave_review">Please log in to leave a review</string>
 
     <!-- Receipt -->
@@ -708,6 +762,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
 
     <!-- Verification -->
     <string name="toast_verification_approved_dev">Verification Approved (Dev)</string>
+    <string name="toast_snap_card_required">Please snap your card or selfie photo first</string>
     <string name="toast_snap_card_or_enter_matrix">Please snap your card or enter Matrix No</string>
     <string name="toast_answer_alumni_questions">Please answer the alumni challenge questions</string>
     <string name="toast_challenge_answer_incorrect">Challenge answer 1 seems incorrect</string>
@@ -722,7 +777,29 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="bio_prompt_change_password">Confirm identity to change password</string>
     <string name="bio_title_enable_biometric_lock">Enable Biometric Lock</string>
     <string name="bio_prompt_enable_lock">Verify to enable security layer</string>
-    <string name="error_password_min_length">Use at least 6 characters</string>
+    <string name="error_password_min_length">Use 5 to 128 characters</string>
+    <string name="forgot_password_title">Forgot password?</string>
+    <string name="forgot_password_instructions">Enter your Student ID or email. We’ll email a six-digit code that expires in 10 minutes.</string>
+    <string name="student_id_or_email">Student ID or email</string>
+    <string name="reset_code">Six-digit reset code</string>
+    <string name="send_reset_code">Send reset code</string>
+    <string name="reset_password">Reset password</string>
+    <string name="reset_code_sent">If the account exists, a reset code has been sent to its email.</string>
+    <string name="password_reset_success">Password reset. You can now sign in.</string>
+    <string name="error_reset_code">Enter the six-digit code</string>
+    <string name="error_passwords_do_not_match">Passwords do not match</string>
+    <string name="refresh">Refresh</string>
+    <string name="secure_student_verification">PolyGo+ secure student verification</string>
+    <string name="error_current_password_required">Enter your current password</string>
+    <string name="current_password">Current password</string>
+    <string name="new_password">New password</string>
+    <string name="confirm_new_password">Confirm new password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="action_continue">Continue</string>
+    <string name="logout_title">Log out?</string>
+    <string name="logout_message">Your private cached data will be removed from this device.</string>
+    <string name="logout_action">Log out</string>
+    <string name="pulse_submitted_review">Submitted for campus moderator review</string>
     <string name="error_password_mismatch">Passwords do not match</string>
     <string name="toast_password_changed">Password changed</string>
     <string name="toast_password_change_failed">Failed to change password</string>
@@ -792,6 +869,7 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
     <string name="quick_message_send">Send message</string>
     <string name="quick_message_default">Is this still available?</string>
     <string name="toast_message_failed">Could not send the message. Please try again.</string>
+    <string name="toast_screen_open_failed">Could not open this screen. Please try again.</string>
     <string name="product_alert">Get alerts for this listing</string>
     <string name="product_alert_on">Alerts enabled for this listing</string>
     <string name="toast_alert_on">You will be notified of price drops and availability.</string>
@@ -919,7 +997,39 @@ Data disimpan selagi akaun anda aktif dan dialih keluar apabila anda memadam aka
         <item>Study first. Browse responsibly. Probably.</item>
         <item>One campus, many suspiciously good deals.</item>
     </string-array>
+    <string-array name="home_greetings_morning">
+        <item>Good morning</item><item>Morning energy</item><item>Ready for campus</item><item>Welcome back</item>
+    </string-array>
+    <string-array name="home_greetings_afternoon">
+        <item>Good afternoon</item><item>Afternoon check-in</item><item>Back for another find</item><item>Welcome back</item>
+    </string-array>
+    <string-array name="home_greetings_evening">
+        <item>Good evening</item><item>Evening finds await</item><item>Back on campus</item><item>Welcome back</item>
+    </string-array>
+    <string-array name="home_greetings_night">
+        <item>Good night</item><item>Still exploring</item><item>Night owl mode</item><item>One last campus check</item>
+    </string-array>
     <string name="impact_leaderboard_title">Green Impact leaderboard</string>
     <string name="impact_leaderboard_empty">No completed sustainable deals yet.</string>
     <string name="impact_leaderboard_failed">Could not load the leaderboard.</string>
+    <string name="error_state_offline_title">No internet connection</string>
+    <string name="error_state_offline_body">Check your Wi-Fi or mobile data, then try again. You can still browse data saved on this phone.</string>
+    <string name="error_state_maintenance_title">We\'ll be back soon</string>
+    <string name="error_state_maintenance_body">PolyGo+ is being updated. Please try again shortly.</string>
+    <string name="error_state_still_offline">Still offline</string>
+    <string name="error_state_still_maintenance">Still under maintenance</string>
+    <string name="error_state_server_title">Server unavailable</string>
+    <string name="error_state_server_body">PolyGo+ could not reach the server. Check your connection and try again.</string>
+    <string name="error_state_retry">Try again</string>
+    <string name="error_state_continue_saved">Continue with saved data</string>
+    <string name="drafts_title">Drafts</string>
+    <string name="drafts_subtitle">Continue where you left off</string>
+    <string name="drafts_saved_count">%1$d saved</string>
+    <string name="draft_untitled">Untitled listing</string>
+    <string name="draft_resume">Resume</string>
+    <string name="draft_delete">Delete</string>
+    <string name="draft_delete_title">Delete this draft?</string>
+    <string name="draft_delete_message">This draft will be permanently removed from this device.</string>
+    <string name="draft_saved_recently">Saved recently</string>
+    <string name="published_listings_title">Published listings</string>
 </resources>

@@ -8,9 +8,11 @@ import android.view.View;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -22,6 +24,7 @@ import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
@@ -44,7 +47,9 @@ public class AccountActivity extends AppCompatActivity {
     private String pendingExportJson;
     private String pendingExportCsv;
     private ActivityResultLauncher<PickVisualMediaRequest> photoPicker;
+    private ActivityResultLauncher<Intent> photoCropper;
     private ActivityResultLauncher<Intent> documentLauncher;
+    private String initialAccountState = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,27 +63,26 @@ public class AccountActivity extends AppCompatActivity {
             }
         });
 
+        photoCropper = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() != RESULT_OK || result.getData() == null) return;
+            String croppedUri = result.getData().getStringExtra(ProfilePhotoCropActivity.EXTRA_RESULT_URI);
+            if (croppedUri == null || croppedUri.isEmpty()) return;
+            selectedPhotoUri = croppedUri;
+            loadProfilePhoto(croppedUri);
+        });
+
         photoPicker = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-            if (uri != null) {
-                try {
-                    selectedPhotoUri = uri.toString();
-                    imgProfile.setImageURI(uri);
-                } catch (Exception ignored) {}
-            }
+            if (uri == null) return;
+            Intent crop = new Intent(this, ProfilePhotoCropActivity.class);
+            crop.putExtra(ProfilePhotoCropActivity.EXTRA_SOURCE_URI, uri.toString());
+            photoCropper.launch(crop);
         });
 
         imgProfile = findViewById(R.id.imgProfilePhoto);
         String currentPhoto = AppDataStore.userProfilePic(this);
         if (!currentPhoto.isEmpty()) {
-            try {
-                imgProfile.setImageURI(Uri.parse(currentPhoto));
-                if (imgProfile.getDrawable() == null) {
-                    imgProfile.setImageResource(R.drawable.ic_user_line);
-                }
-                selectedPhotoUri = currentPhoto;
-            } catch (Exception e) {
-                imgProfile.setImageResource(R.drawable.ic_user_line);
-            }
+            selectedPhotoUri = currentPhoto;
+            loadProfilePhoto(currentPhoto);
         }
 
         ((TextInputEditText)findViewById(R.id.etFirstName)).setText(firstName(AppDataStore.userName(this)));
@@ -110,7 +114,7 @@ public class AccountActivity extends AppCompatActivity {
         });
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setNavigationOnClickListener(v -> confirmExit());
         
         findViewById(R.id.btnChangePhoto).setOnClickListener(v -> {
             photoPicker.launch(new PickVisualMediaRequest.Builder()
@@ -153,7 +157,8 @@ public class AccountActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(Call<PolyGoApi.UploadResponse> call, Throwable t) {
                         v.setEnabled(true);
-                        UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), getString(R.string.toast_upload_failed_reason, t.getMessage()));
+                        UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content),
+                                R.string.toast_upload_failed);
                     }
                 });
             } else {
@@ -177,6 +182,48 @@ public class AccountActivity extends AppCompatActivity {
             HapticManager.lightTap(v);
             downloadMyData(v);
         });
+
+        initialAccountState = currentAccountState();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private String textOf(int id) {
+        TextInputEditText input = findViewById(id);
+        return input.getText() == null ? "" : input.getText().toString();
+    }
+
+    private String currentAccountState() {
+        return textOf(R.id.etFirstName) + "|"
+                + textOf(R.id.etLastName) + "|"
+                + textOf(R.id.etEmail) + "|"
+                + textOf(R.id.etMobileNo) + "|"
+                + textOf(R.id.etBio) + "|"
+                + selectedPhotoUri + "|"
+                + ((MaterialSwitch) findViewById(R.id.switchPrivateAccount)).isChecked();
+    }
+
+    private void confirmExit() {
+        if (initialAccountState.equals(currentAccountState())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
+    }
+
+    private void loadProfilePhoto(String source) {
+        Glide.with(this)
+                .load(source)
+                .centerCrop()
+                .placeholder(R.drawable.ic_user_line)
+                .error(R.drawable.ic_user_line)
+                .fallback(R.drawable.ic_user_line)
+                .into(imgProfile);
     }
 
     private void deleteAccountNow() {
@@ -273,7 +320,8 @@ public class AccountActivity extends AppCompatActivity {
         }
         String[] sections = {"listings", "favorites", "threads", "messages", "transactions",
             "reviews_given", "reviews_received", "notifications", "reports_submitted",
-            "security_alerts", "green_impact"};
+            "security_alerts", "green_impact", "verification_requests", "blocked_users",
+            "following", "campus_posts", "timetable_entries", "bug_reports"};
         for (String section : sections) {
             JsonElement el = data.get(section);
             if (el == null || !el.isJsonArray()) continue;
@@ -314,6 +362,13 @@ public class AccountActivity extends AppCompatActivity {
     }
 
     private void appendCsvRow(StringBuilder sb, JsonObject obj) {
+        boolean firstHeader = true;
+        for (String key : obj.keySet()) {
+            if (!firstHeader) sb.append(',');
+            sb.append(csvEscape(key));
+            firstHeader = false;
+        }
+        sb.append('\n');
         boolean firstCell = true;
         for (java.util.Map.Entry<String, JsonElement> e : obj.entrySet()) {
             if (!firstCell) sb.append(',');
@@ -351,7 +406,7 @@ public class AccountActivity extends AppCompatActivity {
             public void onFailure(Call<BaseResponse> call, Throwable t) {
                 HapticManager.error(AccountActivity.this);
                 btn.setEnabled(true);
-                UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), getString(R.string.toast_save_error_reason, t.getMessage()));
+                UiUtils.snackbarError(AccountActivity.this.findViewById(android.R.id.content), R.string.toast_save_error);
             }
         });
     }

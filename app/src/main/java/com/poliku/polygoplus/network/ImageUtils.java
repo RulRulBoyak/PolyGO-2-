@@ -33,16 +33,14 @@ public final class ImageUtils {
 
             int width = options.outWidth;
             int height = options.outHeight;
-            int reqWidth = 1080; // Standard High Definition width
-            int reqHeight = 1080;
+            int maxDimension = 1600;
+
+            if (width <= 0 || height <= 0) return originalUri;
 
             int inSampleSize = 1;
-            if (height > reqHeight || width > reqWidth) {
-                final int halfHeight = height / 2;
-                final int halfWidth = width / 2;
-                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                    inSampleSize *= 2;
-                }
+            while (width / inSampleSize > maxDimension
+                    || height / inSampleSize > maxDimension) {
+                inSampleSize *= 2;
             }
 
             options.inSampleSize = inSampleSize;
@@ -60,12 +58,13 @@ public final class ImageUtils {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out); // 80% quality is a good balance
             out.flush();
             out.close();
+            bitmap.recycle();
 
             Log.d(TAG, "Compressed image from " + (width * height * 4 / 1024) + "KB to " + (tempFile.length() / 1024) + "KB");
             
             return Uri.fromFile(tempFile);
 
-        } catch (Exception e) {
+        } catch (Exception | OutOfMemoryError e) {
             Log.e(TAG, "Error compressing image: " + e.getMessage());
             return originalUri; // Fallback to original if compression fails
         }

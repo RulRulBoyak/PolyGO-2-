@@ -3,11 +3,13 @@ package com.poliku.polygoplus;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import androidx.credentials.Credential;
@@ -20,6 +22,7 @@ import androidx.credentials.exceptions.NoCredentialException;
 import androidx.core.content.ContextCompat;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import androidx.activity.OnBackPressedCallback;
 
 import androidx.lifecycle.ViewModelProvider;
 import com.poliku.polygoplus.viewmodel.AuthViewModel;
@@ -44,6 +47,7 @@ import retrofit2.Response;
 
 @AndroidEntryPoint
 public class LoginActivity extends BaseActivity {
+    private static final String TAG = "GoogleSignIn";
     @Inject PolyGoRepository polyGoRepository;
     private AuthViewModel viewModel;
     private TextInputEditText etMatrix, etPassword;
@@ -51,6 +55,8 @@ public class LoginActivity extends BaseActivity {
     private Button btnLogin, btnGoogle;
     private CredentialManager credentialManager;
     private Executor executor;
+    private CancellationSignal googleCancellationSignal;
+    private boolean googleSignInInProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +74,7 @@ public class LoginActivity extends BaseActivity {
         credentialManager = CredentialManager.create(this);
         executor = ContextCompat.getMainExecutor(this);
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> confirmExit());
         
         setupValidation();
         setupGoogleSignIn();
@@ -93,7 +99,7 @@ public class LoginActivity extends BaseActivity {
 
                 @Override
                 public void onFailure(Call<PolyGoApi.LoginResponse> call, Throwable t) {
-                    onError(t.getMessage());
+                    onError(getString(R.string.toast_could_not_reach_server_try_again));
                 }
 
                 private void onError(String msg) {
@@ -116,16 +122,33 @@ public class LoginActivity extends BaseActivity {
             }
             return false;
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(etMatrix.getText(), etPassword.getText())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private void setupGoogleSignIn() {
         btnGoogle.setOnClickListener(v -> {
+            if (googleSignInInProgress) return;
             HapticManager.lightTap(v);
             String webClientId = getString(R.string.default_web_client_id);
             if (webClientId == null || webClientId.isEmpty()) {
                 Toast.makeText(this, R.string.toast_google_sign_in_unavailable, Toast.LENGTH_LONG).show();
                 return;
             }
+            setGoogleSignInInProgress(true);
             googleSignIn();
         });
     }
@@ -139,50 +162,72 @@ public class LoginActivity extends BaseActivity {
         GetCredentialRequest request = new GetCredentialRequest.Builder()
                 .addCredentialOption(googleIdOption)
                 .build();
-        btnGoogle.setEnabled(false);
+        googleCancellationSignal = new CancellationSignal();
 
-        credentialManager.getCredentialAsync(this, request, new CancellationSignal(), executor,
+        credentialManager.getCredentialAsync(this, request, googleCancellationSignal, executor,
                 new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
                     @Override
                     public void onResult(GetCredentialResponse result) {
-                        btnGoogle.setEnabled(true);
                         Credential credential = result.getCredential();
                         if (credential instanceof GoogleIdTokenCredential) {
                             String idToken = ((GoogleIdTokenCredential) credential).getIdToken();
                             loginWithGoogleIdToken(idToken);
                         } else if (credential instanceof androidx.credentials.CustomCredential) {
+                            androidx.credentials.CustomCredential customCredential =
+                                    (androidx.credentials.CustomCredential) credential;
+                            if (!GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                                    .equals(customCredential.getType())) {
+                                Log.w(TAG, "Unexpected credential type: " + customCredential.getType());
+                                onGoogleError(false, null);
+                                return;
+                            }
                             try {
                                 GoogleIdTokenCredential googleCredential =
-                                        GoogleIdTokenCredential.createFrom(credential.getData());
+                                        GoogleIdTokenCredential.createFrom(customCredential.getData());
                                 loginWithGoogleIdToken(googleCredential.getIdToken());
-                            } catch (Exception ignore) {
+                            } catch (Exception error) {
+                                Log.w(TAG, "Could not parse Google credential", error);
                                 onGoogleError(false, null);
                             }
                         } else {
+                            Log.w(TAG, "Unexpected credential class: " + credential.getClass().getName());
                             onGoogleError(false, null);
                         }
                     }
 
                     @Override
                     public void onError(GetCredentialException e) {
-                        btnGoogle.setEnabled(true);
-                        boolean cancelled = e instanceof androidx.credentials.exceptions.GetCredentialCancellationException
-                                || e instanceof NoCredentialException;
-                        onGoogleError(cancelled, e.getMessage());
+                        Log.w(TAG, "Credential request failed: " + e.getClass().getSimpleName()
+                                + ": " + e.getMessage());
+                        boolean cancelled = e instanceof androidx.credentials.exceptions.GetCredentialCancellationException;
+                        String message = e instanceof NoCredentialException
+                                ? getString(R.string.toast_google_sign_in_unavailable)
+                                : e.getMessage();
+                        onGoogleError(cancelled, message);
                     }
                 });
     }
 
     private void loginWithGoogleIdToken(String idToken) {
         btnGoogle.setEnabled(false);
-        polyGoRepository.googleLogin(idToken, new Callback<PolyGoApi.LoginResponse>() {
+        polyGoRepository.googleLogin(idToken, false, new Callback<PolyGoApi.LoginResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.LoginResponse> call, Response<PolyGoApi.LoginResponse> response) {
                 btnGoogle.setEnabled(true);
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    handleLoginResponse(response.body());
+                PolyGoApi.LoginResponse body = response.body();
+                if (response.isSuccessful() && body != null && body.isSuccess()
+                        && body.requiresProfile) {
+                    Intent registration = new Intent(LoginActivity.this, RegisterActivity.class);
+                    registration.putExtra(RegisterActivity.EXTRA_GOOGLE_ID_TOKEN, idToken);
+                    registration.putExtra(RegisterActivity.EXTRA_GOOGLE_EMAIL, body.googleEmail);
+                    registration.putExtra(RegisterActivity.EXTRA_GOOGLE_NAME, body.googleName);
+                    startActivity(registration);
+                    setGoogleSignInInProgress(false);
+                } else if (response.isSuccessful() && body != null && body.isSuccess()) {
+                    handleLoginResponse(body);
                 } else {
-                    onGoogleError(false, null);
+                    String message = body == null ? googleErrorMessage(response) : body.getMessage();
+                    onGoogleError(false, message);
                 }
             }
 
@@ -194,11 +239,36 @@ public class LoginActivity extends BaseActivity {
         });
     }
 
+    /** Preserve the API's safe, user-facing error rather than hiding every failed Google login. */
+    private String googleErrorMessage(Response<?> response) {
+        try {
+            if (response.errorBody() == null) return null;
+            BaseResponse error = new com.google.gson.Gson().fromJson(
+                    response.errorBody().charStream(), BaseResponse.class);
+            return error == null ? null : error.getMessage();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private void onGoogleError(boolean cancelled, String message) {
+        setGoogleSignInInProgress(false);
         if (!cancelled) {
             HapticManager.error(LoginActivity.this);
             Toast.makeText(this, message == null ? getString(R.string.toast_google_sign_in_failed) : message, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void setGoogleSignInInProgress(boolean inProgress) {
+        googleSignInInProgress = inProgress;
+        if (btnGoogle != null) btnGoogle.setEnabled(!inProgress);
+        if (!inProgress) googleCancellationSignal = null;
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (googleCancellationSignal != null) googleCancellationSignal.cancel();
+        super.onDestroy();
     }
 
     private boolean isSuspendedResponse(Response<?> response) {
@@ -223,9 +293,14 @@ public class LoginActivity extends BaseActivity {
             userJson.put("email", body.user.email);
             userJson.put("mobile", body.user.mobile);
             userJson.put("role", body.user.role);
+            userJson.put("profile_pic_url", body.user.profile_pic_url);
+            userJson.put("bio", body.user.bio);
+            userJson.put("is_private", body.user.isPrivate);
+            userJson.put("is_verified", body.user.verified);
+            userJson.put("verification_status", body.user.verificationStatus);
             userJson.put("is_banned", body.user.banned);
 
-            AppDataStore.saveRemoteSession(LoginActivity.this, userJson, body.token);
+            AppDataStore.saveRemoteSession(LoginActivity.this, userJson, body.getToken());
         } catch (Exception ignored) {}
 
         syncFcmToken();

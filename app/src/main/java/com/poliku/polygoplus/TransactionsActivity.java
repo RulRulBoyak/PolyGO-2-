@@ -44,6 +44,11 @@ public class TransactionsActivity extends BaseActivity {
                 getString(R.string.transactions_empty_desc), getString(R.string.transactions_browse_listings),
                 v -> startActivity(new Intent(this, SearchActivity.class)));
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         fetchTransactions();
     }
 
@@ -53,22 +58,29 @@ public class TransactionsActivity extends BaseActivity {
             @Override
             public void onResponse(Call<PolyGoApi.TransactionsResponse> call, Response<PolyGoApi.TransactionsResponse> response) {
                 PolyGoApi.TransactionsResponse body = response.body();
+                if (!response.isSuccessful() || body == null || !body.isSuccess()
+                        || body.transactions == null) {
+                    showCachedTransactions();
+                    return;
+                }
                 List<AppDataStore.TransactionRecord> items = new ArrayList<>();
-                if (body != null && body.transactions != null) {
-                    for (PolyGoApi.Transaction t : body.transactions) {
-                        items.add(AppDataStore.TransactionRecord.fromTransaction(t));
-                    }
+                AppDataStore.cacheTransactions(TransactionsActivity.this, body.transactions);
+                for (PolyGoApi.Transaction t : body.transactions) {
+                    items.add(AppDataStore.TransactionRecord.fromTransaction(t));
                 }
                 renderTransactions(items);
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
-                // FALLBACK: Show local transactions if network fails
-                renderTransactions(AppDataStore.getTransactions(TransactionsActivity.this));
-                Toast.makeText(TransactionsActivity.this, R.string.toast_viewing_offline_history, Toast.LENGTH_SHORT).show();
+                showCachedTransactions();
             }
         });
+    }
+
+    private void showCachedTransactions() {
+        renderTransactions(AppDataStore.getTransactions(this));
+        Toast.makeText(this, R.string.toast_viewing_offline_history, Toast.LENGTH_SHORT).show();
     }
 
     private void renderTransactions(List<AppDataStore.TransactionRecord> items) {

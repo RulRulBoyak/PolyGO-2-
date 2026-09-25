@@ -3,6 +3,8 @@ package com.poliku.polygoplus.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.animation.ValueAnimator;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -89,12 +92,16 @@ public class HomeFragment extends Fragment {
     private EventAdapter eventAdapter;
     private final List<String> rotatingMessages = new ArrayList<>();
     private int messageIndex;
+    private int greetingIndex;
+    private int motionPattern = -1;
     private long messageIntervalMs = 8000L;
     private final Runnable messageRotation = new Runnable() {
         @Override
         public void run() {
             if (binding == null || rotatingMessages.isEmpty()) return;
             messageIndex = (messageIndex + 1) % rotatingMessages.size();
+            greetingIndex++;
+            motionPattern = (motionPattern + 1) % 4;
             animateHeaderCopy();
             autoRotateHandler.postDelayed(this, messageIntervalMs);
         }
@@ -186,12 +193,15 @@ public class HomeFragment extends Fragment {
         }
         loadEvents();
         loadActivityHubData();
+        startAutoRotate();
+        startMessageRotation();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         stopAutoRotate();
+        autoRotateHandler.removeCallbacks(messageRotation);
     }
 
     private void observeViewModel() {
@@ -266,13 +276,14 @@ public class HomeFragment extends Fragment {
         binding.tvGreeting.setText(greetingText(context));
 
         String photo = AppDataStore.userProfilePic(context);
-        if (!photo.isEmpty()) {
-            Glide.with(this)
-                    .load(photo)
-                    .circleCrop()
-                    .override(160, 160)
-                    .into(binding.ivProfilePic);
-        }
+        Glide.with(this)
+                .load(photo)
+                .circleCrop()
+                .override(160, 160)
+                .placeholder(R.drawable.ic_user_line)
+                .error(R.drawable.ic_user_line)
+                .fallback(R.drawable.ic_user_line)
+                .into(binding.ivProfilePic);
 
         binding.ivProfilePic.setOnClickListener(v -> {
             HapticManager.lightTap(v);
@@ -323,15 +334,17 @@ public class HomeFragment extends Fragment {
 
     private String greetingText(Context context) {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        int greeting = hour < 5 || hour >= 21 ? R.string.greeting_night
-                : hour < 12 ? R.string.greeting_morning
-                : hour < 18 ? R.string.greeting_afternoon : R.string.greeting_evening;
+        int greetings = hour < 5 || hour >= 21 ? R.array.home_greetings_night
+                : hour < 12 ? R.array.home_greetings_morning
+                : hour < 18 ? R.array.home_greetings_afternoon : R.array.home_greetings_evening;
+        String[] variants = getResources().getStringArray(greetings);
+        String greeting = variants[greetingIndex % variants.length];
         String name = AppDataStore.userName(context);
         if (!AppDataStore.isLoggedIn(context) || name == null || name.trim().isEmpty()
                 || "PolyGo member".equals(name)) {
-            return getString(greeting) + "!";
+            return greeting + "!";
         }
-        return getString(greeting) + ", " + name.trim().split(" ")[0];
+        return greeting + ", " + name.trim().split(" ")[0];
     }
 
     private void loadHeaderMessages() {
@@ -374,24 +387,65 @@ public class HomeFragment extends Fragment {
         if (binding == null) return;
         Context context = getContext();
         if (context == null) return;
-        binding.tvGreeting.animate().cancel();
-        binding.tvGreetingSub.animate().cancel();
-        binding.tvGreeting.animate().alpha(0f).translationY(-dp(6)).setDuration(180)
-                .withEndAction(() -> {
-                    if (binding == null) return;
-                    binding.tvGreeting.setText(greetingText(context));
-                    binding.tvGreeting.setTranslationY(dp(6));
-                    binding.tvGreeting.animate().alpha(1f).translationY(0f)
-                            .setDuration(240).start();
+        String nextGreeting = greetingText(context);
+        String nextSubtitle = rotatingMessages.get(messageIndex);
+        if (!animationsEnabled()) {
+            binding.tvGreeting.setText(nextGreeting);
+            binding.tvGreetingSub.setText(nextSubtitle);
+            return;
+        }
+        swapHeaderText(binding.tvGreeting, nextGreeting, 1f, motionPattern);
+        // Offset the subtitle pattern so the two lines feel connected without moving identically.
+        swapHeaderText(binding.tvGreetingSub, nextSubtitle, 0.9f, (motionPattern + 1) % 4);
+    }
+
+    private void swapHeaderText(TextView view, String nextText, float finalAlpha, int pattern) {
+        view.animate().cancel();
+        resetMotion(view, finalAlpha);
+        switch (pattern) {
+            case 1:
+                view.animate().alpha(0f).translationX(-dp(16)).setDuration(170).withEndAction(() -> {
+                    view.setText(nextText);
+                    view.setTranslationX(dp(18));
+                    view.animate().alpha(finalAlpha).translationX(0f).setDuration(280).start();
                 }).start();
-        binding.tvGreetingSub.animate().alpha(0f).translationY(-dp(6)).setDuration(180)
-                .withEndAction(() -> {
-                    if (binding == null) return;
-                    binding.tvGreetingSub.setText(rotatingMessages.get(messageIndex));
-                    binding.tvGreetingSub.setTranslationY(dp(6));
-                    binding.tvGreetingSub.animate().alpha(0.9f).translationY(0f)
-                            .setDuration(240).start();
+                break;
+            case 2:
+                view.animate().alpha(0f).scaleX(0.94f).scaleY(0.94f).setDuration(170).withEndAction(() -> {
+                    view.setText(nextText);
+                    view.setScaleX(1.06f);
+                    view.setScaleY(1.06f);
+                    view.animate().alpha(finalAlpha).scaleX(1f).scaleY(1f).setDuration(300).start();
                 }).start();
+                break;
+            case 3:
+                view.setCameraDistance(dp(8000));
+                view.animate().alpha(0f).rotationX(32f).setDuration(180).withEndAction(() -> {
+                    view.setText(nextText);
+                    view.setRotationX(-32f);
+                    view.animate().alpha(finalAlpha).rotationX(0f).setDuration(300).start();
+                }).start();
+                break;
+            default:
+                view.animate().alpha(0f).translationY(-dp(10)).setDuration(170).withEndAction(() -> {
+                    view.setText(nextText);
+                    view.setTranslationY(dp(12));
+                    view.animate().alpha(finalAlpha).translationY(0f).setDuration(280).start();
+                }).start();
+        }
+    }
+
+    private void resetMotion(View view, float alpha) {
+        view.setAlpha(alpha);
+        view.setTranslationX(0f);
+        view.setTranslationY(0f);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
+        view.setRotationX(0f);
+    }
+
+    private boolean animationsEnabled() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ValueAnimator.areAnimatorsEnabled();
     }
 
     private void loadEvents() {
@@ -965,10 +1019,12 @@ public class HomeFragment extends Fragment {
             ImageView icon = holder.itemView.findViewById(R.id.ivCategoryIcon);
             View bg = holder.itemView.findViewById(R.id.ivCategoryBg);
 
-            icon.setImageResource(resolveCategoryIcon(c.icon_res, c.name));
+            icon.setImageResource(UiUtils.categoryIcon(c.icon_res, c.name));
+            icon.setVisibility(View.VISIBLE);
+            icon.setAlpha(1f);
 
             int color = requireContext().getColor(UiUtils.categoryColor(c.name));
-            icon.setImageTintList(ColorStateList.valueOf(color));
+            ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(color));
             bg.setBackgroundTintList(ColorStateList.valueOf(color));
             holder.itemView.setOnClickListener(v -> {
                 Context context = getContext();
@@ -992,11 +1048,6 @@ public class HomeFragment extends Fragment {
                 name = itemView.findViewById(R.id.tvCategoryName);
             }
         }
-    }
-
-    private int resolveCategoryIcon(String iconRes, String name) {
-        return iconRes == null || iconRes.isEmpty()
-                ? UiUtils.categoryIcon(name) : UiUtils.categoryIconKey(iconRes);
     }
 
     private void openProduct(String listingId) {

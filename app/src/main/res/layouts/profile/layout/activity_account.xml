@@ -149,6 +149,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Email address"
+                app:helperText="@string/account_email_change_hint"
                 app:boxCornerRadiusBottomEnd="14dp"
                 app:boxCornerRadiusBottomStart="14dp"
                 app:boxCornerRadiusTopEnd="14dp"
@@ -160,6 +161,8 @@
                     android:id="@+id/etEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
                     android:text="johndoe@gmail.com"
@@ -212,6 +215,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="top"
                     android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="255"
                     android:maxLines="4"
                     android:minLines="2"
                     android:textColor="@color/airbnb_ink"
@@ -254,6 +258,7 @@
             <!-- Primary Action: Save Changes -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUpdateProfile"
+                style="@style/Widget.PolyGo.Button"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:layout_marginTop="36dp"
@@ -262,7 +267,6 @@
                 android:textAllCaps="false"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/pks_blue"
                 app:cornerRadius="14dp"
                 app:elevation="0dp" />
 
@@ -282,10 +286,12 @@
             <!-- PDPA Data Portability: Download a copy of all my data -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDownloadMyData"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.PolyGo.Button.Text"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
+                android:maxLines="2"
+                android:minHeight="48dp"
                 android:text="@string/download_my_data"
                 android:textAllCaps="false"
                 android:textColor="@color/pks_blue"

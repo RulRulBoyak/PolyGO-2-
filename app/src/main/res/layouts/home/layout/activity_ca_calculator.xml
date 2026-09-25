@@ -123,12 +123,12 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCalculate"
+                style="@style/Widget.PolyGo.Button"
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:text="@string/ca_calculate"
-                android:textAllCaps="false"
-                app:backgroundTint="@color/pks_green" />
+                android:textAllCaps="false" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/resultCard"

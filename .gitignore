@@ -29,6 +29,7 @@ secrets/
 credentials/
 keystore.properties
 *.jks
+.local-backups/
 # --- backend drift hardening (AGENTS.md: repo backend/polygo-api is the source of truth) ---
 backend/polygo-api/*.bak-*
 backend/polygo-api/config-db-local.php

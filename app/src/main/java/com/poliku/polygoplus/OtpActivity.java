@@ -5,10 +5,12 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 import com.poliku.polygoplus.api.PolyGoApi;
@@ -46,7 +48,7 @@ public class OtpActivity extends BaseActivity {
         consentAgreed = getIntent().getBooleanExtra(EXTRA_CONSENT_AGREED, false);
 
         etOtp = findViewById(R.id.etOtp);
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> confirmExit());
         findViewById(R.id.btnVerify).setOnClickListener(v -> verify());
         findViewById(R.id.tvResend).setOnClickListener(v -> resend());
         etOtp.setOnEditorActionListener((v, actionId, event) -> {
@@ -59,6 +61,20 @@ public class OtpActivity extends BaseActivity {
 
         ((TextView) findViewById(R.id.tvOtpSubtitle)).setText(getString(R.string.otp_sent_subtitle, email));
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(etOtp.getText())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private void verify() {
@@ -83,7 +99,7 @@ public class OtpActivity extends BaseActivity {
 
             @Override
             public void onFailure(retrofit2.Call<com.poliku.polygoplus.api.model.BaseResponse> call, Throwable t) {
-                onError(t.getMessage());
+                onError(getString(R.string.toast_could_not_reach_server_try_again));
             }
 
             private void onError(String msg) {
@@ -107,7 +123,7 @@ public class OtpActivity extends BaseActivity {
 
             @Override
             public void onFailure(retrofit2.Call<PolyGoApi.OtpSendResponse> call, Throwable t) {
-                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), t.getMessage());
+                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_failed_to_resend);
             }
         });
     }
@@ -129,9 +145,11 @@ public class OtpActivity extends BaseActivity {
                         userJson.put("email", body.user.email);
                         userJson.put("mobile", body.user.mobile);
                         userJson.put("role", body.user.role);
+                        userJson.put("is_verified", body.user.verified);
+                        userJson.put("verification_status", body.user.verificationStatus);
                         userJson.put("is_banned", body.user.banned);
                         
-                        AppDataStore.saveRemoteSession(OtpActivity.this, userJson, body.token);
+                        AppDataStore.saveRemoteSession(OtpActivity.this, userJson, body.getToken());
                     } catch (Exception ignored) {}
 
                     syncFcmToken();
@@ -151,7 +169,7 @@ public class OtpActivity extends BaseActivity {
             @Override
             public void onFailure(retrofit2.Call<PolyGoApi.LoginResponse> call, Throwable t) {
                 setSubmitting(false);
-                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), t.getMessage());
+                UiUtils.snackbarError(OtpActivity.this.findViewById(android.R.id.content), R.string.toast_registration_failed);
             }
         });
     }

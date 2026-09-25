@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -45,6 +46,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.LandmarkPickerSheet;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
@@ -80,6 +82,8 @@ public class AddServiceActivity extends BaseActivity {
     private PhotoPreviewAdapter photoAdapter;
     private final List<Uri> selectedUris = new ArrayList<>();
     private UUID publishWorkId;
+    private String initialFormState = "";
+    private boolean formLoaded;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMedia =
             registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(5), uris -> {
@@ -122,6 +126,48 @@ public class AddServiceActivity extends BaseActivity {
         
         // Rule 3.3: Observe and restore state
         observeViewModel();
+        snapshotForm();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private String currentFormState() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(etTitle.getText()).append('|');
+        sb.append(etPrice.getText()).append('|');
+        sb.append(etTime.getText()).append('|');
+        sb.append(etAvailability.getText()).append('|');
+        sb.append(etDescription.getText()).append('|');
+        sb.append(autoCategory.getText()).append('|');
+        sb.append(etCustomCategory.getText()).append('|');
+        sb.append(autoCompleteLocation.getText()).append('|');
+        sb.append(etCustomLocation.getText()).append('|');
+        sb.append(etFreeSlots.getText()).append('|');
+        sb.append(autoCompleteMajor.getText()).append('|');
+        sb.append(selectedUris.size());
+        return sb.toString();
+    }
+
+    private void snapshotForm() {
+        initialFormState = currentFormState();
+        formLoaded = true;
+    }
+
+    private boolean isDirty() {
+        return formLoaded && !initialFormState.equals(currentFormState());
+    }
+
+    private void confirmExit() {
+        if (!isDirty()) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private void observeViewModel() {
@@ -167,7 +213,7 @@ public class AddServiceActivity extends BaseActivity {
 
     private void setupUI() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> confirmExit());
         
         etTitle = findViewById(R.id.etServiceTitle);
         etPrice = findViewById(R.id.etServicePrice);
@@ -216,12 +262,18 @@ public class AddServiceActivity extends BaseActivity {
             v.setEnabled(false);
             ((MaterialButton) v).setText(R.string.ai_thinking);
 
-            AiHelper.suggestListingDetails(polyGoRepository, this, selectedUris.get(0), new AiHelper.AiCallback() {
+            AiHelper.suggestServiceDetails(polyGoRepository, this, selectedUris.get(0), new AiHelper.AiCallback() {
                 @Override
-                public void onResult(String title, String price, String description) {
+                public void onResult(String title, String price, String description, String category,
+                                     List<String> tags, String condition, double confidence) {
+                    if (isFinishing() || isDestroyed()) return;
                     etTitle.setText(title);
                     etPrice.setText(price);
                     etDescription.setText(description);
+                    if (!category.isEmpty()) {
+                        autoCategory.setText(category, false);
+                        syncServiceCategoryChipsFromField();
+                    }
                     v.setEnabled(true);
                     ((MaterialButton) v).setText(R.string.ai_suggest_service);
                     HapticManager.success(AddServiceActivity.this);
@@ -229,6 +281,7 @@ public class AddServiceActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
+                    if (isFinishing() || isDestroyed()) return;
                     v.setEnabled(true);
                     ((MaterialButton) v).setText(R.string.ai_suggest_service);
                     Toast.makeText(AddServiceActivity.this, error, Toast.LENGTH_LONG).show();

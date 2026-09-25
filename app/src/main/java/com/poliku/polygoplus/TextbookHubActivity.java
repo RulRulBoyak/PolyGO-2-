@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.poliku.polygoplus.network.BookLookup;
+import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import java.util.ArrayList;
@@ -61,7 +62,12 @@ public class TextbookHubActivity extends BaseActivity {
         
         findViewById(R.id.btnWantedList).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            Toast.makeText(this, R.string.toast_alerts_in_development, Toast.LENGTH_SHORT).show();
+            if (!AppDataStore.isLoggedIn(this)) {
+                Toast.makeText(this, R.string.toast_login_required_save_favorites, Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+            startActivity(new Intent(this, SavedItemsActivity.class));
         });
     }
 

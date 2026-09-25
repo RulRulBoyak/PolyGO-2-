@@ -9,6 +9,9 @@ try {
     if ($userId <= 0) {
         respond(false, 'Unauthorized');
     }
+    if (!rate_limit_check($pdo, 'export_uid:' . $userId, 3, 3600)) {
+        respond(false, 'Too many export requests. Please try again later.');
+    }
 
     $db = $pdo;
 
@@ -27,6 +30,12 @@ try {
         'reports_submitted' => [],
         'security_alerts' => [],
         'green_impact' => [],
+        'verification_requests' => [],
+        'blocked_users' => [],
+        'following' => [],
+        'campus_posts' => [],
+        'timetable_entries' => [],
+        'bug_reports' => [],
     ];
 
     $fetch = static function (string $sql, array $params) use ($db): array {
@@ -73,13 +82,19 @@ try {
     $data['reports_submitted'] = $fetch('SELECT target_type, target_id, reason, details, created_at FROM reports WHERE reporter_id = ? ORDER BY id', [$userId]);
     $data['security_alerts'] = $fetch('SELECT thread_id, listing_id, landmark, latitude, longitude, created_at FROM security_logs WHERE user_id = ? ORDER BY id', [$userId]);
     $data['green_impact'] = $fetch('SELECT category_name, co2_kg, water_l, paper_kg, energy_kwh, created_at FROM impact_entries WHERE user_id = ? ORDER BY id', [$userId]);
-
+    $data['verification_requests'] = $fetch('SELECT verification_email, status, created_at FROM verification_requests WHERE user_id = ? ORDER BY id', [$userId]);
+    $data['blocked_users'] = $fetch('SELECT blocked_id, created_at FROM blocked_users WHERE user_id = ? ORDER BY id', [$userId]);
+    $data['following'] = $fetch('SELECT followed_id, created_at FROM user_follows WHERE follower_id = ? ORDER BY followed_id', [$userId]);
+    $data['campus_posts'] = $fetch('SELECT tag, title, body, status, created_at FROM campus_alerts WHERE user_id = ? ORDER BY id', [$userId]);
+    $data['timetable_entries'] = $fetch('SELECT day_of_week, starts_at, ends_at, course, room FROM timetable_entries WHERE user_id = ? ORDER BY day_of_week, starts_at', [$userId]);
+    $data['bug_reports'] = $fetch('SELECT description, device_model, os_version, app_version, screen, status, created_at FROM bug_reports WHERE user_id = ? ORDER BY id', [$userId]);
     $impacts = $fetch('SELECT co2_kg, water_l, paper_kg, energy_kwh, impact_count, tier FROM user_impact WHERE user_id = ?', [$userId]);
     if (isset($impacts[0])) {
         $data['green_impact_summary'] = $impacts[0];
     }
 
     header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="polygo-data-export.json"');
     echo json_encode([
         'success' => true,
         'message' => 'Data export ready',

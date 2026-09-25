@@ -72,6 +72,7 @@ if (($input['action'] ?? '') === 'similar') {
         COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
         FROM listings l LEFT JOIN majors m ON m.id = l.major_id INNER JOIN users u ON u.id = l.owner_id
         WHERE l.category = ? AND l.id <> ? AND l.archived_at IS NULL AND l.is_available = 1 AND l.hide_from_friends = 0
+        AND (' . ($blockedClause !== '' ? $blockedClause : '1=1') . ')
         ORDER BY l.created_at DESC LIMIT 10');
     $similar->execute([$category, $id]);
     $rows = [];
@@ -92,12 +93,7 @@ if (($input['action'] ?? '') === 'similar') {
         $item['auto_reply'] = (bool)($item['auto_reply'] ?? 0);
         $item['hide_from_friends'] = (bool)($item['hide_from_friends'] ?? 0);
         $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
-        $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
-            ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
-            : '';
-        if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
-            $item['thumb_url'] = $item['image_url'];
-        }
+        $item['thumb_url'] = listing_thumbnail_url((string)($item['image_url'] ?? ''));
         $rows[] = $item;
     }
     respond(true, 'Similar listings loaded', ['listings' => $rows]);
@@ -137,7 +133,9 @@ if ($id > 0) {
         $item['hide_from_friends'] = (bool)($item['hide_from_friends'] ?? 0);
         $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
         // Increment view count (owner views excluded)
-        if ($viewerId <= 0 || $viewerId !== (int)$item['owner_id']) {
+        $viewKey = 'listing_view:' . $id . ':' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        if (($viewerId <= 0 || $viewerId !== (int)$item['owner_id'])
+                && rate_limit_check($pdo, $viewKey, 1, 3600)) {
             $inc = $pdo->prepare('UPDATE listings SET views = views + 1 WHERE id = ?');
             $inc->execute([$id]);
             $item['views'] = $item['views'] + 1;
@@ -155,10 +153,11 @@ $staleCutoff = date('Y-m-d H:i:s', time() - (90 * 24 * 60 * 60));
 $stale->execute([$staleCutoff]);
 $staleRows = $stale->fetchAll();
 if (!empty($staleRows)) {
-    $touch = $pdo->prepare('UPDATE listings SET archived_at = NOW() WHERE id = ?');
+    $touch = $pdo->prepare('UPDATE listings SET archived_at = NOW() WHERE id = ? AND archived_at IS NULL');
     $note = $pdo->prepare('INSERT INTO notifications (user_id, title, body) VALUES (?, ?, ?)');
     foreach ($staleRows as $row) {
         $touch->execute([$row['id']]);
+        if ($touch->rowCount() === 0) continue;
         $note->execute([
             $row['owner_id'],
             'Listing auto-archived',
@@ -200,10 +199,10 @@ if (($input['action'] ?? '') === 'mylistings') {
 }
 
 // Pagination & Sorting Logic
-$limit = (int)($input['limit'] ?? 20);
-$offset = (int)($input['offset'] ?? 0);
+$limit = min(50, max(1, (int)($input['limit'] ?? 20)));
+$offset = min(10000, max(0, (int)($input['offset'] ?? 0)));
 $sort = $input['sort'] ?? 'newest';
-$search = $input['query'] ?? '';
+$search = mb_substr(trim((string)($input['query'] ?? '')), 0, 100);
 $majorId = (int)($input['major'] ?? 0);
 $ownerId = (int)($input['owner_id'] ?? 0);
 
@@ -269,12 +268,7 @@ foreach ($query->fetchAll() as $item) {
     $item['auto_reply'] = (bool)($item['auto_reply'] ?? 0);
     $item['hide_from_friends'] = (bool)($item['hide_from_friends'] ?? 0);
     $item['posted_at_ms'] = (int)($item['posted_at_ms'] ?? 0);
-    $item['thumb_url'] = ($item['image_url'] ?? '') !== ''
-        ? preg_replace('#/uploads/([^/]+)$#', '/uploads/thumbs/' . pathinfo($item['image_url'], PATHINFO_FILENAME) . '.thumb.jpg', $item['image_url'])
-        : '';
-    if ($item['thumb_url'] !== '' && !file_exists(__DIR__ . '/' . ltrim($item['thumb_url'], '/'))) {
-        $item['thumb_url'] = $item['image_url'];
-    }
+    $item['thumb_url'] = listing_thumbnail_url((string)($item['image_url'] ?? ''));
     $items[] = $item;
 }
 

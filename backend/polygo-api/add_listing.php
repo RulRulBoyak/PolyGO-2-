@@ -21,14 +21,14 @@ try {
     }
 
     $input = input_json();
-    $title = $input['title'] ?? '';
-    $category = $input['category'] ?? '';
-    $description = $input['description'] ?? '';
+    $title = trim((string)($input['title'] ?? ''));
+    $category = trim((string)($input['category'] ?? ''));
+    $description = trim((string)($input['description'] ?? ''));
     $price = (float)($input['price'] ?? 0);
-    $imageUrl = $input['image_url'] ?? '';
-    $location = $input['location'] ?? 'Near campus';
-    $tags = $input['tags'] ?? '';
-    $freeSlots = $input['free_slots'] ?? '';
+    $imageUrl = trim((string)($input['image_url'] ?? ''));
+    $location = trim((string)($input['location'] ?? 'Near campus'));
+    $tags = trim((string)($input['tags'] ?? ''));
+    $freeSlots = trim((string)($input['free_slots'] ?? ''));
     $majorId = (int)($input['major_id'] ?? 0);
     $majorId = $majorId > 0 ? $majorId : null;
 
@@ -51,6 +51,17 @@ try {
     if (mb_strlen($description) > 2000) respond(false, 'Description is too long (max 2000 characters)');
     if ($category === '' || mb_strlen($category) > 80) respond(false, 'Please choose a valid category');
     if ($price <= 0 || $price > 100000) respond(false, 'Please enter a valid price');
+    if (mb_strlen($tags) > 255 || mb_strlen($freeSlots) > 500 || mb_strlen($location) > 150) {
+        respond(false, 'Listing details are too long');
+    }
+    $categoryCheck = $pdo->prepare('SELECT 1 FROM categories WHERE name = ? AND is_published = 1 LIMIT 1');
+    $categoryCheck->execute([$category]);
+    if (!$categoryCheck->fetchColumn()) respond(false, 'Please choose a published category');
+    if ($imageUrl !== '') {
+        $canonicalImage = canonical_uploaded_image_url($imageUrl);
+        if ($canonicalImage === null) respond(false, 'Please upload a valid listing image');
+        $imageUrl = $canonicalImage;
+    }
     if ($majorId !== null) {
         $majorCheck = $pdo->prepare('SELECT id FROM majors WHERE id = ? LIMIT 1');
         $majorCheck->execute([$majorId]);

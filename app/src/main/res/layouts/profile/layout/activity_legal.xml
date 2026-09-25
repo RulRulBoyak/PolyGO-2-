@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background"
     android:fitsSystemWindows="true">
 
     <!-- Fixed Sticky Header for Navigation & Title -->
@@ -52,9 +51,10 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLangToggle"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.PolyGo.Button.Text"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:text="@string/lang_toggle_to_bm"
                 android:textAllCaps="false"
                 android:textColor="@color/pks_blue"
@@ -87,26 +87,33 @@
             android:paddingTop="28dp"
             android:paddingBottom="64dp">
 
-            <!-- "Last Updated" timestamp hook (Optional programmatic expansion) -->
+            <!-- Document metadata -->
             <TextView
+                android:id="@+id/tvLegalEyebrow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:letterSpacing="0.04"
-                android:text="EFFECTIVE DATE: AUG 2024"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="11.5sp"
+                android:text="@string/legal_document_label"
+                android:textColor="@color/pks_blue"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <!-- Main Legal Body Text (Optimized for Reading Comfort) -->
             <TextView
-                android:id="@+id/tvLegalBody"
+                android:id="@+id/tvLegalUpdated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="20dp"
+                android:textColor="@color/airbnb_muted"
+                android:textSize="13sp"
+                tools:text="Last updated: September 11, 2026" />
+
+            <!-- Sections are rendered here so headings and lists retain hierarchy. -->
+            <LinearLayout
+                android:id="@+id/legalContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:lineSpacingExtra="6dp"
-                android:textColor="@color/text_secondary"
-                android:textSize="15.5sp"
-                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n\nPhasellus imperdiet, nulla et dictum interdum, nisi lorem egestas vitae scel erisque enim ligula venenatis dolor. Maecenas nisl est, ultrices nec congue eget, auctor vitae massa." />
+                android:orientation="vertical" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_variant_light"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -19,7 +18,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationContentDescription="@string/back"
-            app:title="PKS Campus Pulse"
+            app:title="@string/campus_hub_pulse"
             app:titleCentered="true" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -28,7 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:padding="16dp"
+        android:paddingBottom="96dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/item_pulse_alert" />
 
@@ -48,10 +47,11 @@
         android:id="@+id/btnPostRequest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="32dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="24dp"
         android:contentDescription="@string/post_request"
-        android:text="Post Request"
+        android:text="@string/pulse_new_thread"
         android:textColor="@color/white"
         app:backgroundTint="@color/pks_blue"
         app:icon="@drawable/ic_edit_square"

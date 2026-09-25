@@ -1,12 +1,12 @@
 <?php
+require_once __DIR__ . '/config.php';
 // Seeding script: only runnable from the local machine (or the Android emulator host bridge).
 $maintenanceClient = $_SERVER['REMOTE_ADDR'] ?? '';
-if (!in_array($maintenanceClient, ['127.0.0.1', '::1', '10.0.2.2'], true)) {
+if (!is_dev_request() || !in_array($maintenanceClient, ['127.0.0.1', '::1', '10.0.2.2'], true)) {
     http_response_code(403);
     echo '<h1>Forbidden</h1><p>This seeding script may only be run locally.</p>';
     exit;
 }
-require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/ImpactEngine.php';
 header('Content-Type: text/html; charset=utf-8');
 

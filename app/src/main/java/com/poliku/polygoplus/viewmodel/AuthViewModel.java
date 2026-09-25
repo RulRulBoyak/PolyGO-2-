@@ -20,6 +20,8 @@ import retrofit2.Callback;
  */
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
+    public static final int MIN_PASSWORD_LENGTH = 5;
+    public static final int MAX_PASSWORD_LENGTH = 128;
 
     private final PolyGoRepository repository;
 
@@ -45,16 +47,21 @@ public class AuthViewModel extends ViewModel {
     private final MutableLiveData<String> _emailError = new MutableLiveData<>();
     public final LiveData<String> emailError = _emailError;
 
+    private final MutableLiveData<String> _confirmPasswordError = new MutableLiveData<>();
+    public final LiveData<String> confirmPasswordError = _confirmPasswordError;
+
     private final MutableLiveData<Boolean> _isRegisterFormValid = new MutableLiveData<>(false);
     public final LiveData<Boolean> isRegisterFormValid = _isRegisterFormValid;
 
     private boolean termsAccepted = false;
+    private boolean registrationAttempted = false;
 
     // Temporary storage for validation values
     private String currentMatrix = "";
     private String currentPassword = "";
     private String currentName = "";
     private String currentEmail = "";
+    private String currentConfirmPassword = "";
 
     public void validateLogin(String matrix, String password) {
         this.currentMatrix = matrix;
@@ -63,36 +70,50 @@ public class AuthViewModel extends ViewModel {
         boolean matrixValid = !matrix.trim().isEmpty();
         _matrixError.setValue(matrixValid ? null : "Matrix number is required");
 
-        boolean passwordValid = password.length() >= 6;
-        _passwordError.setValue(passwordValid ? null : "Password must be at least 6 characters");
+        boolean passwordValid = !password.isEmpty();
+        _passwordError.setValue(passwordValid ? null : "Password is required");
 
         _isLoginFormValid.setValue(matrixValid && passwordValid);
     }
 
     public void setTermsAccepted(boolean accepted) {
         this.termsAccepted = accepted;
-        validateRegister(currentName, currentMatrix, currentEmail, currentPassword);
+        validateRegister(currentName, currentMatrix, currentEmail, currentPassword,
+                currentConfirmPassword);
     }
 
-    public void validateRegister(String name, String matrix, String email, String password) {
+    public void validateRegister(String name, String matrix, String email, String password,
+                                 String confirmPassword) {
         this.currentName = name;
         this.currentMatrix = matrix;
         this.currentEmail = email;
         this.currentPassword = password;
+        this.currentConfirmPassword = confirmPassword;
 
         boolean nameValid = !name.trim().isEmpty();
-        _nameError.setValue(nameValid ? null : "Full name is required");
-
         boolean matrixValid = !matrix.trim().isEmpty();
-        _matrixError.setValue(matrixValid ? null : "Student/Staff ID is required");
-
         boolean emailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches();
-        _emailError.setValue(emailValid ? null : "Please enter a valid PKS email");
+        boolean passwordValid = password.length() >= MIN_PASSWORD_LENGTH
+                && password.length() <= MAX_PASSWORD_LENGTH;
+        boolean passwordsMatch = password.equals(confirmPassword) && !confirmPassword.isEmpty();
 
-        boolean passwordValid = password.length() >= 6;
-        _passwordError.setValue(passwordValid ? null : "Password must be at least 6 characters");
+        if (registrationAttempted) {
+            _nameError.setValue(nameValid ? null : "Full name is required");
+            _matrixError.setValue(matrixValid ? null : "Student ID is required");
+            _emailError.setValue(emailValid ? null : "Please enter a valid email address");
+            _passwordError.setValue(passwordValid ? null : "Use 5 to 128 characters");
+            _confirmPasswordError.setValue(passwordsMatch ? null : "Passwords do not match");
+        }
 
-        _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid && termsAccepted);
+        _isRegisterFormValid.setValue(nameValid && matrixValid && emailValid && passwordValid
+                && passwordsMatch && termsAccepted);
+    }
+
+    public boolean validateRegisterForSubmit(String name, String matrix, String email,
+                                             String password, String confirmPassword) {
+        registrationAttempted = true;
+        validateRegister(name, matrix, email, password, confirmPassword);
+        return Boolean.TRUE.equals(_isRegisterFormValid.getValue());
     }
 
     public void login(String studentId, String password, Callback<PolyGoApi.LoginResponse> callback) {
@@ -105,5 +126,16 @@ public class AuthViewModel extends ViewModel {
 
     public void sendOtp(String email, Callback<PolyGoApi.OtpSendResponse> callback) {
         repository.sendOtp(email, callback);
+    }
+
+    public void googleLogin(String idToken, Callback<PolyGoApi.LoginResponse> callback) {
+        repository.googleLogin(idToken, false, callback);
+    }
+
+    public void completeGoogleRegistration(String idToken, String name, String studentId,
+                                           String password, boolean consentAgreed,
+                                           Callback<PolyGoApi.LoginResponse> callback) {
+        repository.completeGoogleRegistration(idToken, name, studentId, password,
+                consentAgreed, callback);
     }
 }

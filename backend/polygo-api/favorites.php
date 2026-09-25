@@ -25,14 +25,18 @@ if ($action === 'toggle') {
 $query = $pdo->prepare('SELECT l.*, u.full_name AS seller,
     COALESCE((SELECT ROUND(AVG(r.stars), 1) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS rating,
     COALESCE((SELECT COUNT(r.id) FROM reviews r WHERE r.seller_id = l.owner_id), 0) AS review_count
-    FROM listings l INNER JOIN favorites f ON f.listing_id = l.id INNER JOIN users u ON u.id = l.owner_id WHERE f.user_id = ?');
-$query->execute([$userId]);
+    FROM listings l INNER JOIN favorites f ON f.listing_id = l.id INNER JOIN users u ON u.id = l.owner_id
+    WHERE f.user_id = ?
+      AND NOT EXISTS (SELECT 1 FROM blocked_users b WHERE b.user_id = ? AND b.blocked_id = l.owner_id)
+      AND NOT EXISTS (SELECT 1 FROM blocked_users b WHERE b.user_id = l.owner_id AND b.blocked_id = ?)');
+$query->execute([$userId, $userId, $userId]);
 $items = [];
 foreach ($query->fetchAll() as $item) {
     $item['id'] = (int)$item['id'];
     $item['owner_id'] = (int)$item['owner_id'];
     $item['price'] = (float)$item['price'];
     $item['is_available'] = (bool)$item['is_available'];
+    $item['thumb_url'] = listing_thumbnail_url((string)($item['image_url'] ?? ''));
     $items[] = $item;
 }
 respond(true, 'Favorites loaded', ['listings' => $items]);

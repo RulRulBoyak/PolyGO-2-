@@ -8,12 +8,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.util.CaCalculator;
 
 import org.json.JSONArray;
@@ -34,13 +36,14 @@ public class CaCalculatorActivity extends BaseActivity {
     private EditText target;
     private View resultCard;
     private TextView resultText;
+    private String initialFormState = "";
 
     @Override
     protected void onCreate(@Nullable Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_ca_calculator);
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setNavigationOnClickListener(v -> confirmExit());
         componentContainer = findViewById(R.id.componentContainer);
         subject = findViewById(R.id.etSubject);
         caWeight = findViewById(R.id.etCaWeight);
@@ -56,6 +59,43 @@ public class CaCalculatorActivity extends BaseActivity {
             addRow(component(getString(R.string.ca_default_quiz), 0, 100, 30));
             addRow(component(getString(R.string.ca_default_lab), 0, 100, 30));
         }
+        snapshotForm();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private String currentFormState() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(subject.getText()).append('|');
+        sb.append(caWeight.getText()).append('|');
+        sb.append(feWeight.getText()).append('|');
+        sb.append(target.getText()).append('|');
+        sb.append(componentContainer.getChildCount());
+        for (int i = 0; i < componentContainer.getChildCount(); i++) {
+            View row = componentContainer.getChildAt(i);
+            sb.append('|').append(((EditText) row.findViewById(R.id.etComponentName)).getText())
+                    .append('|').append(((EditText) row.findViewById(R.id.etObtained)).getText())
+                    .append('|').append(((EditText) row.findViewById(R.id.etMaximum)).getText())
+                    .append('|').append(((EditText) row.findViewById(R.id.etComponentWeight)).getText());
+        }
+        return sb.toString();
+    }
+
+    private void snapshotForm() {
+        initialFormState = currentFormState();
+    }
+
+    private void confirmExit() {
+        if (initialFormState.equals(currentFormState())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private JSONObject component(String name, double obtained, double maximum, double weight) {

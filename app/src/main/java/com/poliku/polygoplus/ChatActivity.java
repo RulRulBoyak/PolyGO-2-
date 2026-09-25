@@ -2,6 +2,8 @@ package com.poliku.polygoplus;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -21,22 +24,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.ChatMessageAdapter;
 import com.poliku.polygoplus.data.PolyGoRepository;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import org.json.JSONObject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import retrofit2.Call;
@@ -65,9 +61,15 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isBlocked;
     private boolean imeOpen;
     private boolean quickRepliesAnswered;
+    private boolean loadingMessages;
     private Call<PolyGoApi.SendMessageResponse> pendingSend;
-    private FirebaseFirestore db;
-    private ListenerRegistration messageListener;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshMessages = new Runnable() {
+        @Override public void run() {
+            loadMessages();
+            refreshHandler.postDelayed(this, 5000);
+        }
+    };
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +118,7 @@ public class ChatActivity extends AppCompatActivity {
         buildQuickChips();
         updateQuickChips();
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> confirmExit());
         findViewById(R.id.btnChatMore).setOnClickListener(v -> {
             HapticManager.lightTap(v);
             showMoreMenu();
@@ -141,17 +143,34 @@ public class ChatActivity extends AppCompatActivity {
             return false;
         });
         
-        loadMessages();
         checkBlockState();
-        
-        db = FirebaseFirestore.getInstance();
-        startRealTimeListener();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(input == null ? null : input.getText())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     @Override protected void onResume() {
         super.onResume();
-        loadMessages();
+        refreshHandler.removeCallbacks(refreshMessages);
+        refreshMessages.run();
         updateMeetupTracker();
+    }
+
+    @Override protected void onPause() {
+        refreshHandler.removeCallbacks(refreshMessages);
+        super.onPause();
     }
 
     private void loadOtherAvatar() {
@@ -179,17 +198,20 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadMessages() {
-        if (threadId == null || threadId.isEmpty()) return;
+        if (threadId == null || threadId.isEmpty() || loadingMessages) return;
+        loadingMessages = true;
         
         String userId = AppDataStore.userId(this);
         polyGoRepository.getMessages(userId, threadId, new Callback<PolyGoApi.MessagesResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.MessagesResponse> call, Response<PolyGoApi.MessagesResponse> response) {
+                loadingMessages = false;
                 if (response.isSuccessful() && response.body() != null) {
                     PolyGoApi.MessagesResponse body = response.body();
                     if (body.messages != null) {
+                        int previousCount = adapter.getItemCount();
                         adapter.submitMessages(body.messages);
-                        scrollToBottom();
+                        if (previousCount == 0 || body.messages.size() > previousCount) scrollToBottom();
                         updateQuickChips();
                     }
                 } else {
@@ -199,6 +221,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<PolyGoApi.MessagesResponse> call, Throwable t) {
+                loadingMessages = false;
                 // Fallback to local
                 AppDataStore.ThreadRecord thread = AppDataStore.getThread(ChatActivity.this, threadId);
                 if (thread != null) {
@@ -242,9 +265,6 @@ public class ChatActivity extends AppCompatActivity {
                     sending = false;
                     findViewById(R.id.btnSend).setEnabled(true);
                     
-                    // Broadcast to Firestore for real-time
-                    broadcastMessageToFirestore(text);
-                    
                     loadMessages();
                 } else {
                     onFailure(call, new Throwable("Send failed"));
@@ -256,11 +276,10 @@ public class ChatActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 sending = false;
                 findViewById(R.id.btnSend).setEnabled(true);
-                UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content), getString(R.string.toast_chat_network_error, t.getMessage()));
-                if (threadId != null && !threadId.isEmpty()) {
-                    AppDataStore.sendMessage(ChatActivity.this, threadId, text);
-                    showLocalMessages();
-                }
+                input.setText(text);
+                input.setSelection(input.length());
+                UiUtils.snackbarError(ChatActivity.this.findViewById(android.R.id.content),
+                        R.string.toast_message_failed);
             }
         });
     }
@@ -505,68 +524,9 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    @Override protected void onStop() {
-        super.onStop();
-    }
-
     @Override protected void onDestroy() {
         if (pendingSend != null) pendingSend.cancel();
-        if (messageListener != null) messageListener.remove();
+        refreshHandler.removeCallbacks(refreshMessages);
         super.onDestroy();
-    }
-
-    private void startRealTimeListener() {
-        if (threadId == null || threadId.isEmpty()) return;
-
-        messageListener = db.collection("chats").document(threadId).collection("messages")
-                .orderBy("timestamp", Query.Direction.ASCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
-
-                    for (DocumentChange dc : value.getDocumentChanges()) {
-                        if (dc.getType() == DocumentChange.Type.ADDED) {
-                            String senderId = dc.getDocument().getString("sender_id");
-                            String content = dc.getDocument().getString("content");
-                            Long ts = dc.getDocument().getLong("timestamp");
-
-                            if (content == null || senderId == null) continue;
-
-                            // Prevent duplicates from local UI updates
-                            boolean exists = false;
-                            for (JSONObject m : adapter.getMessages()) {
-                                if (content.equals(m.optString("text")) && (ts == null || Math.abs(ts - m.optLong("time")) < 5)) {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-
-                            if (!exists) {
-                                PolyGoApi.Message msg = new PolyGoApi.Message();
-                                msg.text = content;
-                                msg.sender = senderId;
-                                msg.time = ts != null ? ts : System.currentTimeMillis() / 1000;
-                                msg.mine = AppDataStore.userId(this).equals(senderId);
-                                adapter.addMessage(msg);
-                                scrollToBottom();
-                            }
-                        }
-                    }
-                });
-    }
-
-    private void broadcastMessageToFirestore(String text) {
-        if (threadId == null || threadId.isEmpty()) return;
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("content", text);
-        data.put("sender_id", AppDataStore.userId(this));
-        data.put("timestamp", System.currentTimeMillis() / 1000);
-
-        db.collection("chats").document(threadId).collection("messages")
-                .add(data);
-    }
-
-    private void render() {
-        // This is no longer used but I'll keep it as a stub if needed
     }
 }

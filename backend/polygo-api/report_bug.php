@@ -14,6 +14,19 @@ $screenshotUrl = trim((string)($input['screenshot_url'] ?? ''));
 if ($description === '' || mb_strlen($description) > 5000) {
     respond(false, 'Please describe the problem (max 5000 characters)');
 }
+if (mb_strlen($deviceModel) > 120 || mb_strlen($osVersion) > 30
+    || mb_strlen($appVersion) > 30 || mb_strlen($screen) > 120
+    || mb_strlen($screenshotUrl) > 500) {
+    respond(false, 'Bug report metadata is too long');
+}
+if ($screenshotUrl !== '') {
+    $canonicalScreenshot = canonical_uploaded_image_url($screenshotUrl);
+    if ($canonicalScreenshot === null) respond(false, 'Invalid screenshot upload');
+    $screenshotUrl = $canonicalScreenshot;
+}
+if (!rate_limit_check($pdo, 'bug_report_uid:' . $ownerId, 10, 3600)) {
+    respond(false, 'Too many bug reports. Please try again later.');
+}
 
 try {
     $query = $pdo->prepare(

@@ -3,29 +3,35 @@ require_once 'config/database.php';
 requireAdmin();
 
 $pdo = getConnection();
-$message = '';
-$error = '';
+$message = (string)($_SESSION['broadcast_message'] ?? '');
+$error = (string)($_SESSION['broadcast_error'] ?? '');
+unset($_SESSION['broadcast_message'], $_SESSION['broadcast_error']);
+$broadcastNonce = (string)($_SESSION['remote_broadcast_nonce'] ?? '');
+if ($broadcastNonce === '') {
+    $broadcastNonce = bin2hex(random_bytes(16));
+    $_SESSION['remote_broadcast_nonce'] = $broadcastNonce;
+}
 
-// Live Alert "Remote Control". One admin-typed message, three synchronized
+// Live Alert "Remote Control". One admin-typed message, two synchronized
 // delivery paths so it pops on every student's phone instantly:
 //   1. campus_alerts INSERT  -> survives the app's pull-to-refresh (REST feed
 //                              rebuilds from the DB) and shows on the Pulse list.
-//   2. Firestore pulse doc   -> the app's real-time snapshot listener
-//                              (CampusPulseActivity, orderBy created_at) appends
-//                              it to the top of an open Pulse screen instantly.
-//   3. FCM push              -> system notification on every registered token
+//   2. FCM push              -> system notification on every registered token
 //                              where is_banned = 0, even with the app closed.
-// The Firestore doc field shape MUST match what the listener reads
-// (title/body/tag/user_name + created_at as integer seconds) or the ordered
-// query silently drops it (orderBy filters out documents missing the field).
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
+    $error = 'Your session expired. Refresh the page and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $body = trim($_POST['body'] ?? '');
     $tag = in_array($_POST['tag'] ?? '', ['ANNOUNCEMENT', 'REQUEST', 'FLASH SALE', 'EVENT'], true) ? $_POST['tag'] : 'ANNOUNCEMENT';
+    $submittedNonce = (string)($_POST['broadcast_nonce'] ?? '');
 
-    if ($body === '') {
+    if ($submittedNonce === '' || !hash_equals($broadcastNonce, $submittedNonce)) {
+        $error = 'This alert was already processed. Start a new alert to send again.';
+    } elseif ($body === '' || mb_strlen($body) > 2000 || mb_strlen($title) > 150) {
         $error = 'Write a message before broadcasting.';
     } else {
+        unset($_SESSION['remote_broadcast_nonce']);
         if ($title === '') {
             $title = 'Live Announcement';
         }
@@ -40,17 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                 $stmt->execute([$adminId, $tag, $title, $body]);
                 $alertId = (int) $pdo->lastInsertId();
 
-                $pulseResult = NotificationManager::postFirestore('pulse', [
-                    'tag'        => $tag,
-                    'title'      => $title,
-                    'body'       => $body,
-                    'user_name'  => 'PolyGo+ Admin',
-                    'status'     => 'approved',
-                    'is_global'  => true,
-                    'created_at' => time(),
-                ]);
-                $fsOk = $pulseResult['status'] >= 200 && $pulseResult['status'] < 300;
-
                 $tokens = $pdo->query("SELECT id FROM users WHERE fcm_token IS NOT NULL AND fcm_token != '' AND is_banned = 0")->fetchAll(PDO::FETCH_COLUMN);
                 $totalTokenUsers = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE fcm_token IS NOT NULL AND fcm_token != ''")->fetchColumn();
                 $skipped = max(0, $totalTokenUsers - count($tokens));
@@ -58,7 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                 $fail = 0;
                 foreach ($tokens as $uid) {
                     try {
-                        if (NotificationManager::sendToUser($pdo, (int) $uid, '📢 ' . $title, $body, ['tag' => $tag, 'type' => 'live_alert'])) {
+                        if (NotificationManager::sendToUser($pdo, (int) $uid, '📢 ' . $title, $body, [
+                            'tag' => $tag,
+                            'type' => 'live_alert',
+                            'message_id' => 'announcement_' . $alertId,
+                        ])) {
                             $sent++;
                         } else {
                             $fail++;
@@ -68,15 +67,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                     }
                 }
 
+                auditAdminAction($pdo, 'broadcast_alert', 'campus_alert', $alertId, $tag . ': ' . $title);
                 $message = 'Live alert #' . $alertId . ' broadcast: ' . $sent . ' sound notification(s) sent'
                     . ($fail > 0 ? ', ' . $fail . ' failed' : '')
-                    . ' · Firestore ' . ($fsOk ? 'OK' : 'FAILED (HTTP ' . $pulseResult['status'] . '): ' . mb_strimwidth(strip_tags($pulseResult['body']), 0, 120, '…') . ' — check service-account.json / internet')
                     . ($skipped > 0 ? ' · ' . $skipped . ' banned account skipped.' : '.');
             }
         } catch (Throwable $e) {
             $error = 'Broadcast failed: ' . $e->getMessage();
         }
     }
+}
+
+// POST/Redirect/GET prevents browser refresh from replaying a live alert.
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $_SESSION['broadcast_message'] = $message;
+    $_SESSION['broadcast_error'] = $error;
+    header('Location: admin_broadcast.php');
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -105,10 +112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                 </div>
 
                 <?php if ($message): ?>
-                    <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle"></i> <?php echo $message; ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($message); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
                 <?php endif; ?>
                 <?php if ($error): ?>
-                    <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle"></i> <?php echo $error; ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle"></i> <?php echo htmlspecialchars($error); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
                 <?php endif; ?>
 
                 <div class="row">
@@ -120,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                             <div class="card-body">
                                 <form method="POST">
                                     <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+                                    <input type="hidden" name="broadcast_nonce" value="<?php echo htmlspecialchars($broadcastNonce); ?>">
                                     <div class="row g-3">
                                         <div class="col-md-9">
                                             <label class="form-label">Message <span class="text-danger">*</span></label>
@@ -152,10 +160,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
                             <div class="card-header"><h5 class="mb-0 fw-bold"><i class="bi bi-info-circle"></i> How it works</h5></div>
                             <div class="card-body small text-muted">
                                 <ol class="mb-0 ps-3">
-                                    <li class="mb-2"><b>Firestore</b> writes one <code>pulse</code> document with the exact field shape the app's real-time listener reads — it pops on the top of every open Pulse screen immediately.</li>
                                     <li class="mb-2"><b>FCM push</b> sends a sound notification to every registered device token (banned accounts are skipped), so it pops even when students are on other screens or the app is closed.</li>
                                     <li class="mb-2"><b>MySQL</b> (<code>campus_alerts</code>) keeps it in the REST feed so it survives a pull-to-refresh.</li>
-                                    <li>Firestore/FCM need a valid <code>secrets.php</code> + <code>service-account.json</code> and live internet; MySQL always works and stays authoritative.</li>
+                                    <li>FCM needs a valid <code>service-account.json</code> and live internet; MySQL always works and stays authoritative.</li>
                                 </ol>
                             </div>
                         </div>

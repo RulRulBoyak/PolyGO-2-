@@ -14,6 +14,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -32,6 +33,7 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.data.local.entity.ListingEntity;
 import com.poliku.polygoplus.ui.BaseActivity;
 import com.poliku.polygoplus.ui.EmptyStates;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
@@ -130,6 +132,21 @@ public class SearchActivity extends BaseActivity {
             }
             return false;
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(search == null ? null : search.getText())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     @Override protected void onPause() {
@@ -238,6 +255,7 @@ public class SearchActivity extends BaseActivity {
             chip.setId(View.generateViewId());
             chip.setText(name);
             chip.setTag(name);
+            if (category.getChildCount() == 0) chip.setChecked(true);
             if (!"All categories".equalsIgnoreCase(name)) {
                 chip.setChipIcon(getDrawable(UiUtils.categoryIcon(name)));
                 chip.setChipIconTint(ColorStateList.valueOf(getColor(UiUtils.categoryColor(name))));

@@ -39,7 +39,6 @@ public class OrderDetailActivity extends BaseActivity {
 
         if (order != null) {
             renderOrder();
-            return;
         }
 
         // Fallback: fetch from server (Order History lists server transactions)
@@ -62,14 +61,18 @@ public class OrderDetailActivity extends BaseActivity {
                         }
                     }
                 }
-                UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
-                runOnUiThread(OrderDetailActivity.this::finish);
+                if (order == null) {
+                    UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
+                    runOnUiThread(OrderDetailActivity.this::finish);
+                }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.TransactionsResponse> call, Throwable t) {
-                UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
-                finish();
+                if (order == null) {
+                    UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_order_not_found);
+                    finish();
+                }
             }
         });
     }
@@ -81,7 +84,13 @@ public class OrderDetailActivity extends BaseActivity {
         ((TextView) findViewById(R.id.tvOrderLocation)).setText(order.location);
         ((TextView) findViewById(R.id.tvMapPin)).setText(getString(R.string.map_pin_label, order.location));
 
-        findViewById(R.id.btnCompleteDeal).setEnabled(!"Completed".equalsIgnoreCase(order.status));
+        boolean sellerView = "seller".equalsIgnoreCase(order.role);
+        boolean completed = "Completed".equalsIgnoreCase(order.status);
+        boolean canComplete = sellerView && ("Accepted".equalsIgnoreCase(order.status)
+                || "Pickup".equalsIgnoreCase(order.status));
+        View completeButton = findViewById(R.id.btnCompleteDeal);
+        completeButton.setVisibility(sellerView && (canComplete || completed) ? View.VISIBLE : View.GONE);
+        completeButton.setEnabled(canComplete);
         findViewById(R.id.btnCompleteDeal).setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             String userId = AppDataStore.userId(this);
@@ -93,8 +102,9 @@ public class OrderDetailActivity extends BaseActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
+                        order = order.withStatus("Completed");
                         UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_transaction_completed);
-                        goToReview();
+                        renderOrder();
                     } else {
                         onFailure(call, new Throwable("Update failed"));
                     }
@@ -102,17 +112,17 @@ public class OrderDetailActivity extends BaseActivity {
 
                 @Override
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
-                    // Local fallback
-                    AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Completed");
-                    UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_completed_offline);
-                    goToReview();
+                    v.setEnabled(true);
+                    UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content),
+                            R.string.toast_could_not_reach_server_try_again);
                 }
             });
         });
 
         // Accept & Schedule Meetup (starts the Safe Meetup flow)
         View btnAcceptOffer = findViewById(R.id.btnAcceptOffer);
-        btnAcceptOffer.setVisibility("Offer sent".equalsIgnoreCase(order.status) ? View.VISIBLE : View.GONE);
+        btnAcceptOffer.setVisibility(sellerView && "Offer sent".equalsIgnoreCase(order.status)
+                ? View.VISIBLE : View.GONE);
         btnAcceptOffer.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
             String userId = AppDataStore.userId(this);
@@ -122,6 +132,7 @@ public class OrderDetailActivity extends BaseActivity {
                 public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
+                        order = order.withStatus("Accepted");
                         UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_deal_accepted_tracker);
                         renderOrder();
                     } else {
@@ -131,9 +142,9 @@ public class OrderDetailActivity extends BaseActivity {
 
                 @Override
                 public void onFailure(Call<BaseResponse> call, Throwable t) {
-                    AppDataStore.updateTransactionStatus(OrderDetailActivity.this, order.id, "Accepted");
-                    UiUtils.snackbar(OrderDetailActivity.this.findViewById(android.R.id.content), R.string.toast_accepted_offline);
-                    renderOrder();
+                    v.setEnabled(true);
+                    UiUtils.snackbarError(OrderDetailActivity.this.findViewById(android.R.id.content),
+                            R.string.toast_could_not_reach_server_try_again);
                 }
             });
         });
@@ -141,24 +152,18 @@ public class OrderDetailActivity extends BaseActivity {
         // Rule 3.3: Link to Live Deal Tracker
         findViewById(R.id.btnTrackDeal).setOnClickListener(v -> {
             HapticManager.swell(this);
-            startActivity(new Intent(this, DealTrackerActivity.class));
+            Intent tracker = new Intent(this, DealTrackerActivity.class);
+            tracker.putExtra(DealTrackerActivity.EXTRA_TRANSACTION_ID, order.id);
+            startActivity(tracker);
         });
 
-        findViewById(R.id.btnViewReceipt).setOnClickListener(v -> {
+        View receiptButton = findViewById(R.id.btnViewReceipt);
+        receiptButton.setVisibility(completed ? View.VISIBLE : View.GONE);
+        receiptButton.setOnClickListener(v -> {
             Intent i = new Intent(this, ReceiptActivity.class);
             i.putExtra(ReceiptActivity.EXTRA_TRANSACTION_ID, order.id);
             startActivity(i);
         });
     }
 
-    private void goToReview() {
-        if (!order.reviewed) {
-            Intent review = new Intent(this, ReviewActivity.class);
-            review.putExtra(ReviewActivity.EXTRA_SELLER, order.seller);
-            review.putExtra(ReviewActivity.EXTRA_TRANSACTION_ID, order.id);
-            review.putExtra(ReviewActivity.EXTRA_LISTING_ID, order.listingId);
-            startActivity(review);
-        }
-        finish();
-    }
 }

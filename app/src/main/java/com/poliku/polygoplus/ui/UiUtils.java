@@ -47,7 +47,13 @@ public final class UiUtils {
     @DrawableRes
     public static int categoryIconKey(String key) {
         if (key == null) return R.drawable.ic_category_tech;
-        switch (key) {
+        String normalized = key.trim().toLowerCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+        if (normalized.endsWith(".xml")) {
+            normalized = normalized.substring(0, normalized.length() - 4);
+        }
+        switch (normalized) {
             case "ic_category_food": return R.drawable.ic_category_food;
             case "ic_category_drink": return R.drawable.ic_category_drink;
             case "ic_category_fashion": return R.drawable.ic_category_fashion;
@@ -61,6 +67,20 @@ public final class UiUtils {
             case "ic_category_tech": return R.drawable.ic_category_tech;
             default: return R.drawable.ic_category_tech;
         }
+    }
+
+    /** Uses the server catalogue when it is recognised, otherwise falls back to the category name. */
+    @DrawableRes
+    public static int categoryIcon(String iconKey, String categoryName) {
+        if (iconKey == null || iconKey.trim().isEmpty()) return categoryIcon(categoryName);
+        String normalized = iconKey.trim().toLowerCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+        if (normalized.endsWith(".xml")) {
+            normalized = normalized.substring(0, normalized.length() - 4);
+        }
+        if (!normalized.startsWith("ic_category_")) return categoryIcon(categoryName);
+        return categoryIconKey(normalized);
     }
 
     public static void rememberCategoryIcons(Context context,

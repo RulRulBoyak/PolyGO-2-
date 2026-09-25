@@ -20,6 +20,14 @@ if (propertiesFile.exists()) {
     }
 }
 val mapsKey = properties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+val debugApiBaseUrl = properties.getProperty("API_BASE_URL")
+    ?: "http://192.168.100.152/polygo-api/"
+val releaseApiBaseUrl = providers.gradleProperty("RELEASE_API_BASE_URL").orNull
+    ?: properties.getProperty("RELEASE_API_BASE_URL")
+    ?: "https://polygo.pks.edu.my/polygo-api/"
+require(releaseApiBaseUrl.startsWith("https://") && releaseApiBaseUrl.endsWith("/")) {
+    "RELEASE_API_BASE_URL must use HTTPS and end with /"
+}
 
 android {
     namespace = "com.poliku.polygoplus"
@@ -61,9 +69,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -73,7 +85,7 @@ android {
     }
 
     lint {
-        abortOnError = false
+        abortOnError = true
         checkReleaseBuilds = true
     }
     buildFeatures {
@@ -113,15 +125,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.appcompat)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.config)
     implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.functions)
-    implementation(libs.firebase.inappmessaging.display)
-    // implementation(libs.firebase.perf)
-    implementation(libs.firebase.storage)
     implementation(libs.googleid)
     implementation(libs.material)
     implementation(libs.activity)
@@ -145,7 +149,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.appcheck)
-    implementation(libs.firebase.appcheck.debug)
+    debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.appcheck.playintegrity)
     
     // Retrofit & OkHttp

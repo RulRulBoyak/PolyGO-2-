@@ -19,14 +19,18 @@ try {
 
     if ($action === 'add') {
         $listingId = (int)($input['listing_id'] ?? 0);
-        $amount = (float)($input['amount'] ?? 0);
+        $amountRaw = $input['amount'] ?? null;
+        $amount = is_numeric($amountRaw) ? round((float)$amountRaw, 2) : 0;
 
-        if ($listingId <= 0 || $amount <= 0) {
+        if ($listingId <= 0 || !is_finite($amount) || $amount <= 0 || $amount > 100000) {
             respond(false, 'Invalid transaction details');
+        }
+        if (!rate_limit_check($pdo, 'offer_uid:' . $userId, 10, 300)) {
+            respond(false, 'Too many offers. Please wait a few minutes and try again.');
         }
 
         // Seller is derived from the listing, never trusted from the client.
-        $listing = $pdo->prepare('SELECT owner_id, is_available FROM listings WHERE id = ? LIMIT 1');
+        $listing = $pdo->prepare('SELECT owner_id, is_available, archived_at FROM listings WHERE id = ? LIMIT 1');
         $listing->execute([$listingId]);
         $row = $listing->fetch();
         if (!$row) {
@@ -36,8 +40,23 @@ try {
         if ($sellerId === (int)$userId) {
             respond(false, 'You cannot make an offer on your own listing');
         }
-        if ((int)$row['is_available'] !== 1) {
+        if ((int)$row['is_available'] !== 1 || $row['archived_at'] !== null) {
             respond(false, 'This listing is no longer available');
+        }
+        $blockCheck = $pdo->prepare('SELECT 1 FROM blocked_users WHERE (user_id = ? AND blocked_id = ?) OR (user_id = ? AND blocked_id = ?) LIMIT 1');
+        $blockCheck->execute([$userId, $sellerId, $sellerId, $userId]);
+        if ($blockCheck->fetchColumn()) respond(false, 'You cannot make an offer to this seller');
+        $committed = $pdo->prepare('SELECT 1 FROM transactions WHERE listing_id = ? AND status IN ("accepted", "pickup", "completed") LIMIT 1');
+        $committed->execute([$listingId]);
+        if ($committed->fetchColumn()) respond(false, 'This listing already has an accepted offer');
+
+        $existingOffer = $pdo->prepare('SELECT id FROM transactions
+            WHERE listing_id = ? AND buyer_id = ? AND status IN ("offer_sent", "accepted", "pickup")
+            ORDER BY id DESC LIMIT 1');
+        $existingOffer->execute([$listingId, $userId]);
+        $existingId = (int)$existingOffer->fetchColumn();
+        if ($existingId > 0) {
+            respond(false, 'You already have an active offer for this listing', ['id' => (string)$existingId]);
         }
 
         $query = $pdo->prepare('INSERT INTO transactions (listing_id, buyer_id, seller_id, amount, status) VALUES (?, ?, ?, ?, "offer_sent")');
@@ -58,7 +77,7 @@ try {
                 'transaction_id' => (string)$transactionId
             ]);
 
-            respond(true, 'Offer sent successfully', ['id' => $transactionId]);
+            respond(true, 'Offer sent successfully', ['id' => (string)$transactionId]);
         } else {
             respond(false, 'Failed to send offer');
         }
@@ -82,7 +101,7 @@ try {
 
             // Load current state + participants. FOR UPDATE closes the race
             // between two clients trying to advance the same deal.
-            $current = $pdo->prepare('SELECT buyer_id, seller_id, listing_id, status FROM transactions WHERE id = ? FOR UPDATE');
+            $current = $pdo->prepare('SELECT buyer_id, seller_id, listing_id, status, amount FROM transactions WHERE id = ? FOR UPDATE');
             $current->execute([$transactionId]);
             $txn = $current->fetch();
             if (!$txn) {
@@ -96,6 +115,20 @@ try {
             if ($buyerId !== $userId && $sellerId !== $userId) {
                 $pdo->rollBack();
                 respond(false, 'Transaction not found or not authorized');
+            }
+
+            // Serialize all state changes for the listing, including two
+            // different offers being accepted at the same instant.
+            $listingLock = $pdo->prepare('SELECT is_available FROM listings WHERE id = ? FOR UPDATE');
+            $listingLock->execute([$listingId]);
+            $listingAvailable = $listingLock->fetchColumn();
+            if ($listingAvailable === false) {
+                $pdo->rollBack();
+                respond(false, 'Listing for this transaction no longer exists');
+            }
+            if ($status === 'accepted' && (int)$listingAvailable !== 1) {
+                $pdo->rollBack();
+                respond(false, 'This listing is no longer available');
             }
 
             // Role-based state machine. Buyers may only withdraw (offer or an
@@ -114,6 +147,21 @@ try {
             if ($from === $status || !in_array($transition, $rules[$role], true)) {
                 $pdo->rollBack();
                 respond(false, 'Transaction update is not allowed for this user');
+            }
+
+            $declinedBuyerIds = [];
+            if ($status === 'accepted') {
+                $exclusive = $pdo->prepare('SELECT id FROM transactions WHERE listing_id = ? AND id <> ? AND status IN ("accepted", "pickup", "completed") FOR UPDATE');
+                $exclusive->execute([$listingId, $transactionId]);
+                if ($exclusive->fetchColumn()) {
+                    $pdo->rollBack();
+                    respond(false, 'Another offer has already been accepted for this listing');
+                }
+                $otherOffers = $pdo->prepare('SELECT buyer_id FROM transactions WHERE listing_id = ? AND id <> ? AND status = "offer_sent" FOR UPDATE');
+                $otherOffers->execute([$listingId, $transactionId]);
+                $declinedBuyerIds = array_map('intval', $otherOffers->fetchAll(PDO::FETCH_COLUMN));
+                $decline = $pdo->prepare('UPDATE transactions SET status = "declined" WHERE listing_id = ? AND id <> ? AND status = "offer_sent"');
+                $decline->execute([$listingId, $transactionId]);
             }
 
             $query = $pdo->prepare('UPDATE transactions SET status = ?, impact_credited = IF(? = "completed" AND impact_credited = 0, 1, impact_credited) WHERE id = ?');
@@ -140,9 +188,16 @@ try {
                     }
                 }
             }
+
             $pdo->commit();
 
-            self::notifyDealUpdate($pdo, $transactionId, $listingId, $buyerId, $sellerId, $role, $status);
+            notifyDealUpdate($pdo, $transactionId, $listingId, $buyerId, $sellerId, $role, $status);
+            foreach ($declinedBuyerIds as $declinedBuyerId) {
+                NotificationManager::sendToUser($pdo, $declinedBuyerId, 'Offer Declined',
+                    'Another offer was accepted for this listing.', [
+                        'type' => 'transactions', 'listing_id' => (string)$listingId
+                    ]);
+            }
 
             respond(true, 'Transaction updated');
         } catch (Throwable $t) {
@@ -157,14 +212,15 @@ try {
         // action = list
         // Fetch where user is either buyer or seller
         $query = $pdo->prepare('
-            SELECT t.*, l.title, l.location, u.full_name as seller_name
+            SELECT t.*, l.title, l.location, u.full_name as seller_name,
+                   EXISTS(SELECT 1 FROM reviews r WHERE r.reviewer_id = ? AND r.listing_id = t.listing_id) AS reviewed
             FROM transactions t
             JOIN listings l ON t.listing_id = l.id
             JOIN users u ON t.seller_id = u.id
             WHERE t.buyer_id = ? OR t.seller_id = ?
             ORDER BY t.created_at DESC
         ');
-        $query->execute([$userId, $userId]);
+        $query->execute([$userId, $userId, $userId]);
         $rows = $query->fetchAll();
 
         // Map to app format
@@ -176,10 +232,11 @@ try {
                 'title' => $row['title'],
                 'amount' => 'RM ' . number_format($row['amount'], 2),
                 'seller' => $row['seller_name'],
+                'role' => (int)$row['buyer_id'] === $userId ? 'buyer' : 'seller',
                 'location' => $row['location'] ?? 'Near campus',
                 'status' => ucfirst(str_replace('_', ' ', $row['status'])),
                 'time' => strtotime($row['created_at']) * 1000,
-                'reviewed' => false // Simplified for now
+                'reviewed' => (bool)$row['reviewed']
             ];
         }
 
@@ -203,11 +260,12 @@ function notifyDealUpdate(PDO $pdo, int $transactionId, int $listingId, int $buy
             $listingsQ->execute([$listingId]);
             $itemTitle = (string)$listingsQ->fetchColumn();
 
-            // The other party + their name.
+            // Notify the other party, but name the actor who changed the deal.
             $peerId = $role === 'buyer' ? $sellerId : $buyerId;
+            $actorId = $role === 'buyer' ? $buyerId : $sellerId;
             $nameQ = $pdo->prepare('SELECT full_name FROM users WHERE id = ?');
-            $nameQ->execute([$peerId]);
-            $peerName = (string)$nameQ->fetchColumn();
+            $nameQ->execute([$actorId]);
+            $actorName = (string)$nameQ->fetchColumn();
 
             // Deep-link target: the conversation thread for this deal pair.
             $threadQ = $pdo->prepare('SELECT id FROM threads WHERE listing_id = ?
@@ -229,10 +287,10 @@ function notifyDealUpdate(PDO $pdo, int $transactionId, int $listingId, int $buy
             $body = '';
             if ($status === 'accepted') {
                 $title = 'Offer Accepted';
-                $body = $peerName . ' accepted your offer for "' . $itemTitle . '"';
+                $body = $actorName . ' accepted your offer for "' . $itemTitle . '"';
             } elseif ($status === 'declined') {
                 $title = 'Offer Declined';
-                $body = $peerName . ' declined your offer for "' . $itemTitle . '"';
+                $body = $actorName . ' declined your offer for "' . $itemTitle . '"';
             } elseif ($status === 'pickup') {
                 $title = 'Ready for Pickup';
                 $body = 'Your item "' . $itemTitle . '" is ready for pickup';
@@ -241,7 +299,7 @@ function notifyDealUpdate(PDO $pdo, int $transactionId, int $listingId, int $buy
                 $body = 'Your deal for "' . $itemTitle . '" is complete';
             } elseif ($status === 'cancelled') {
                 $title = 'Offer Cancelled';
-                $body = $peerName . ' cancelled the offer for "' . $itemTitle . '"';
+                $body = $actorName . ' cancelled the offer for "' . $itemTitle . '"';
             }
 
             if ($title !== '') {

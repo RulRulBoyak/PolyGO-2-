@@ -1,12 +1,8 @@
 package com.poliku.polygoplus;
 
 import android.app.Application;
-import android.os.Build;
-
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.network.AuthSessionHandler;
 import com.poliku.polygoplus.network.NetworkErrorHandler;
@@ -50,11 +46,7 @@ public class PolyGoApplication extends Application implements Configuration.Prov
     private void installAppCheck() {
         FirebaseApp.initializeApp(this);
         FirebaseAppCheck appCheck = FirebaseAppCheck.getInstance();
-        if (BuildConfig.DEBUG) {
-            appCheck.installAppCheckProviderFactory(DebugAppCheckProviderFactory.getInstance());
-        } else {
-            appCheck.installAppCheckProviderFactory(PlayIntegrityAppCheckProviderFactory.getInstance());
-        }
+        AppCheckProviderInstaller.install(appCheck);
     }
 
     @Override

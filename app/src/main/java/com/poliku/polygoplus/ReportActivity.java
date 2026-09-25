@@ -11,7 +11,10 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.UiUtils;
+
+import androidx.activity.OnBackPressedCallback;
 
 import javax.inject.Inject;
 
@@ -31,7 +34,7 @@ public class ReportActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_report);
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> confirmExit());
 
         String type = getIntent().getStringExtra(EXTRA_TARGET_TYPE);
         String id = getIntent().getStringExtra(EXTRA_TARGET_ID);
@@ -65,5 +68,20 @@ public class ReportActivity extends BaseActivity {
             UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_report_submitted);
             finish();
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(((EditText) findViewById(R.id.etReportDetails)).getText())) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 }

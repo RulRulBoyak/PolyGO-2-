@@ -13,7 +13,22 @@
         <item name="android:statusBarColor">#121212</item>
         <item name="android:windowBackground">#121212</item>
         <item name="android:textColorPrimary">#E1E1E1</item>
-        <item name="android:textColorSecondary">#A0A0A0</item>
+        <item name="android:textColorSecondary">@color/airbnb_muted</item>
+        <item name="materialButtonStyle">@style/Widget.PolyGo.Button</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.PolyGo.MaterialAlertDialog</item>
+    </style>
+
+    <style name="ThemeOverlay.PolyGo.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.PolyGo.Dialog</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#F5F5F5</item>
+        <item name="colorOnSurfaceVariant">#BDBDBD</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.PolyGo.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.PolyGo.Dialog.Body</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.PolyGo.DialogButton.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.PolyGo.DialogButton.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.PolyGo.DialogButton.Text</item>
+        <item name="android:backgroundDimAmount">0.5</item>
     </style>
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">

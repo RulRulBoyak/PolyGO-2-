@@ -64,7 +64,9 @@ public class PolyGoMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onNewToken(@NonNull String token) {
-        Log.d(TAG, "Refreshed token: " + token);
+        // FCM registration tokens are credentials. Never write them to logcat,
+        // including debug builds that may be captured in shared bug reports.
+        Log.d(TAG, "FCM registration token refreshed");
 
         // Always remember the latest token locally so a login right after a
         // rotation can still sync a valid value to the backend.

@@ -9,6 +9,10 @@ $viewerId = verify_jwt();
 $followedId = (int)($input['followed_id'] ?? 0);
 $action = $input['action'] ?? 'follow';
 
+if (!in_array($action, ['follow', 'unfollow'], true)) {
+    respond(false, 'Unknown follow action');
+}
+
 if ($followedId <= 0) {
     respond(false, 'Missing user');
 }

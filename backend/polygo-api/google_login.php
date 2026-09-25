@@ -5,7 +5,7 @@ require_once __DIR__ . '/config.php';
 // Provide it locally via backend/polygo-api/secrets/google_web_client_id.php
 // (gitignored) or the GOOGLE_WEB_CLIENT_ID environment variable. While empty,
 // the token audience check is skipped (dev mode).
-$webClientId = '';
+$webClientId = defined('GOOGLE_WEB_CLIENT_ID') ? trim((string)GOOGLE_WEB_CLIENT_ID) : '';
 $secretFile = __DIR__ . '/secrets/google_web_client_id.php';
 if (is_file($secretFile)) {
     $secrets = @include $secretFile;
@@ -25,6 +25,10 @@ if ($webClientId === '' && !is_dev_request()) {
 
 $input = input_json();
 $idToken = trim((string)($input['id_token'] ?? ''));
+$consentAgreed = filter_var($input['consent_agreed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+$requestedName = trim((string)($input['full_name'] ?? ''));
+$requestedStudentId = trim((string)($input['student_id'] ?? ''));
+$requestedPassword = (string)($input['password'] ?? '');
 
 if ($idToken === '') {
     respond(false, 'Google ID token required');
@@ -76,40 +80,67 @@ try {
     }
 
     // Only accept accounts with a verified email address.
-    if (array_key_exists('email_verified', $info) && !(bool)$info['email_verified']) {
+    if (!filter_var($info['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
         respond(false, 'Your Google account email is not verified');
     }
 
     $email = strtolower(trim((string)($info['email'] ?? '')));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        respond(false, 'Google did not provide a valid email address');
+    }
     $name = trim((string)($info['name'] ?? ''));
     if ($name === '') {
         $local = explode('@', $email)[0] ?? 'campus user';
         $name = ucwords(str_replace(['.', '_', '-'], ' ', $local));
     }
+    $name = mb_substr($name, 0, 120);
 
     // Per-account rate limit: an attacker may not loop sign-ins for one email.
     if (!rate_limit_check($pdo, 'google_login_email:' . $email, 10, 3600)) {
         respond(false, 'Too many attempts for this account, please try again later');
     }
 
-    // Find an existing user by email, otherwise create one.
-    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, is_banned FROM users WHERE email = ? LIMIT 1');
+    // Existing users sign in immediately. New users must finish the profile
+    // form first; authenticating with Google must never silently create one.
+    $query = $pdo->prepare('SELECT id, full_name, student_id, email, mobile, role, profile_pic_url, bio, is_verified, verification_status, is_private, is_banned FROM users WHERE email = ? LIMIT 1');
     $query->execute([$email]);
     $user = $query->fetch();
 
     if (!$user) {
-        $localPart = explode('@', $email)[0] ?? '';
-        $studentId = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $localPart));
-        $randomHash = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+        if ($requestedName === '' && $requestedStudentId === '' && $requestedPassword === '') {
+            respond(true, 'Complete your profile to create your account', [
+                'requires_profile' => true,
+                'google_email' => $email,
+                'google_name' => $name,
+            ]);
+        }
+        if (!$consentAgreed) {
+            respond(false, 'Please agree to the Terms of Service and Privacy Policy before creating an account');
+        }
+        $passwordLength = function_exists('mb_strlen')
+            ? mb_strlen($requestedPassword, 'UTF-8') : strlen($requestedPassword);
+        if ($requestedName === '' || $requestedStudentId === ''
+                || mb_strlen($requestedName) > 120 || mb_strlen($requestedStudentId) > 50
+                || $passwordLength < 5 || $passwordLength > 128) {
+            respond(false, 'Please provide valid registration details');
+        }
         try {
-            $insert = $pdo->prepare('INSERT INTO users (full_name, student_id, email, password_hash) VALUES (?, ?, ?, ?)');
-            $insert->execute([$name, $studentId, $email, $randomHash]);
-        } catch (Throwable $e) {
-            error_log('[polygo-api] google auto-create failed: ' . $e->getMessage());
-            respond(false, 'Could not create the account automatically. If you already have an account, sign in with your student ID.');
+            $insert = $pdo->prepare('INSERT INTO users (full_name, student_id, email, password_hash, consent_agreed_at) VALUES (?, ?, ?, ?, NOW())');
+            $insert->execute([$requestedName, $requestedStudentId, $email,
+                password_hash($requestedPassword, PASSWORD_DEFAULT)]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') respond(false, 'Student ID or email already exists');
+            error_log('[polygo-api] google profile creation failed: ' . $e->getMessage());
+            respond(false, 'Could not create the account');
         }
         $userId = (int)$pdo->lastInsertId();
-        $user = ['id' => $userId, 'full_name' => $name, 'student_id' => $studentId, 'email' => $email, 'mobile' => '', 'role' => 'Student'];
+        $user = [
+            'id' => $userId, 'full_name' => $requestedName,
+            'student_id' => $requestedStudentId,
+            'email' => $email, 'mobile' => '', 'role' => 'Student',
+            'profile_pic_url' => '', 'bio' => '', 'is_verified' => 0,
+            'verification_status' => 'unverified', 'is_private' => 0, 'is_banned' => 0,
+        ];
     }
 
     $userId = (int)$user['id'];
@@ -135,7 +166,8 @@ try {
 
     respond(true, 'Google sign-in successful', [
         'user' => $user,
-        'token' => $token
+        'token' => $token,
+        'requires_profile' => false
     ]);
 
 } catch (Throwable $e) {

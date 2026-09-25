@@ -153,12 +153,29 @@ public final class AppDataStore {
     }
 
     public static void logout(Context context) {
-        DISK_EXECUTOR.execute(() -> 
-            prefs(context).edit()
+        SharedPreferences preferences = prefs(context);
+        SharedPreferences.Editor editor = preferences.edit()
                 .putBoolean("loggedIn", false)
                 .remove("user_token")
-                .apply()
-        );
+                .remove(KEY_USER)
+                .remove(KEY_FAVORITES)
+                .remove(KEY_THREADS)
+                .remove(KEY_NOTIFICATIONS)
+                .remove(KEY_TRANSACTIONS)
+                .remove(KEY_VERIFICATION)
+                .remove(KEY_VERIFICATION_STATUS)
+                .remove(KEY_BANNED)
+                .remove(KEY_REVIEWS)
+                .remove(KEY_REPORTS)
+                .remove(KEY_DRAFTS)
+                .remove(KEY_BIO_LOCK)
+                .remove(KEY_MEETUP_DISCLOSURE);
+        for (String key : preferences.getAll().keySet()) {
+            if (key.startsWith(KEY_CA_PRESETS_PREFIX)) editor.remove(key);
+        }
+        // apply() updates the in-memory preferences immediately, before the next
+        // activity can render data from the account that just signed out.
+        editor.apply();
     }
 
     public static void saveRemoteSession(Context context, JSONObject user, String token) {
@@ -180,10 +197,17 @@ public final class AppDataStore {
             normalized.put("profile_pic_url", user.optString("profile_pic_url", ""));
             normalized.put("bio", user.optString("bio", ""));
             normalized.put("is_private", user.optBoolean("is_private", false));
-            normalized.put("verified", user.optBoolean("verified", false));
+            normalized.put("verified", user.optBoolean("verified",
+                    user.optBoolean("is_verified", false)));
+            String verificationStatus = user.optString("verification_status", "");
+            if (verificationStatus.isEmpty()) {
+                verificationStatus = normalized.optBoolean("verified", false)
+                        ? "approved" : "unverified";
+            }
             prefs(context).edit()
                 .putString(KEY_USER, normalized.toString())
                 .putString("user_token", token)
+                .putString(KEY_VERIFICATION_STATUS, verificationStatus)
                 .putBoolean("loggedIn", true)
                 .putBoolean(KEY_BANNED, false)
                 .apply();
@@ -192,6 +216,12 @@ public final class AppDataStore {
 
     public static String userToken(Context context) {
         return prefs(context).getString("user_token", "");
+    }
+
+    public static void replaceSessionToken(Context context, String token) {
+        if (token != null && !token.isEmpty()) {
+            prefs(context).edit().putString("user_token", token).apply();
+        }
     }
 
     // Remember the latest FCM token the OS issued, even while logged out, so the
@@ -315,9 +345,7 @@ public final class AppDataStore {
     }
 
     public static void deleteAccount(Context context) {
-        DISK_EXECUTOR.execute(() -> 
-            prefs(context).edit().remove(KEY_USER).putBoolean("loggedIn", false).apply()
-        );
+        logout(context);
     }
 
     // --- Listings ---
@@ -599,17 +627,40 @@ public final class AppDataStore {
 
     // --- Transactions & Notifications ---
 
-    public static void addTransaction(Context context, String listingId, String title, String amount) {
+    public static void addTransaction(Context context, String id, String listingId, String title,
+                                      String amount, String seller) {
         DISK_EXECUTOR.execute(() -> {
             JSONArray list = array(context, KEY_TRANSACTIONS);
             try {
                 JSONObject o = new JSONObject();
-                o.put("id", UUID.randomUUID().toString());
+                o.put("id", id == null ? "" : id);
                 o.put("listingId", listingId); o.put("title", title); o.put("amount", amount);
-                o.put("status", "Offer sent"); o.put("time", System.currentTimeMillis()); o.put("reviewed", false);
+                o.put("status", "Offer sent"); o.put("time", System.currentTimeMillis());
+                o.put("reviewed", false); o.put("seller", seller); o.put("role", "buyer");
                 list.put(o); saveArray(context, KEY_TRANSACTIONS, list);
             } catch (JSONException ignored) {}
         });
+    }
+
+    public static void cacheTransactions(Context context, List<PolyGoApi.Transaction> transactions) {
+        JSONArray list = new JSONArray();
+        if (transactions != null) {
+            // The API returns newest first, while local records are stored oldest
+            // first because getTransactions() reads the array in reverse.
+            for (int i = transactions.size() - 1; i >= 0; i--) {
+                PolyGoApi.Transaction t = transactions.get(i);
+                if (t == null) continue;
+                try {
+                    JSONObject o = new JSONObject();
+                    o.put("id", t.id); o.put("listingId", t.listingId); o.put("title", t.title);
+                    o.put("amount", t.amount); o.put("status", t.status); o.put("location", t.location);
+                    o.put("seller", t.seller); o.put("time", t.time); o.put("reviewed", t.reviewed);
+                    o.put("role", t.role);
+                    list.put(o);
+                } catch (JSONException ignored) {}
+            }
+        }
+        saveArraySync(context, KEY_TRANSACTIONS, list);
     }
 
     @NonNull
@@ -641,7 +692,8 @@ public final class AppDataStore {
 
     public static TransactionRecord getEligibleReviewTransaction(Context context, String seller) {
         for (TransactionRecord t : getTransactions(context)) {
-            if ("Completed".equalsIgnoreCase(t.status) && t.seller != null
+            if (!t.reviewed && "buyer".equalsIgnoreCase(t.role)
+                    && "Completed".equalsIgnoreCase(t.status) && t.seller != null
                     && t.seller.equalsIgnoreCase(seller != null ? seller.trim() : "")) {
                 return t;
             }
@@ -991,10 +1043,6 @@ public final class AppDataStore {
         DISK_EXECUTOR.execute(() -> prefs(context).edit().putString(KEY_VERIFICATION_STATUS, "pending").apply());
     }
 
-    public static void approvePendingVerification(Context context) {
-        DISK_EXECUTOR.execute(() -> prefs(context).edit().putBoolean(KEY_VERIFICATION, true).putString(KEY_VERIFICATION_STATUS, "approved").apply());
-    }
-
     public static List<ProductRecord> getListingsBySeller(Context context, String name, String id) {
         List<ProductRecord> res = new ArrayList<>();
         for (ProductRecord p : getListings(context)) {
@@ -1118,20 +1166,34 @@ public final class AppDataStore {
     }
 
     public static final class TransactionRecord {
-        @NonNull public final String id, listingId, title, amount, status, location, seller;
+        @NonNull public final String id, listingId, title, amount, status, location, seller, role;
         public final long time; public final boolean reviewed;
 
-        public TransactionRecord(@NonNull String id, @NonNull String listingId, @NonNull String title, @NonNull String amount, @NonNull String status, @NonNull String location, @NonNull String seller, long time, boolean reviewed) {
-            this.id = id; this.listingId = listingId; this.title = title; this.amount = amount; this.status = status; this.location = location; this.seller = seller; this.time = time; this.reviewed = reviewed;
+        public TransactionRecord(@NonNull String id, @NonNull String listingId, @NonNull String title,
+                                 @NonNull String amount, @NonNull String status, @NonNull String location,
+                                 @NonNull String seller, @NonNull String role, long time, boolean reviewed) {
+            this.id = id; this.listingId = listingId; this.title = title; this.amount = amount;
+            this.status = status; this.location = location; this.seller = seller; this.role = role;
+            this.time = time; this.reviewed = reviewed;
         }
 
         public static TransactionRecord fromJson(JSONObject o) {
-            return new TransactionRecord(o.optString("id", ""), o.optString("listingId", ""), o.optString("title", "Deal"), o.optString("amount", "0"), o.optString("status", "Sent"), o.optString("location", "Campus"), o.optString("seller", "User"), o.optLong("time", 0), o.optBoolean("reviewed", false));
+            return new TransactionRecord(o.optString("id", ""), o.optString("listingId", ""),
+                    o.optString("title", "Deal"), o.optString("amount", "0"),
+                    o.optString("status", "Sent"), o.optString("location", "Campus"),
+                    o.optString("seller", "User"), o.optString("role", "buyer"),
+                    o.optLong("time", 0), o.optBoolean("reviewed", false));
         }
 
         public static TransactionRecord fromTransaction(PolyGoApi.Transaction t) {
             if (t == null) return null;
-            return new TransactionRecord(t.id, t.listingId, t.title, t.amount, t.status, t.location, t.seller, t.time, t.reviewed);
+            return new TransactionRecord(t.id, t.listingId, t.title, t.amount, t.status,
+                    t.location, t.seller, t.role == null ? "buyer" : t.role, t.time, t.reviewed);
+        }
+
+        public TransactionRecord withStatus(String newStatus) {
+            return new TransactionRecord(id, listingId, title, amount, newStatus, location,
+                    seller, role, time, reviewed);
         }
     }
 

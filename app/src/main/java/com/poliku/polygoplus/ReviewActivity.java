@@ -9,8 +9,11 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
+
+import androidx.activity.OnBackPressedCallback;
 
 import javax.inject.Inject;
 
@@ -30,7 +33,7 @@ public class ReviewActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_review);
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> confirmExit());
         String seller = getIntent().getStringExtra(EXTRA_SELLER);
         String transactionId = getIntent().getStringExtra(EXTRA_TRANSACTION_ID);
         ((TextView) findViewById(R.id.tvReviewSeller)).setText(getString(R.string.review_prompt, seller == null ? getString(R.string.review_this_seller) : seller));
@@ -65,12 +68,30 @@ public class ReviewActivity extends BaseActivity {
                 }
 
                 @Override public void onFailure(Call<BaseResponse> call, Throwable t) {
-                    AppDataStore.addReview(ReviewActivity.this, sellerName, stars, comment);
-                    if (txId != null) AppDataStore.markTransactionReviewed(ReviewActivity.this, txId);
-                    UiUtils.snackbar(ReviewActivity.this.findViewById(android.R.id.content), R.string.review_saved_offline);
-                    finish();
+                    HapticManager.error(ReviewActivity.this);
+                    UiUtils.snackbarError(ReviewActivity.this.findViewById(android.R.id.content),
+                            R.string.toast_could_not_reach_server_try_again);
+                    v.setEnabled(true);
                 }
             });
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        RatingBar ratingBar = findViewById(R.id.ratingBar);
+        EditText etReview = findViewById(R.id.etReview);
+        if ((ratingBar != null && ratingBar.getRating() > 0)
+                || ExitGuard.anyText(etReview == null ? null : etReview.getText())) {
+            ExitGuard.show(this, this::finish);
+            return;
+        }
+        finish();
     }
 }

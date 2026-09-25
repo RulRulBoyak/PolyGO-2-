@@ -4,65 +4,79 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/surface_card"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="2dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="@color/grey_200">
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/grey_200"
+    app:strokeWidth="0.5dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:paddingStart="16dp" android:paddingTop="14dp"
+        android:paddingEnd="12dp" android:paddingBottom="6dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/tvPulseTag"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_category_circle"
-                android:backgroundTint="@color/soft_blue"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="3dp"
-                android:text="ANNOUNCEMENT"
-                android:textColor="@color/pks_blue"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
-            <TextView
-                android:id="@+id/tvPulseTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="2h ago"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="11sp" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivPulseAvatar" android:layout_width="44dp" android:layout_height="44dp"
+            android:contentDescription="@string/content_description_profile_picture"
+            android:scaleType="centerCrop" android:src="@drawable/ic_user_line"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:gravity="center_vertical" android:orientation="horizontal">
+                <TextView android:id="@+id/tvPulseAuthor" android:layout_width="0dp"
+                    android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end"
+                    android:maxLines="1" android:textColor="?attr/colorOnSurface" android:textSize="15sp"
+                    android:textStyle="bold" tools:text="Aina Rahman" />
+                <TextView android:id="@+id/tvPulseTime" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:layout_marginStart="8dp"
+                    android:textColor="@color/airbnb_muted" android:textSize="12sp" tools:text="2h" />
+            </LinearLayout>
+
+            <TextView android:id="@+id/tvPulseTag" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginTop="2dp"
+                android:background="@drawable/bg_pulse_tag"
+                android:paddingStart="8dp" android:paddingTop="2dp"
+                android:paddingEnd="8dp" android:paddingBottom="2dp"
+                android:textColor="@color/pks_blue" android:textSize="11sp" android:textStyle="bold"
+                tools:text="REQUEST" />
+
+            <TextView android:id="@+id/tvPulseTitle" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:textColor="?attr/colorOnSurface" android:textSize="16sp" android:textStyle="bold"
+                tools:text="Lost Student ID Card" />
+
+            <TextView android:id="@+id/tvPulseBody" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp" android:maxLines="8" android:textColor="@color/text_secondary"
+                android:textSize="14sp" tools:text="Found near the cafeteria around 2pm. Please contact me if this belongs to you." />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                android:layout_marginTop="4dp" android:gravity="center_vertical" android:orientation="horizontal">
+                <TextView android:id="@+id/btnPulseComment" android:layout_width="wrap_content"
+                    android:layout_height="48dp" android:layout_marginEnd="12dp"
+                    android:minWidth="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true"
+                    android:drawablePadding="7dp" android:focusable="true"
+                    android:gravity="center" android:paddingHorizontal="8dp"
+                    android:textColor="@color/polygo_teal" android:textSize="12sp" tools:text="12"
+                    app:drawableStartCompat="@drawable/ic_pulse_comment" />
+                <TextView android:id="@+id/btnPulseLike" android:layout_width="wrap_content"
+                    android:layout_height="48dp" android:layout_marginEnd="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true"
+                    android:drawablePadding="7dp"
+                    android:focusable="true" android:gravity="center" android:minWidth="48dp"
+                    android:paddingHorizontal="8dp"
+                    android:textColor="@color/airbnb_muted" android:textSize="12sp" tools:text="24"
+                    app:drawableStartCompat="@drawable/ic_pulse_heart_outline" />
+                <TextView android:id="@+id/btnPulseShare" android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true"
+                    android:contentDescription="@string/pulse_share"
+                    android:focusable="true" android:gravity="center" android:minWidth="48dp"
+                    app:drawableStartCompat="@drawable/ic_pulse_share" />
+            </LinearLayout>
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvPulseTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Lost Student ID Card"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/tvPulseBody"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:lineSpacingExtra="3dp"
-            android:text="Found near the Cafeteria around 2pm. Please contact Amirul at Block A."
-            android:textColor="@color/airbnb_ink"
-            android:textSize="13.5sp" />
-
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

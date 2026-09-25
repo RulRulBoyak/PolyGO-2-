@@ -1,5 +1,6 @@
 <?php
 require_once 'config/database.php';
+require_once __DIR__ . '/../NotificationManager.php';
 requireAdmin();
 
 $pdo = getConnection();
@@ -38,6 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
             $stmt = $pdo->prepare("UPDATE verification_requests SET status = 'approved' WHERE user_id = ? AND status = 'pending'");
             $stmt->execute([$user_id]);
             $pdo->commit();
+            auditAdminAction($pdo, 'approve_verification', 'user', $user_id, 'Matrix card approved');
+            NotificationManager::sendToUser($pdo, $user_id, 'Account Verified',
+                'Your Matrix Card was approved. You can now post listings.', ['type' => 'verification']);
             $message = 'Verification approved for user #' . $user_id . '.';
         } elseif ($action === 'reject' && $user_id) {
             $pdo->beginTransaction();
@@ -46,6 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
             $stmt = $pdo->prepare("UPDATE verification_requests SET status = 'rejected' WHERE user_id = ? AND status = 'pending'");
             $stmt->execute([$user_id]);
             $pdo->commit();
+            auditAdminAction($pdo, 'reject_verification', 'user', $user_id, 'Matrix card rejected');
+            NotificationManager::sendToUser($pdo, $user_id, 'Verification Rejected',
+                'Your Matrix Card was rejected. Please resubmit from the verification screen.', ['type' => 'verification']);
             $message = 'Verification rejected for user #' . $user_id . '.';
         }
     } catch (Throwable $e) {

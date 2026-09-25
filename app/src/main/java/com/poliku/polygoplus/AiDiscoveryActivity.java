@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
@@ -78,42 +79,61 @@ public class AiDiscoveryActivity extends BaseActivity {
     private void processImage(Uri uri) {
         ivPreview.setImageURI(uri);
         ivPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        tvLabel.setText("Analyzing image...");
+        tvLabel.setText(R.string.ai_analyzing);
         progress.setVisibility(View.VISIBLE);
         HapticManager.swell(this);
 
         AiHelper.suggestListingDetails(polyGoRepository, this, uri, new AiHelper.AiCallback() {
             @Override
-            public void onResult(String title, String price, String description) {
+            public void onResult(String title, String price, String description, String category,
+                                 List<String> tags, String condition, double confidence) {
+                if (isFinishing() || isDestroyed()) return;
                 progress.setVisibility(View.GONE);
-                tvLabel.setText("Found items similar to: " + title);
+                tvLabel.setText(getString(R.string.ai_suggestion_ready, title));
                 HapticManager.success(AiDiscoveryActivity.this);
-                
-                // Simulate finding items based on AI keywords
-                mockResults(title);
+                matchListings(title);
+                showSuggestion(title, price, description, category, tags, condition);
             }
 
             @Override
             public void onError(String error) {
+                if (isFinishing() || isDestroyed()) return;
                 progress.setVisibility(View.GONE);
-                tvLabel.setText("Snap a photo to find items");
+                tvLabel.setText(R.string.ai_idle_hint);
                 Toast.makeText(AiDiscoveryActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void mockResults(String keyword) {
+    private void showSuggestion(String title, String price, String description, String category,
+                                List<String> tags, String condition) {
+        String tagText = tags == null ? "" : android.text.TextUtils.join(", ", tags);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.ai_suggestion_title)
+                .setMessage(getString(R.string.ai_suggestion_body_full,
+                        title, price, category, condition, tagText, description))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ai_suggestion_create, (dialog, which) -> {
+                    Intent create = new Intent(this, EditProductActivity.class);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_TITLE, title);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_PRICE, price);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_DESCRIPTION, description);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_CATEGORY, category);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_TAGS, tagText);
+                    create.putExtra(EditProductActivity.EXTRA_PREFILL_CONDITION, condition);
+                    startActivity(create);
+                })
+                .show();
+    }
+
+    private void matchListings(String keyword) {
         results.clear();
         String needle = keyword.toLowerCase(Locale.ROOT);
         List<ListingEntity> all = AppDataStore.listingsToEntities(AppDataStore.getActiveListings(this));
         for (ListingEntity p : all) {
-            if (p.title.toLowerCase(Locale.ROOT).contains(needle)) {
+            if (p.title != null && p.title.toLowerCase(Locale.ROOT).contains(needle)) {
                 results.add(p);
             }
-        }
-        for (ListingEntity p : all) {
-            if (results.size() >= 4) break;
-            if (!results.contains(p)) results.add(p);
         }
         adapter.updateData(results);
     }

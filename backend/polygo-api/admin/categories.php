@@ -20,7 +20,9 @@ $categoryIcons = [
 ];
 
 // Handle category actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
+    $error = 'Your session expired. Refresh the page and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $category_id = $_POST['category_id'] ?? 0;
     
@@ -32,12 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
         
         if (empty($category_name)) {
             $error = "Category name is required.";
+        } elseif (mb_strlen($category_name) > 80) {
+            $error = "Category name must be 80 characters or fewer.";
         } elseif (!array_key_exists($icon, $categoryIcons)) {
             $error = "Choose an icon from the PolyGo icon catalogue.";
         } else {
             try {
                 $stmt = $pdo->prepare("INSERT INTO categories (name, icon_res) VALUES (?, ?)");
                 $stmt->execute([$category_name, $icon]);
+                auditAdminAction($pdo, 'create', 'category', (int)$pdo->lastInsertId(), $category_name);
                 $message = "Category added successfully!";
             } catch (PDOException $e) {
                 if ($e->getCode() == 23000) {
@@ -57,12 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
         
         if (empty($category_name)) {
             $error = "Category name is required.";
+        } elseif (mb_strlen($category_name) > 80) {
+            $error = "Category name must be 80 characters or fewer.";
         } elseif (!array_key_exists($icon, $categoryIcons)) {
             $error = "Choose an icon from the PolyGo icon catalogue.";
         } else {
             try {
                 $stmt = $pdo->prepare("UPDATE categories SET name = ?, icon_res = ? WHERE id = ?");
                 $stmt->execute([$category_name, $icon, $category_id]);
+                auditAdminAction($pdo, 'update', 'category', (int)$category_id, $category_name);
                 $message = "Category updated successfully!";
             } catch (PDOException $e) {
                 $error = "Failed to update category.";
@@ -83,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrf()) {
             } else {
                 $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
                 $stmt->execute([$category_id]);
+                auditAdminAction($pdo, 'delete', 'category', (int)$category_id, 'Deleted unused category');
                 $message = "Category deleted successfully!";
             }
         } catch (PDOException $e) {

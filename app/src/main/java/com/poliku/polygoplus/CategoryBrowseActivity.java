@@ -54,7 +54,7 @@ public class CategoryBrowseActivity extends BaseActivity {
             public void onBindViewHolder(@NonNull Holder holder, int position) {
                 PolyGoApi.Category category = categories.get(position);
                 holder.name.setText(category.name);
-                holder.icon.setImageResource(UiUtils.categoryIconKey(category.icon_res));
+                holder.icon.setImageResource(UiUtils.categoryIcon(category.icon_res, category.name));
                 holder.icon.setImageTintList(ColorStateList.valueOf(
                         getColor(UiUtils.categoryColor(category.name))));
                 holder.badge.setBackgroundTintList(ColorStateList.valueOf(

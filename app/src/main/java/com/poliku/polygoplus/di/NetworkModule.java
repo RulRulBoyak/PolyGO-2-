@@ -155,12 +155,12 @@ public final class NetworkModule {
                 .addInterceptor(appCheckInterceptor)
                 .addInterceptor(authResponseInterceptor)
                 .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
 
         return new Retrofit.Builder()
-                .baseUrl(BuildConfig.DEBUG ? "http://192.168.100.152/polygo-api/" : "https://polygo.pks.edu.my/polygo-api/")
+                .baseUrl(BuildConfig.API_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build()

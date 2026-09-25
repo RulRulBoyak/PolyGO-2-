@@ -16,13 +16,11 @@ if ($action === 'events') {
     $stmt = $pdo->prepare('SELECT id, title, description, venue, starts_at, ends_at, theme, accent_color, emoji, label, cover_url, is_featured, organizer_name, organizer_contact, registration_url, map_url, capacity FROM campus_events WHERE is_published = 1 AND COALESCE(ends_at, starts_at) >= NOW() ORDER BY is_featured DESC, starts_at ASC LIMIT 100');
     $stmt->execute();
     $events = $stmt->fetchAll();
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? '10.0.2.2';
     foreach ($events as &$event) {
         $event['id'] = (string)$event['id'];
         $event['is_featured'] = (int)($event['is_featured'] ?? 0);
         if (!empty($event['cover_url']) && strpos($event['cover_url'], 'http') !== 0) {
-            $event['cover_url'] = $scheme . '://' . $host . $event['cover_url'];
+            $event['cover_url'] = public_api_base_url() . $event['cover_url'];
         }
         $event['capacity'] = $event['capacity'] !== null ? (int)$event['capacity'] : 0;
     }
@@ -40,9 +38,7 @@ if ($action === 'event') {
     $event['id'] = (string)$event['id'];
     $event['is_featured'] = (int)($event['is_featured'] ?? 0);
     if (!empty($event['cover_url']) && strpos($event['cover_url'], 'http') !== 0) {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? '10.0.2.2';
-        $event['cover_url'] = $scheme . '://' . $host . $event['cover_url'];
+        $event['cover_url'] = public_api_base_url() . $event['cover_url'];
     }
     $event['capacity'] = $event['capacity'] !== null ? (int)$event['capacity'] : 0;
     respond(true, 'Event loaded', ['event' => $event]);

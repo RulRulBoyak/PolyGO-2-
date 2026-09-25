@@ -24,9 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $expected = adminPassword();
                 if ($expected !== null && hash_equals($expected, $password)) {
+                    $pdo->prepare('DELETE FROM rate_limits WHERE bucket = ?')->execute([$bucket]);
                     session_regenerate_id(true);
                     $_SESSION['admin_auth'] = true;
                     $_SESSION['full_name'] = 'PolyGo+ Administrator';
+                    $_SESSION['last_activity'] = time();
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                    auditAdminAction($pdo, 'admin_login', 'admin_session', null, 'Successful sign-in');
                     header('Location: index.php');
                     exit();
                 }
@@ -73,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="password" class="form-control" id="password" name="password"
                                placeholder="Enter admin password" autofocus required>
                     </div>
-                    <div class="form-text">Uses the shared <code>ADMIN_PASSWORD</code> from <code>secrets.php</code>.</div>
+                    <div class="form-text">Use the administrator credential provided by your system owner.</div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-box-arrow-in-right"></i> Sign In

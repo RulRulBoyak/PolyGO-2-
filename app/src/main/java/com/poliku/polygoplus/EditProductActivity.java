@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -49,6 +50,7 @@ import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.LandmarkPickerSheet;
 import com.poliku.polygoplus.ui.PhotoPreviewAdapter;
@@ -85,6 +87,8 @@ public class EditProductActivity extends BaseActivity {
     public static final String EXTRA_PREFILL_PRICE = "prefill_price";
     public static final String EXTRA_PREFILL_DESCRIPTION = "prefill_description";
     public static final String EXTRA_PREFILL_CATEGORY = "prefill_category";
+    public static final String EXTRA_PREFILL_TAGS = "prefill_tags";
+    public static final String EXTRA_PREFILL_CONDITION = "prefill_condition";
     public static final String EXTRA_LISTING_ID = "listing_id";
 
     @Inject PolyGoRepository polyGoRepository;
@@ -105,8 +109,12 @@ public class EditProductActivity extends BaseActivity {
     private String lastAiTitle = "";
     private String lastAiPrice = "";
     private String lastAiDescription = "";
+    private String lastAiCategory = "";
+    private String lastAiTags = "";
     private boolean isAcademic = false;
     private final List<String> categoryNames = new ArrayList<>();
+    private String initialFormState = "";
+    private boolean formLoaded;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMedia =
             registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(10), uris -> {
@@ -126,6 +134,7 @@ public class EditProductActivity extends BaseActivity {
                     }
                     photoAdapter.updateData(selectedUris);
                     updateViewModelUris();
+                    updatePhotoCount();
                 } else {
                     UiUtils.snackbarError(findViewById(android.R.id.content), R.string.no_photos_found);
                 }
@@ -216,13 +225,30 @@ public class EditProductActivity extends BaseActivity {
 
             AiHelper.suggestListingDetails(polyGoRepository, this, selectedUris.get(0), new AiHelper.AiCallback() {
                 @Override
-                public void onResult(String title, String price, String description) {
+                public void onResult(String title, String price, String description, String category,
+                                     List<String> tags, String condition, double confidence) {
+                    if (isFinishing() || isDestroyed()) return;
                     lastAiTitle = title == null ? "" : title;
                     lastAiPrice = price == null ? "" : price;
                     lastAiDescription = description == null ? "" : description;
+                    lastAiCategory = category == null ? "" : category;
+                    lastAiTags = joinAiTags(tags);
                     etName.setText(title);
                     etPrice.setText(price);
                     etDescription.setText(description);
+                    etTags.setText(lastAiTags);
+                    if (!lastAiCategory.isEmpty()) {
+                        autoCompleteCategory.setText(lastAiCategory, false);
+                        isAcademic = "Books".equalsIgnoreCase(lastAiCategory)
+                                || "Services".equalsIgnoreCase(lastAiCategory);
+                        tilCustomCategory.setVisibility(View.GONE);
+                        etCustomCategory.setText("");
+                        syncCategoryChipsFromField();
+                        setupRoleAwareListing();
+                    }
+                    if (condition != null && !condition.trim().isEmpty()) {
+                        applyCondition(condition);
+                    }
                     v.setEnabled(true);
                     ((MaterialButton) v).setText(R.string.ai_suggest_details);
                     findViewById(R.id.btnFlagAiSuggestion).setVisibility(View.VISIBLE);
@@ -232,6 +258,7 @@ public class EditProductActivity extends BaseActivity {
 
                 @Override
                 public void onError(String error) {
+                    if (isFinishing() || isDestroyed()) return;
                     v.setEnabled(true);
                     ((MaterialButton) v).setText(R.string.ai_suggest_details);
                     UiUtils.snackbarError(EditProductActivity.this.findViewById(android.R.id.content), error);
@@ -252,6 +279,8 @@ public class EditProductActivity extends BaseActivity {
                         aiContent.put("title", lastAiTitle);
                         aiContent.put("price", lastAiPrice);
                         aiContent.put("description", lastAiDescription);
+                        aiContent.put("category", lastAiCategory);
+                        aiContent.put("tags", lastAiTags);
                         details = aiContent.toString();
                     } catch (Exception ignored) {}
                     polyGoRepository.submitReport(
@@ -291,6 +320,51 @@ public class EditProductActivity extends BaseActivity {
         loadDraftIfAny();
         applyPrefillExtras();
         loadEditListing();
+        snapshotForm();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private String currentFormState() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(etName.getText()).append('|');
+        sb.append(etPrice.getText()).append('|');
+        sb.append(etDescription.getText()).append('|');
+        sb.append(etCustomCategory.getText()).append('|');
+        sb.append(etCustomLocation.getText()).append('|');
+        sb.append(etTags.getText()).append('|');
+        sb.append(etFreeSlots.getText()).append('|');
+        sb.append(etOriginalPrice.getText()).append('|');
+        sb.append(autoCompleteCategory.getText()).append('|');
+        sb.append(autoCompleteLocation.getText()).append('|');
+        sb.append(autoCompleteCondition.getText()).append('|');
+        sb.append(autoCompleteMajor.getText()).append('|');
+        sb.append(selectedUris.size()).append('|');
+        sb.append(switchAutoReply != null && switchAutoReply.isChecked()).append('|');
+        sb.append(switchHideFromFriends != null && switchHideFromFriends.isChecked());
+        return sb.toString();
+    }
+
+    private void snapshotForm() {
+        initialFormState = currentFormState();
+        formLoaded = true;
+    }
+
+    private boolean isDirty() {
+        return formLoaded && !initialFormState.equals(currentFormState());
+    }
+
+    private void confirmExit() {
+        if (!isDirty()) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, R.string.action_save_draft, this::saveDraftNow, this::finish);
     }
 
     private void wireFocusScroll() {
@@ -311,7 +385,6 @@ public class EditProductActivity extends BaseActivity {
     }
 
     private static final String[] CONDITION_ENUMS = {"New", "Used - Like New", "Used - Good", "Used - Fair"};
-    private static final String[] CONDITION_CHIP_LABELS = {"New", "Like New", "Good", "Fair"};
 
     private void setupConditionPicker() {
         autoCompleteCondition.setOnClickListener(v -> PickerOptionSheet.show(
@@ -322,23 +395,8 @@ public class EditProductActivity extends BaseActivity {
                 conditionOptions(),
                 enumValue -> {
                     applyCondition(enumValue);
-                    syncConditionChips(enumValue);
                 }));
-
-        ChipGroup chips = findViewById(R.id.chipGroupCondition);
-        chips.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-            View chip = group.findViewById(checkedIds.get(0));
-            if (chip instanceof Chip) {
-                Chip c = (Chip) chip;
-                Object tag = c.getTag();
-                String label = tag != null ? tag.toString() : c.getText().toString();
-                String enumValue = conditionEnumFromChip(label);
-                applyCondition(enumValue);
-            }
-        });
         applyCondition(normalizeCondition(autoCompleteCondition.getText() == null ? "" : autoCompleteCondition.getText().toString()));
-        syncConditionChips(autoCompleteCondition.getText() == null ? "" : autoCompleteCondition.getText().toString());
     }
 
     private List<PickerOptionSheet.Option> conditionOptions() {
@@ -370,18 +428,6 @@ public class EditProductActivity extends BaseActivity {
         }
     }
 
-    /** Canonical backend ENUM value for a chip's short label (keeps MS-safe too). */
-    private String conditionEnumFromChip(String chipLabel) {
-        if (chipLabel == null) return CONDITION_ENUMS[0];
-        String t = chipLabel.trim();
-        for (int i = 0; i < CONDITION_ENUMS.length; i++) {
-            if (t.equalsIgnoreCase(CONDITION_ENUMS[i]) || t.equalsIgnoreCase(CONDITION_CHIP_LABELS[i])) {
-                return CONDITION_ENUMS[i];
-            }
-        }
-        return CONDITION_ENUMS[0];
-    }
-
     /** Map any previously stored (possibly localized) condition text to a canonical ENUM value. */
     private String normalizeCondition(String text) {
         if (text == null) return CONDITION_ENUMS[0];
@@ -396,21 +442,9 @@ public class EditProductActivity extends BaseActivity {
     }
 
     private void applyCondition(String enumValue) {
-        String safe = conditionEnumFromChip(enumValue == null ? CONDITION_ENUMS[0] : enumValue);
+        String safe = normalizeCondition(enumValue);
         autoCompleteCondition.setText(safe);
         autoCompleteCondition.setSelection(0);
-    }
-
-    private void syncConditionChips(String enumValue) {
-        ChipGroup group = findViewById(R.id.chipGroupCondition);
-        if (group == null) return;
-        for (int i = 0; i < group.getChildCount() && i < CONDITION_CHIP_LABELS.length; i++) {
-            Chip chip = (Chip) group.getChildAt(i);
-            if (chip.getTag() == null) {
-                chip.setTag(CONDITION_CHIP_LABELS[i]);
-            }
-            chip.setChecked(conditionEnumFromChip(CONDITION_CHIP_LABELS[i]).equalsIgnoreCase(conditionEnumFromChip(enumValue)));
-        }
     }
 
     private void setupPriceLogic() {
@@ -485,6 +519,8 @@ public class EditProductActivity extends BaseActivity {
         String price = intent.getStringExtra(EXTRA_PREFILL_PRICE);
         String description = intent.getStringExtra(EXTRA_PREFILL_DESCRIPTION);
         String category = intent.getStringExtra(EXTRA_PREFILL_CATEGORY);
+        String tags = intent.getStringExtra(EXTRA_PREFILL_TAGS);
+        String condition = intent.getStringExtra(EXTRA_PREFILL_CONDITION);
 
         if (title != null && !title.isEmpty()) {
             etName.setText(title);
@@ -503,7 +539,20 @@ public class EditProductActivity extends BaseActivity {
         if (category != null && !category.isEmpty()) {
             autoCompleteCategory.setText(category, false);
         }
+        if (tags != null && !tags.isEmpty()) etTags.setText(tags);
+        if (condition != null && !condition.isEmpty()) {
+            applyCondition(condition);
+        }
         syncCategoryChipsFromField();
+    }
+
+    private static String joinAiTags(List<String> tags) {
+        if (tags == null || tags.isEmpty()) return "";
+        StringJoiner joiner = new StringJoiner(", ");
+        for (String tag : tags) {
+            if (tag != null && !tag.trim().isEmpty()) joiner.add(tag.trim());
+        }
+        return joiner.toString();
     }
 
     private void observeViewModel() {
@@ -625,13 +674,20 @@ public class EditProductActivity extends BaseActivity {
     private void setupDraftAction() {
         findViewById(R.id.btnSaveDraft).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            AppDataStore.saveDraft(this, etName.getText().toString(),
-                    autoCompleteCategory.getText().toString().trim(),
-                    etPrice.getText().toString(), etDescription.getText().toString(), 
-                    viewModel.imageUri.getValue(), selectedLocation());
-            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_draft_saved);
-            finish();
+            saveDraftNow();
         });
+    }
+
+    private String currentDraftId;
+
+    private void saveDraftNow() {
+        AppDataStore.saveDraft(this, etName.getText().toString(),
+                autoCompleteCategory.getText().toString().trim(),
+                etPrice.getText().toString(), etDescription.getText().toString(),
+                viewModel.imageUri.getValue(), selectedLocation());
+        if (currentDraftId != null) AppDataStore.deleteDraft(this, currentDraftId);
+        UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_draft_saved);
+        finish();
     }
 
     private void loadDraftIfAny() {
@@ -651,6 +707,7 @@ public class EditProductActivity extends BaseActivity {
         }
         JSONObject draft = AppDataStore.getDraft(this, draftId);
         if (draft == null) return;
+        currentDraftId = draftId;
         etName.setText(draft.optString("title"));
         autoCompleteCategory.setText(draft.optString("category"), false);
         etPrice.setText(draft.optString("price"));
@@ -694,7 +751,6 @@ public class EditProductActivity extends BaseActivity {
                 etOriginalPrice.setText(l.original_price == null ? "" : l.original_price);
                 String cond = normalizeCondition(l.condition);
                 applyCondition(cond);
-                syncConditionChips(cond);
 
                 if (switchAutoReply != null) switchAutoReply.setChecked(l.autoReply);
                 if (switchHideFromFriends != null) switchHideFromFriends.setChecked(l.hideFromFriends);
@@ -709,6 +765,7 @@ public class EditProductActivity extends BaseActivity {
                 photoAdapter.updateData(selectedUris);
                 updatePhotoCount();
                 updateViewModelUris();
+                snapshotForm();
 
                 UiUtils.snackbar(EditProductActivity.this.findViewById(android.R.id.content), R.string.toast_listing_loaded);
             }
@@ -724,7 +781,7 @@ public class EditProductActivity extends BaseActivity {
 
     private void setupToolbar() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> confirmExit());
     }
 
     private void setupPriceAdjuster() {
@@ -1120,6 +1177,7 @@ public class EditProductActivity extends BaseActivity {
                                 PolyGoApi.AddListingResponse body = response.body();
                                 if (response.isSuccessful() && body != null && body.isSuccess()) {
                                     HapticManager.success(EditProductActivity.this);
+                                    if (currentDraftId != null) AppDataStore.deleteDraft(EditProductActivity.this, currentDraftId);
                                     AppDataStore.addUserListing(EditProductActivity.this, editListingId,
                                             title, category, price, description, imageJoined, location);
                                     polyGoRepository.refreshListings(ownerId);
@@ -1154,6 +1212,7 @@ public class EditProductActivity extends BaseActivity {
                     String imageUrl = workInfo.getOutputData().getString("image_url");
                     if (listingId != null && imageUrl != null) {
                         HapticManager.success(EditProductActivity.this);
+                        if (currentDraftId != null) AppDataStore.deleteDraft(EditProductActivity.this, currentDraftId);
                         celebrate();
                         AppDataStore.addUserListing(EditProductActivity.this, listingId, title, category, price, description, imageUrl, selectedLocation());
                         

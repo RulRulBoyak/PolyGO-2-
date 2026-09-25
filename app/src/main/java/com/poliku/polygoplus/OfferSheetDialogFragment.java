@@ -16,7 +16,6 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputLayout;
 import com.poliku.polygoplus.api.PolyGoApi;
-import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.HapticManager;
@@ -122,28 +121,32 @@ public class OfferSheetDialogFragment extends BottomSheetDialogFragment {
         String amountText = String.format(Locale.US, "%.2f", amount);
         String userId = AppDataStore.userId(requireContext());
 
-        polyGoRepository.addTransaction(userId, productId, ownerId, amountText, new Callback<BaseResponse>() {
-            @Override
-            public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    HapticManager.success(requireContext());
-                    AppDataStore.addTransaction(requireContext(), productId, title, "RM " + amountText);
-                    Toast.makeText(requireContext(), R.string.offer_sheet_sent, Toast.LENGTH_LONG).show();
-                    dismiss();
-                } else {
-                    onFailure(call, new Throwable("Transaction failed"));
-                }
-            }
+        polyGoRepository.addTransaction(userId, productId, ownerId, amountText,
+                new Callback<PolyGoApi.TransactionResponse>() {
+                    @Override
+                    public void onResponse(Call<PolyGoApi.TransactionResponse> call,
+                                           Response<PolyGoApi.TransactionResponse> response) {
+                        if (!isAdded()) return;
+                        if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                            HapticManager.success(requireContext());
+                            AppDataStore.addTransaction(requireContext(), response.body().id,
+                                    productId, title, "RM " + amountText, seller);
+                            Toast.makeText(requireContext(), R.string.offer_sheet_sent, Toast.LENGTH_LONG).show();
+                            dismiss();
+                        } else {
+                            onFailure(call, new Throwable("Transaction failed"));
+                        }
+                    }
 
-            @Override
-            public void onFailure(Call<BaseResponse> call, Throwable t) {
-                if (!isAdded()) return;
-                AppDataStore.addTransaction(requireContext(), productId, title, "RM " + amountText);
-                Toast.makeText(requireContext(), R.string.offer_sheet_local_only, Toast.LENGTH_SHORT).show();
-                dismiss();
-            }
-        });
+                    @Override
+                    public void onFailure(Call<PolyGoApi.TransactionResponse> call, Throwable t) {
+                        if (!isAdded()) return;
+                        sending = false;
+                        viewSendState(true);
+                        Toast.makeText(requireContext(), R.string.toast_could_not_reach_server_try_again,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void viewSendState(boolean enabled) {

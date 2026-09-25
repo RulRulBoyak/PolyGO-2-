@@ -48,32 +48,40 @@
     </style>
 
     <style name="Widget.PolyGo.Button" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/airbnb_coral</item>
+        <item name="backgroundTint">@color/button_primary_background</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@color/button_primary_text</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:maxLines">2</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
     <style name="Widget.PolyGo.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="strokeColor">@color/airbnb_ink</item>
-        <item name="android:textColor">@color/airbnb_ink</item>
+        <item name="strokeColor">@color/pks_blue</item>
+        <item name="android:textColor">@color/button_tonal_text</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:maxLines">2</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
     <style name="Widget.PolyGo.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
+        <item name="backgroundTint">@color/button_tonal_background</item>
+        <item name="android:textColor">@color/button_tonal_text</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:maxLines">2</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
     <style name="Widget.PolyGo.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="android:textColor">@color/button_tonal_text</item>
         <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:maxLines">2</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
@@ -87,10 +95,44 @@
 
     <style name="ThemeOverlay.PolyGo.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.PolyGo.Dialog</item>
-        <item name="colorSurface">@color/surface_sheet</item>
-        <item name="buttonBarPositiveButtonStyle">@style/Widget.PolyGo.Button.Text</item>
-        <item name="buttonBarNegativeButtonStyle">@style/Widget.PolyGo.Button.Text</item>
-        <item name="buttonBarNeutralButtonStyle">@style/Widget.PolyGo.Button.Text</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.PolyGo.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.PolyGo.Dialog.Body</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.PolyGo.DialogButton.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.PolyGo.DialogButton.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.PolyGo.DialogButton.Text</item>
+        <item name="android:backgroundDimAmount">0.42</item>
+    </style>
+
+<style name="TextAppearance.PolyGo.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textSize">21sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.PolyGo.Dialog.Body" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="Widget.PolyGo.DialogButton.Positive" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/pks_blue</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:minWidth">80dp</item>
+    </style>
+
+    <style name="Widget.PolyGo.DialogButton.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="backgroundTint">@android:color/transparent</item>
+        <item name="android:textColor">@color/pks_blue</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.PolyGo.Button</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">40dp</item>
     </style>
 
     <style name="ShapeAppearance.PolyGo.Button" parent="ShapeAppearance.Material3.MediumComponent">
@@ -98,7 +140,7 @@
     </style>
 
     <style name="ShapeAppearance.PolyGo.Dialog" parent="ShapeAppearance.Material3.LargeComponent">
-        <item name="cornerSize">24dp</item>
+        <item name="cornerSize">20dp</item>
     </style>
 
     <style name="Widget.PolyGo.BentoCard" parent="Widget.Material3.CardView.Filled">
@@ -180,6 +222,13 @@
         <item name="chipIconTint">@color/pks_blue</item>
         <item name="chipIconSize">16dp</item>
         <item name="chipMinHeight">34dp</item>
+    </style>
+
+    <style name="Theme.PolyGo.ProfileCrop" parent="Theme.PolyGo">
+        <item name="android:windowBackground">#101114</item>
+        <item name="android:navigationBarColor">#101114</item>
+        <item name="android:statusBarColor">#101114</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
 </resources>

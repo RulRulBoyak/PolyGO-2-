@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
     android:fitsSystemWindows="true">
 
     <!-- Custom Header Bar -->
@@ -248,19 +247,6 @@
             android:padding="10dp"
             android:src="@drawable/ic_camera"
             android:contentDescription="@string/action_add_photo"
-            app:tint="@color/airbnb_muted" />
-
-        <ImageView
-            android:id="@+id/btnSchedule"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="10dp"
-            android:src="@drawable/ic_calendar"
-            android:contentDescription="@string/action_schedule"
             app:tint="@color/airbnb_muted" />
 
         <ImageView

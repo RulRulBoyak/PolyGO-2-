@@ -296,20 +296,23 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHowItWorks"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.PolyGo.Button.Text"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_marginTop="12dp"
                 android:text="@string/impact_how_title"
                 android:textAllCaps="false"
+                android:maxLines="2"
                 android:textColor="@color/pks_green"
                 android:textSize="14sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnShareImpact"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.PolyGo.Button.Tonal"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:layout_marginTop="32dp"
                 android:text="Share My Progress"
                 app:icon="@drawable/ic_share" />

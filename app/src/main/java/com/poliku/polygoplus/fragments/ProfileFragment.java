@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.text.InputType;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,12 +22,15 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import androidx.biometric.BiometricManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import com.poliku.polygoplus.AccountActivity;
+import com.poliku.polygoplus.ProfilePhotoCropActivity;
 import com.poliku.polygoplus.LegalActivity;
 import com.poliku.polygoplus.LoginActivity;
 import com.poliku.polygoplus.MainActivity;
@@ -44,6 +49,7 @@ import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.databinding.FragmentProfileBinding;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
+import com.poliku.polygoplus.viewmodel.AuthViewModel;
 import com.poliku.polygoplus.network.ImageUtils;
 import java.io.File;
 import okhttp3.MediaType;
@@ -72,13 +78,21 @@ public class ProfileFragment extends Fragment {
     @Inject PolyGoRepository polyGoRepository;
     private FragmentProfileBinding binding;
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
+    private ActivityResultLauncher<Intent> cropPhoto;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        cropPhoto = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+            String cropped = result.getData().getStringExtra(ProfilePhotoCropActivity.EXTRA_RESULT_URI);
+            if (cropped != null && !cropped.isEmpty()) uploadProfilePicture(Uri.parse(cropped));
+        });
         pickMedia = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
             if (uri != null) {
-                uploadProfilePicture(uri);
+                Intent crop = new Intent(requireContext(), ProfilePhotoCropActivity.class);
+                crop.putExtra(ProfilePhotoCropActivity.EXTRA_SOURCE_URI, uri.toString());
+                cropPhoto.launch(crop);
             }
         });
     }
@@ -108,7 +122,7 @@ public class ProfileFragment extends Fragment {
         
         if (loggedIn) {
             binding.tvUserName.setText(AppDataStore.userName(getContext()));
-            binding.tvUserRole.setText("PKS " + AppDataStore.userRole(getContext()).toLowerCase(Locale.ROOT));
+            showVerificationLabel(getContext());
 
             String photo = AppDataStore.userProfilePic(getContext());
             if (!photo.isEmpty()) {
@@ -119,11 +133,12 @@ public class ProfileFragment extends Fragment {
                         .into(binding.ivProfile);
             }
 
-            binding.ivLogout.setVisibility(View.VISIBLE);
+            binding.layoutLogoutButton.setVisibility(View.VISIBLE);
         } else {
             binding.tvUserName.setText(getString(R.string.profile_guest_user));
             binding.tvUserRole.setText(getString(R.string.profile_login_to_access_features));
-            binding.ivLogout.setVisibility(View.GONE);
+            // A guest cannot log out. Hiding only the icon left an empty pink logout circle.
+            binding.layoutLogoutButton.setVisibility(View.GONE);
         }
 
         String bio = AppDataStore.userBio(getContext());
@@ -266,13 +281,12 @@ public class ProfileFragment extends Fragment {
 
         binding.ivLogout.setOnClickListener(v -> {
             if (getContext() == null) return;
-            AppDataStore.logout(getContext());
-            Intent intent = new Intent(getContext(), MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            if (getActivity() != null) {
-                getActivity().overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-            }
+            new MaterialAlertDialogBuilder(getContext())
+                    .setTitle(R.string.logout_title)
+                    .setMessage(R.string.logout_message)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.logout_action, (dialog, which) -> logoutFromDevice())
+                    .show();
         });
 
         binding.swipeRefreshProfile.setColorSchemeResources(R.color.pks_blue, R.color.polygo_purple);
@@ -292,6 +306,33 @@ public class ProfileFragment extends Fragment {
         refreshProfileData();
     }
 
+    private void logoutFromDevice() {
+        Context context = getContext();
+        if (context == null) return;
+        binding.ivLogout.setEnabled(false);
+        String userId = AppDataStore.userId(context);
+        polyGoRepository.updateFcmToken(userId, "", new Callback<BaseResponse>() {
+            @Override public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                finishLogout(context);
+            }
+
+            @Override public void onFailure(Call<BaseResponse> call, Throwable t) {
+                finishLogout(context);
+            }
+        });
+    }
+
+    private void finishLogout(Context context) {
+        AppDataStore.logout(context);
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        }
+    }
+
     private void refreshProfileData() {
         Context context = getContext();
         if (context == null) {
@@ -302,7 +343,7 @@ public class ProfileFragment extends Fragment {
         boolean loggedIn = AppDataStore.isLoggedIn(context);
         if (loggedIn) {
             binding.tvUserName.setText(AppDataStore.userName(context));
-            binding.tvUserRole.setText("PKS " + AppDataStore.userRole(context).toLowerCase(Locale.ROOT));
+            showVerificationLabel(context);
             String photo = AppDataStore.userProfilePic(context);
             if (!photo.isEmpty()) {
                 Glide.with(this)
@@ -311,9 +352,10 @@ public class ProfileFragment extends Fragment {
                         .placeholder(R.mipmap.ic_launcher_foreground)
                         .into(binding.ivProfile);
             }
-            binding.ivLogout.setVisibility(View.VISIBLE);
+            binding.layoutLogoutButton.setVisibility(View.VISIBLE);
             loadSellerMetrics(binding.getRoot());
         } else {
+            binding.layoutLogoutButton.setVisibility(View.GONE);
             binding.swipeRefreshProfile.setRefreshing(false);
         }
     }
@@ -322,14 +364,8 @@ public class ProfileFragment extends Fragment {
         Context context = getContext();
         if (context == null || binding == null) return;
 
-        Uri compressed = ImageUtils.compressImage(context, uri);
-        if (compressed == null || compressed.getPath() == null) return;
-
-        File file = new File(compressed.getPath());
-        if (!file.exists()) return;
-
         binding.swipeRefreshProfile.setRefreshing(true);
-        polyGoRepository.uploadImage(file, new Callback<PolyGoApi.UploadResponse>() {
+        polyGoRepository.uploadImage(context, uri, new Callback<PolyGoApi.UploadResponse>() {
             @Override
             public void onResponse(Call<PolyGoApi.UploadResponse> call, Response<PolyGoApi.UploadResponse> response) {
                 if (!isAdded() || getContext() == null || binding == null) return;
@@ -350,6 +386,17 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(getContext(), "Network error during upload", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showVerificationLabel(Context context) {
+        String status = AppDataStore.verificationStatus(context);
+        if ("approved".equals(status)) {
+            binding.tvUserRole.setText(R.string.profile_student);
+        } else if ("pending".equals(status)) {
+            binding.tvUserRole.setText(R.string.profile_verification_pending);
+        } else {
+            binding.tvUserRole.setText(R.string.profile_member_unverified);
+        }
     }
 
     private void saveProfilePhotoUrl(String photoUrl) {
@@ -406,11 +453,18 @@ public class ProfileFragment extends Fragment {
             View btnSave = dialog.findViewById(R.id.btnSavePassword);
             if (btnSave != null) {
                 btnSave.setOnClickListener(button -> {
+                    EditText current = dialog.findViewById(R.id.etCurrentPassword);
                     EditText first = dialog.findViewById(R.id.etNewPassword);
                     EditText second = dialog.findViewById(R.id.etConfirmPassword);
+                    String currentPassword = current == null || current.getText() == null ? "" : current.getText().toString();
                     String password = first == null || first.getText() == null ? "" : first.getText().toString();
                     String confirmation = second == null || second.getText() == null ? "" : second.getText().toString();
-                    if (password.length() < 6) {
+                    if (currentPassword.isEmpty()) {
+                        if (current != null) current.setError(getString(R.string.error_current_password_required));
+                        return;
+                    }
+                    if (password.length() < AuthViewModel.MIN_PASSWORD_LENGTH
+                            || password.length() > AuthViewModel.MAX_PASSWORD_LENGTH) {
                         if (first != null) {
                             first.setError(getString(R.string.error_password_min_length));
                         }
@@ -422,12 +476,13 @@ public class ProfileFragment extends Fragment {
                         }
                         return;
                     }
-                    polyGoRepository.updatePassword(password, new Callback<BaseResponse>() {
+                    polyGoRepository.updatePassword(currentPassword, password, new Callback<BaseResponse>() {
                         @Override
                         public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                             if (!isAdded() || getContext() == null) return;
                             Context context = getContext();
                             if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                                AppDataStore.replaceSessionToken(context, response.body().getToken());
                                 dialog.dismiss();
                                 HapticManager.success(context);
                                 Toast.makeText(context, R.string.toast_password_changed, Toast.LENGTH_SHORT).show();
@@ -450,16 +505,27 @@ public class ProfileFragment extends Fragment {
 
     private void showEditBioDialog() {
         if (getContext() == null) return;
-        EditText input = new EditText(getContext());
-        input.setHint(R.string.profile_bio_hint);
+        TextInputLayout field = new TextInputLayout(getContext());
+        field.setHint(getString(R.string.profile_bio_hint));
+        field.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        field.setCounterEnabled(true);
+        field.setCounterMaxLength(80);
+
+        TextInputEditText input = new TextInputEditText(field.getContext());
         input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(80)});
-        input.setMinLines(1);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        input.setGravity(Gravity.TOP | Gravity.START);
+        input.setMinLines(3);
+        input.setMaxLines(4);
         input.setText(AppDataStore.userBio(getContext()));
         input.setSelection(input.getText().length());
+        field.addView(input, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         new MaterialAlertDialogBuilder(getContext())
             .setTitle(R.string.bio_edit_title)
-            .setView(input)
+            .setView(field)
             .setNegativeButton(R.string.bio_edit_cancel, null)
             .setPositiveButton(R.string.bio_edit_save, (d, w) -> saveBio(input.getText().toString().trim()))
             .show();
@@ -496,6 +562,10 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
+                if (isAdded() && getContext() != null) {
+                    Toast.makeText(getContext(), R.string.toast_could_not_reach_server_try_again,
+                            Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

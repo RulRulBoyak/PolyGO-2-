@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -17,6 +18,7 @@ import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 
 import javax.inject.Inject;
@@ -63,7 +65,7 @@ public class BugReportActivity extends BaseActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
-            toolbar.setNavigationOnClickListener(v -> finish());
+            toolbar.setNavigationOnClickListener(v -> confirmExit());
         }
 
         tvDeviceInfo.setText(String.format("%s %s | v%s", Build.MODEL, Build.VERSION.RELEASE, BuildConfig.VERSION_NAME));
@@ -79,6 +81,21 @@ public class BugReportActivity extends BaseActivity {
             HapticManager.mediumTap(v);
             submitReport();
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+    }
+
+    private void confirmExit() {
+        if (!ExitGuard.anyText(etDescription.getText()) && screenshotUri == null) {
+            finish();
+            return;
+        }
+        ExitGuard.show(this, this::finish);
     }
 
     private void submitReport() {

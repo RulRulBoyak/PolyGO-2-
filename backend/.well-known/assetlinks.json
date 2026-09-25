@@ -1,0 +1,12 @@
+[
+    {
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.poliku.polygoplus",
+            "sha256_cert_fingerprints": [
+                "5E:FC:40:50:3F:17:A3:96:83:F4:9F:2D:8F:14:6F:C7:95:93:F0:31:7C:BF:54:DE:27:C9:D8:4B:08:F7:F0:28"
+            ]
+        }
+    }
+]

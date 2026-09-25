@@ -151,23 +151,22 @@
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Profile Pic with extra elevation for "Pop" -->
+                    <!-- A clean edge lets the photo sit naturally beside the search field. -->
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/ivProfilePic"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginStart="12dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="14dp"
                         android:clickable="true"
                         android:contentDescription="@string/content_description_profile"
-                        android:elevation="10dp"
+                        android:elevation="0dp"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_user_line"
                         android:transitionName="profile_pic_hero"
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                        app:strokeColor="@color/white"
-                        app:strokeWidth="2.5dp" />
+                        app:strokeWidth="0dp" />
 
                 </LinearLayout>
 

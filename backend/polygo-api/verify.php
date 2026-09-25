@@ -26,74 +26,10 @@ if ($action === 'status') {
     respond(true, 'OK', ['verification_status' => 'unverified', 'verification_photo' => '', 'is_banned' => false]);
 }
 
-// ADMIN ACTIONS: prefer the per-session token from the web admin page, and
-// keep the ADMIN_PASSWORD header/field accepted for CLI/SQL tooling.
+// Moderation happens only in the CSRF-protected admin panel. Keeping a second
+// public password-based admin route here would create an unnecessary bypass.
 if (in_array($action, ['admin_pending', 'approve', 'reject'], true)) {
-    // Slow down password guessing regardless of which token path is used.
-    $adminIp = $_SERVER['REMOTE_ADDR'] ?? '';
-    if (!rate_limit_check($pdo, 'admin_verify_ip:' . $adminIp, 10, 600)) {
-        respond(false, 'Too many attempts, please try again later');
-    }
-
-    $adminToken = (string)($input['admin_token'] ?? '');
-    $headerToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-    if ($adminToken === '' && $headerToken !== '') {
-        $adminToken = $headerToken;
-    }
-
-    $authorized = false;
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        $secureCookie = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-        session_set_cookie_params([
-            'lifetime' => 0,
-            'path'     => '/',
-            'httponly' => true,
-            'secure'   => $secureCookie,
-            'samesite' => 'Lax'
-        ]);
-        session_start();
-    }
-    if (!empty($_SESSION['admin_ok'])
-        && hash_equals((string)($_SESSION['admin_api_token'] ?? ''), $adminToken)) {
-        $authorized = true;
-    } elseif (defined('ADMIN_PASSWORD') && ADMIN_PASSWORD !== ''
-        && hash_equals(ADMIN_PASSWORD, $adminToken)) {
-        $authorized = true;
-    }
-    if (!$authorized) {
-        respond(false, 'Unauthorized admin token');
-    }
-
-    if ($action === 'admin_pending') {
-        $pending = $pdo->prepare(
-            'SELECT id, full_name, student_id, email, verification_photo, updated_at
-             FROM users WHERE verification_status = "pending" ORDER BY updated_at DESC'
-        );
-        $pending->execute();
-        $rows = $pending->fetchAll();
-        respond(true, 'OK', ['pending' => $rows]);
-    }
-
-    $targetId = (int)($input['user_id'] ?? 0);
-    if ($targetId <= 0) {
-        respond(false, 'Missing user_id');
-    }
-    $newStatus = $action === 'approve' ? 'approved' : 'rejected';
-    $update = $pdo->prepare('UPDATE users SET verification_status = ?, updated_at = NOW() WHERE id = ?');
-    $update->execute([$newStatus, $targetId]);
-    $request = $pdo->prepare('UPDATE verification_requests SET status = ? WHERE user_id = ? AND status = "pending"');
-    $request->execute([$newStatus, $targetId]);
-
-    // Notify the applicant about the decision (inbox row + push).
-    if ($action === 'approve') {
-        NotificationManager::sendToUser($pdo, $targetId, 'Account Verified',
-            'Your Matrix Card was approved. You can now post listings.', ['type' => 'verification']);
-    } else {
-        NotificationManager::sendToUser($pdo, $targetId, 'Verification Rejected',
-            'Your Matrix Card was rejected. Please resubmit from the verification screen.', ['type' => 'verification']);
-    }
-
-    respond(true, $action === 'approve' ? 'User approved' : 'User rejected');
+    respond(false, 'Use the authenticated admin panel for moderation');
 }
 
 // Authenticated submission of the Matrix Card upload URL.
@@ -101,12 +37,14 @@ if ($action === 'submit') {
     $userId   = verify_jwt();
     $photoUrl = trim((string)($input['verification_photo'] ?? ''));
 
-    if ($photoUrl === '') {
+    $canonicalPhoto = canonical_uploaded_image_url($photoUrl);
+    if ($canonicalPhoto === null || $canonicalPhoto === '') {
         respond(false, 'Please upload your Matrix Card first');
     }
+    $photoUrl = $canonicalPhoto;
 
     $update = $pdo->prepare(
-        'UPDATE users SET verification_photo = ?, verification_status = ?, updated_at = NOW() WHERE id = ?'
+        'UPDATE users SET verification_photo = ?, verification_status = ?, is_verified = 0, updated_at = NOW() WHERE id = ?'
     );
     $update->execute([$photoUrl, 'pending', $userId]);
 

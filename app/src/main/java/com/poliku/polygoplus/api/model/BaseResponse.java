@@ -10,6 +10,9 @@ public class BaseResponse {
     @SerializedName("message")
     private String message;
 
+    @SerializedName("token")
+    private String token;
+
     @SerializedName("maintenance")
     private boolean maintenance;
 
@@ -28,6 +31,10 @@ public class BaseResponse {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getToken() {
+        return token;
     }
 
     public boolean isMaintenance() {

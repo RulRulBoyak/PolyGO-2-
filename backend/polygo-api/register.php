@@ -10,7 +10,10 @@ $password = (string)($input['password'] ?? '');
 // "false" previously cast to true, silently bypassing PDPA consent.
 $consentAgreed = ($input['consent_agreed'] ?? false) === true;
 
-if ($name === '' || $studentId === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
+$passwordLength = function_exists('mb_strlen') ? mb_strlen($password, 'UTF-8') : strlen($password);
+if ($name === '' || $studentId === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)
+        || mb_strlen($name) > 120 || mb_strlen($studentId) > 50 || mb_strlen($email) > 160
+        || $passwordLength < 5 || $passwordLength > 128) {
     respond(false, 'Please provide valid registration details');
 }
 
@@ -49,7 +52,17 @@ try {
 
     respond(true, 'Account created', [
         'token' => $token,
-        'user' => ['id' => $id, 'name' => $name, 'studentId' => $studentId, 'email' => $email, 'mobile' => '']
+        'user' => [
+            'id' => $id,
+            'name' => $name,
+            'studentId' => $studentId,
+            'email' => $email,
+            'mobile' => '',
+            'role' => 'Student',
+            'is_verified' => false,
+            'verification_status' => 'unverified',
+            'is_banned' => false,
+        ]
     ]);
 } catch (PDOException $error) {
     if ($pdo->inTransaction()) $pdo->rollBack();

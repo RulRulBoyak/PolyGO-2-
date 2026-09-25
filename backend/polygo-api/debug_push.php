@@ -10,9 +10,10 @@
  * Guard: local requests only (127.0.0.1/::1/10.0.2.2) + APP_ENV !== 'prod'
  */
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/NotificationManager.php';
 
 $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
-if (!in_array($remoteAddr, ['127.0.0.1', '::1', '10.0.2.2'], true)) {
+if (!is_dev_request() || !in_array($remoteAddr, ['127.0.0.1', '::1', '10.0.2.2'], true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'debug_push is for local dev only']);
     exit;

@@ -1,5 +1,6 @@
 package com.poliku.polygoplus;
 
+import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,23 +8,24 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.FileProvider;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.poliku.polygoplus.api.PolyGoApi;
 import com.poliku.polygoplus.api.model.BaseResponse;
 import com.poliku.polygoplus.data.AppDataStore;
 import com.poliku.polygoplus.data.PolyGoRepository;
 import com.poliku.polygoplus.ui.BaseActivity;
+import com.poliku.polygoplus.ui.ExitGuard;
 import com.poliku.polygoplus.ui.HapticManager;
 import com.poliku.polygoplus.ui.UiUtils;
 
-import java.util.Locale;
+import java.io.File;
 
 import javax.inject.Inject;
 
@@ -39,33 +41,47 @@ public class VerificationActivity extends BaseActivity {
 
     private TextView tvStatus;
     private ImageView ivStatusIcon, ivMatrixPreview;
-    private View layoutForm, layoutStudent, layoutAlumni;
-    private TextInputEditText etMatrixNo, etAlumniQ1, etAlumniQ2;
-    private MaterialButton btnSubmit, btnSimulate;
-    private ChipGroup chipGroupRole;
+    private View layoutForm;
+    private TextInputEditText etMatrixNo;
+    private MaterialButton btnSubmit;
+    private LinearProgressIndicator verificationProgress;
+    private boolean submitting;
     
     private Uri selectedImageUri;
-    private ActivityResultLauncher<PickVisualMediaRequest> imagePicker;
+    private Uri pendingCameraUri;
+    private ActivityResultLauncher<Uri> cameraLauncher;
+    private ActivityResultLauncher<String> cameraPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_verification);
 
-        imagePicker = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-            if (uri != null) {
-                selectedImageUri = uri;
-                ivMatrixPreview.setImageURI(uri);
-                ivMatrixPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                ivMatrixPreview.setColorFilter(null);
-            }
+        cameraLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), saved -> {
+            if (saved && pendingCameraUri != null) showSelectedImage(pendingCameraUri);
         });
+        cameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> {
+                    if (granted) openCamera();
+                    else UiUtils.snackbarError(findViewById(android.R.id.content),
+                            R.string.toast_camera_permission_required);
+                });
         
         initViews();
+        String savedImage = savedInstanceState == null ? null
+                : savedInstanceState.getString("selected_image");
+        String pendingImage = savedInstanceState == null ? null
+                : savedInstanceState.getString("pending_camera_image");
+        if (pendingImage != null && !pendingImage.isEmpty()) {
+            pendingCameraUri = Uri.parse(pendingImage);
+        }
+        if (savedImage != null && !savedImage.isEmpty()) {
+            showSelectedImage(Uri.parse(savedImage));
+        }
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                returnHome();
+                confirmExit();
             }
         });
         setupListeners();
@@ -100,17 +116,26 @@ public class VerificationActivity extends BaseActivity {
         ivStatusIcon = findViewById(R.id.ivStatusIcon);
         ivMatrixPreview = findViewById(R.id.ivMatrixPreview);
         layoutForm = findViewById(R.id.layoutForm);
-        layoutStudent = findViewById(R.id.layoutStudent);
-        layoutAlumni = findViewById(R.id.layoutAlumni);
         etMatrixNo = findViewById(R.id.etMatrixNo);
-        etAlumniQ1 = findViewById(R.id.etAlumniQ1);
-        etAlumniQ2 = findViewById(R.id.etAlumniQ2);
         btnSubmit = findViewById(R.id.btnSubmit);
-        btnSimulate = findViewById(R.id.btnSimulate);
-        chipGroupRole = findViewById(R.id.chipGroupRole);
+        verificationProgress = findViewById(R.id.verificationProgress);
         
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> returnHome());
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> confirmExit());
+    }
+
+    private void confirmExit() {
+        if (submitting) {
+            UiUtils.snackbar(findViewById(android.R.id.content),
+                    R.string.verification_wait_for_submission);
+            return;
+        }
+        if (ExitGuard.anyText(etMatrixNo.getText())
+                || selectedImageUri != null) {
+            ExitGuard.show(this, this::returnHome);
+            return;
+        }
+        returnHome();
     }
 
     private void returnHome() {
@@ -121,24 +146,9 @@ public class VerificationActivity extends BaseActivity {
     }
 
     private void setupListeners() {
-        chipGroupRole.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-            int checkedId = checkedIds.get(0);
-            HapticManager.lightTap(group);
-            if (checkedId == R.id.chipStudent) {
-                layoutStudent.setVisibility(View.VISIBLE);
-                layoutAlumni.setVisibility(View.GONE);
-            } else if (checkedId == R.id.chipAlumni) {
-                layoutStudent.setVisibility(View.GONE);
-                layoutAlumni.setVisibility(View.VISIBLE);
-            }
-        });
-
         findViewById(R.id.btnSnapMatrix).setOnClickListener(v -> {
             HapticManager.lightTap(v);
-            imagePicker.launch(new PickVisualMediaRequest.Builder()
-                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                    .build());
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
         });
 
         btnSubmit.setOnClickListener(v -> {
@@ -146,49 +156,42 @@ public class VerificationActivity extends BaseActivity {
             submitVerification();
         });
 
-        btnSimulate.setOnClickListener(v -> {
-            HapticManager.success(this);
-            AppDataStore.approvePendingVerification(this);
-            UiUtils.snackbar(findViewById(android.R.id.content), R.string.toast_verification_approved_dev);
-            render();
-        });
-        if (!BuildConfig.DEBUG) {
-            btnSimulate.setVisibility(View.GONE);
+    }
+
+    private void openCamera() {
+        try {
+            File folder = new File(getCacheDir(), "verification-captures");
+            if (!folder.exists() && !folder.mkdirs()) {
+                throw new IllegalStateException("Could not create camera folder");
+            }
+            File photo = new File(folder, "student-card-" + System.currentTimeMillis() + ".jpg");
+            pendingCameraUri = FileProvider.getUriForFile(this,
+                    getPackageName() + ".fileprovider", photo);
+            cameraLauncher.launch(pendingCameraUri);
+        } catch (Exception error) {
+            UiUtils.snackbarError(findViewById(android.R.id.content),
+                    R.string.toast_error_starting_camera);
         }
     }
 
-    private void submitVerification() {
-        int checkedId = chipGroupRole.getCheckedChipId();
-        if (checkedId == R.id.chipStudent) {
-            String matrix = etMatrixNo.getText().toString().trim();
-            if (selectedImageUri == null && matrix.isEmpty()) {
-                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_snap_card_or_enter_matrix);
-                return;
-            }
-        } else if (checkedId == R.id.chipAlumni) {
-            String q1 = etAlumniQ1.getText().toString().trim();
-            String q2 = etAlumniQ2.getText().toString().trim();
-            if (q1.isEmpty() || q2.isEmpty()) {
-                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_answer_alumni_questions);
-                return;
-            }
-            // Basic verification for alumni (Futuristic: would check against alumni DB)
-            if (!q1.toLowerCase(Locale.ROOT).contains("pks") && !q1.toLowerCase(Locale.ROOT).contains("poliku")) {
-                UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_challenge_answer_incorrect);
-                return;
-            }
-        }
+    private void showSelectedImage(Uri uri) {
+        selectedImageUri = uri;
+        ivMatrixPreview.setImageURI(uri);
+        ivMatrixPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        ivMatrixPreview.setColorFilter(null);
+    }
 
+    private void submitVerification() {
+        if (submitting) return;
+        // The server's verify.php submit requires the card/selfie photo — a
+        // submission without one would be invisible to the admin panel, so it
+        // must never complete locally.
         if (selectedImageUri == null) {
-            // No card photo (e.g. alumni challenge flow): keep the local simulation.
-            AppDataStore.submitVerification(this);
-            HapticManager.success(this);
-            UiUtils.snackbar(findViewById(android.R.id.content), getString(R.string.verification_submitted));
-            render();
+            UiUtils.snackbarError(findViewById(android.R.id.content), R.string.toast_snap_card_required);
             return;
         }
 
-        btnSubmit.setEnabled(false);
+        setSubmitting(true);
         UiUtils.snackbar(findViewById(android.R.id.content), getString(R.string.verification_uploading));
         polyGoRepository.uploadImage(this, selectedImageUri, new Callback<PolyGoApi.UploadResponse>() {
             @Override
@@ -198,13 +201,13 @@ public class VerificationActivity extends BaseActivity {
                         && body.url != null && !body.url.isEmpty()) {
                     submitToServer(body.url);
                 } else {
-                    finishUploadFailure();
+                    finishUploadFailure(body == null ? null : body.getMessage());
                 }
             }
 
             @Override
             public void onFailure(Call<PolyGoApi.UploadResponse> call, Throwable t) {
-                finishUploadFailure();
+                finishUploadFailure(null);
             }
         });
     }
@@ -214,32 +217,51 @@ public class VerificationActivity extends BaseActivity {
             @Override
             public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
                 boolean ok = response.isSuccessful() && response.body() != null && response.body().isSuccess();
-                AppDataStore.submitVerification(VerificationActivity.this);
-                HapticManager.success(VerificationActivity.this);
                 if (ok) {
+                    AppDataStore.submitVerification(VerificationActivity.this);
+                    HapticManager.success(VerificationActivity.this);
                     UiUtils.snackbar(VerificationActivity.this.findViewById(android.R.id.content),
                             R.string.verification_submitted);
                 } else {
                     UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content),
                             R.string.verification_server_failed);
                 }
-                btnSubmit.setEnabled(true);
+                setSubmitting(false);
                 render();
             }
 
             @Override
             public void onFailure(Call<BaseResponse> call, Throwable t) {
-                AppDataStore.submitVerification(VerificationActivity.this);
                 UiUtils.snackbarError(VerificationActivity.this.findViewById(android.R.id.content), R.string.verification_server_failed);
-                btnSubmit.setEnabled(true);
+                setSubmitting(false);
                 render();
             }
         });
     }
 
-    private void finishUploadFailure() {
-        btnSubmit.setEnabled(true);
-        UiUtils.snackbarError(findViewById(android.R.id.content), R.string.verification_upload_failed);
+    private void finishUploadFailure(String message) {
+        setSubmitting(false);
+        UiUtils.snackbarError(findViewById(android.R.id.content),
+                message == null || message.trim().isEmpty()
+                        ? getString(R.string.verification_upload_failed) : message);
+    }
+
+    private void setSubmitting(boolean value) {
+        submitting = value;
+        btnSubmit.setEnabled(!value);
+        btnSubmit.setText(value ? R.string.verification_uploading : R.string.submit_review);
+        verificationProgress.setVisibility(value ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (selectedImageUri != null) {
+            outState.putString("selected_image", selectedImageUri.toString());
+        }
+        if (pendingCameraUri != null) {
+            outState.putString("pending_camera_image", pendingCameraUri.toString());
+        }
+        super.onSaveInstanceState(outState);
     }
 
     private void render() {
@@ -250,19 +272,16 @@ public class VerificationActivity extends BaseActivity {
             ivStatusIcon.setColorFilter(getResources().getColor(R.color.pks_green));
             tvStatus.setText(getString(R.string.verified_member));
             layoutForm.setVisibility(View.GONE);
-            btnSimulate.setVisibility(View.GONE);
         } else if ("pending".equals(state)) {
             ivStatusIcon.setImageResource(R.drawable.ic_history);
             ivStatusIcon.setColorFilter(getResources().getColor(R.color.polygo_amber));
             tvStatus.setText(R.string.review_in_progress);
             layoutForm.setVisibility(View.GONE);
-            btnSimulate.setVisibility(View.VISIBLE);
         } else {
             ivStatusIcon.setImageResource(R.drawable.ic_shield_check);
             ivStatusIcon.setColorFilter(getResources().getColor(R.color.airbnb_muted));
             tvStatus.setText(R.string.verification_required);
             layoutForm.setVisibility(View.VISIBLE);
-            btnSimulate.setVisibility(View.GONE);
         }
     }
 }

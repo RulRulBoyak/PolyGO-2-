@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Out-of-band delivery for OTPs and temporary passwords.
+// Out-of-band delivery for verification and password-reset codes.
 // Uses PHPMailer (composer autoload) when SMTP is configured in secrets.php;
 // otherwise falls back to the PHP error log so the local/emulator workflow
 // keeps working. Secrets are NEVER returned in an API response.
@@ -47,8 +47,16 @@ final class Mailer
             }
         }
 
-        // Dev fallback: surface the payload in the server log only.
-        error_log("[polygo-api] [dev-mail] To=$to Subject=$subject Body=$body");
-        return true;
+        // Local development may use the PHP error log as a fake mailbox. Never
+        // report success in production when SMTP is absent: doing so leaves the
+        // user waiting for an OTP that was never delivered.
+        $isDev = defined('APP_ENV') && APP_ENV === 'dev';
+        if ($isDev) {
+            error_log("[polygo-api] [dev-mail] To=$to Subject=$subject Body=$body");
+            return true;
+        }
+
+        error_log('[polygo-api] mail is not configured: SMTP_HOST and PHPMailer are required');
+        return false;
     }
 }

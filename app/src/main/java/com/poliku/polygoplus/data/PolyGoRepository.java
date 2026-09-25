@@ -95,8 +95,15 @@ public final class PolyGoRepository {
         api.login(new PolyGoApi.LoginRequest(studentId, password)).enqueue(callback);
     }
 
-    public void googleLogin(String idToken, Callback<PolyGoApi.LoginResponse> callback) {
-        api.googleLogin(new PolyGoApi.GoogleLoginRequest(idToken)).enqueue(callback);
+    public void googleLogin(String idToken, boolean consentAgreed, Callback<PolyGoApi.LoginResponse> callback) {
+        api.googleLogin(new PolyGoApi.GoogleLoginRequest(idToken, consentAgreed)).enqueue(callback);
+    }
+
+    public void completeGoogleRegistration(String idToken, String name, String studentId,
+                                           String password, boolean consentAgreed,
+                                           Callback<PolyGoApi.LoginResponse> callback) {
+        api.googleLogin(new PolyGoApi.GoogleLoginRequest(idToken, name, studentId,
+                password, consentAgreed)).enqueue(callback);
     }
 
     public void register(String name, String studentId, String email, String password, boolean consentAgreed, Callback<PolyGoApi.LoginResponse> callback) {
@@ -359,7 +366,8 @@ public final class PolyGoRepository {
         api.markNotificationsRead(req).enqueue(callback);
     }
 
-    public void addTransaction(String userId, String listingId, String sellerId, String amount, Callback<BaseResponse> callback) {
+    public void addTransaction(String userId, String listingId, String sellerId, String amount,
+                               Callback<PolyGoApi.TransactionResponse> callback) {
         PolyGoApi.TransactionRequest req = new PolyGoApi.TransactionRequest();
         req.user_id = userId;
         req.listing_id = listingId;
@@ -457,12 +465,17 @@ public final class PolyGoRepository {
         api.submitReview(req).enqueue(callback);
     }
 
-    public void forgotPassword(String identifier, Callback<PolyGoApi.ForgotPasswordResponse> callback) {
-        api.forgotPassword(new PolyGoApi.ForgotPasswordRequest(identifier)).enqueue(callback);
+    public void requestPasswordReset(String identifier, Callback<PolyGoApi.ForgotPasswordResponse> callback) {
+        api.forgotPassword(new PolyGoApi.ForgotPasswordRequest("request", identifier, null, null)).enqueue(callback);
     }
 
-    public void updatePassword(String newPassword, Callback<BaseResponse> callback) {
-        api.updatePassword(new PolyGoApi.UpdatePasswordRequest(newPassword)).enqueue(callback);
+    public void resetPassword(String identifier, String code, String newPassword,
+                              Callback<PolyGoApi.ForgotPasswordResponse> callback) {
+        api.forgotPassword(new PolyGoApi.ForgotPasswordRequest("reset", identifier, code, newPassword)).enqueue(callback);
+    }
+
+    public void updatePassword(String currentPassword, String newPassword, Callback<BaseResponse> callback) {
+        api.updatePassword(new PolyGoApi.UpdatePasswordRequest(currentPassword, newPassword)).enqueue(callback);
     }
 
     public void getStatus(Callback<BaseResponse> callback) {
@@ -475,6 +488,18 @@ public final class PolyGoRepository {
 
     public void postPulse(String tag, String title, String body, Callback<BaseResponse> callback) {
         api.postPulse(new PolyGoApi.PulseRequest(tag, title, body)).enqueue(callback);
+    }
+
+    public void setPulseLiked(String pulseId, boolean liked, Callback<PolyGoApi.PulseActionResponse> callback) {
+        api.reactPulse(PolyGoApi.PulseRequest.like(pulseId, liked)).enqueue(callback);
+    }
+
+    public void getPulseComments(String pulseId, Callback<PolyGoApi.PulseCommentsResponse> callback) {
+        api.getPulseComments(PolyGoApi.PulseRequest.comments(pulseId)).enqueue(callback);
+    }
+
+    public void postPulseComment(String pulseId, String comment, Callback<PolyGoApi.PulseCommentResponse> callback) {
+        api.postPulseComment(PolyGoApi.PulseRequest.comment(pulseId, comment)).enqueue(callback);
     }
 
     public void submitVerification(String photoUrl, Callback<BaseResponse> callback) {
@@ -498,12 +523,14 @@ public final class PolyGoRepository {
     public void uploadImage(Context context, Uri uri, Callback<PolyGoApi.UploadResponse> callback) {
         executor.execute(() -> {
             try {
-                InputStream inputStream = context.getContentResolver().openInputStream(uri);
+                Uri preparedUri = com.poliku.polygoplus.network.ImageUtils
+                        .compressImage(context, uri);
+                InputStream inputStream = context.getContentResolver().openInputStream(preparedUri);
                 if (inputStream == null) {
                     postFailure(callback, "Could not open input stream");
                     return;
                 }
-                byte[] bytes = getBytes(inputStream);
+                byte[] bytes = getBytes(inputStream, 5 * 1024 * 1024);
                 inputStream.close();
                 RequestBody requestFile = RequestBody.create(bytes, MediaType.parse("image/jpeg"));
                 MultipartBody.Part body = MultipartBody.Part.createFormData("image", "upload.jpg", requestFile);
@@ -514,20 +541,25 @@ public final class PolyGoRepository {
         });
     }
 
-    public void aiSuggest(Context context, Uri uri, Callback<PolyGoApi.AiSuggestResponse> callback) {
+    public void aiSuggest(Context context, Uri uri, String mode,
+                          Callback<PolyGoApi.AiSuggestResponse> callback) {
         executor.execute(() -> {
             try {
-                InputStream inputStream = context.getContentResolver().openInputStream(uri);
+                Uri preparedUri = com.poliku.polygoplus.network.ImageUtils.compressImage(context, uri);
+                InputStream inputStream = context.getContentResolver().openInputStream(preparedUri);
                 if (inputStream == null) {
                     new Handler(Looper.getMainLooper())
                             .post(() -> callback.onFailure(null, new Throwable("Could not open input stream")));
                     return;
                 }
-                byte[] bytes = getBytes(inputStream);
+                byte[] bytes = getBytes(inputStream, 5 * 1024 * 1024);
                 inputStream.close();
                 RequestBody requestFile = RequestBody.create(bytes, MediaType.parse("image/jpeg"));
                 MultipartBody.Part body = MultipartBody.Part.createFormData("image", "upload.jpg", requestFile);
-                api.aiSuggestImage(body).enqueue(callback);
+                RequestBody modeBody = RequestBody.create(
+                        "service".equals(mode) ? "service" : "product",
+                        MediaType.parse("text/plain"));
+                api.aiSuggestImage(body, modeBody).enqueue(callback);
             } catch (Exception e) {
                 new Handler(Looper.getMainLooper())
                         .post(() -> callback.onFailure(null, e));
@@ -559,5 +591,18 @@ public final class PolyGoRepository {
             byteBuffer.write(buffer, 0, len);
         }
         return byteBuffer.toByteArray();
+    }
+
+    private byte[] getBytes(InputStream inputStream, int maxBytes) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(Math.min(maxBytes, 256 * 1024));
+        byte[] chunk = new byte[8192];
+        int total = 0;
+        int read;
+        while ((read = inputStream.read(chunk)) != -1) {
+            total += read;
+            if (total > maxBytes) throw new IOException("Prepared photo is larger than 5 MB");
+            buffer.write(chunk, 0, read);
+        }
+        return buffer.toByteArray();
     }
 }

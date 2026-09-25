@@ -102,6 +102,35 @@
 
         </LinearLayout>
 
+        <!-- Filters belong directly under the search field and use the full content width. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/home_categories"
+            android:textColor="@color/airbnb_ink"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:clipToPadding="false"
+            android:fillViewport="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="2dp"
+                app:chipSpacingHorizontal="6dp"
+                app:singleLine="true"
+                app:singleSelection="true" />
+        </HorizontalScrollView>
+
         <!-- Dynamic State 1: Discovery / Suggestions -->
         <LinearLayout
             android:id="@+id/searchSuggestions"
@@ -173,46 +202,18 @@
         </LinearLayout>
 
         <!-- Dynamic State 2: Results Header Metadata (Shown with Results) -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvResultCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingVertical="12dp">
-
-            <!-- Result Count Metric -->
-            <TextView
-                android:id="@+id/tvResultCount"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:letterSpacing="0.04"
-                android:textAllCaps="true"
-                android:textColor="@color/airbnb_muted"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                tools:text="12 LISTINGS FOUND" />
-
-            <!-- Category Filter Chips (scrollable single row) -->
-            <HorizontalScrollView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:fillViewport="true"
-                android:overScrollMode="never"
-                android:scrollbars="none">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupCategory"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="4dp"
-                    app:chipSpacingHorizontal="6dp"
-                    app:singleSelection="true" />
-            </HorizontalScrollView>
-
-        </LinearLayout>
+            android:letterSpacing="0.04"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp"
+            android:textAllCaps="true"
+            android:textColor="@color/airbnb_muted"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            tools:text="12 LISTINGS FOUND" />
     </LinearLayout>
 
     <View
